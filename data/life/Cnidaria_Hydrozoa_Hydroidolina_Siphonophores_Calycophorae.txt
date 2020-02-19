@@ -1,0 +1,13 @@
+Abylopsis tetragona (Otto), 489, 61, M, Shallow, 15
+Chuniphyes multidentata Lens and van Riemsdijk, 481, 61, P, Deep, 1500
+Craseoa lathetica Pugh and Harbison, 489, 90, B, Deep, 719
+Hippopodius hippopus (ForskaÊl), 450, 83, P, Deep, 150
+Maresearsia praeclara Totton, 486, 10, P, Deep, 800
+Muggiaea sp., 500, 76, S, Shallow, 3
+Nectadamas diomedeae (Bigelow), 443, 83, B, Deep, 1329
+Nectopyramis natans (Bigelow), 447, 81, H, Deep, 750
+Praya dubia (Quoy and Gaimard), 477, 86, P, Deep, 560
+Prayidae unidentified speciese, 448, 80, P, Deep, 300
+Rosacea plicata sensu Bigelow, 491, 77, B, Deep, 431
+Vogtia glabra Bigelow, 448, 79, B, Deep, 537
+Vogtia serrata (Moser), 451, 86, P, Deep, 650

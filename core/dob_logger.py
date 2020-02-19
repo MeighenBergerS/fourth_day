@@ -1,10 +1,12 @@
 """
-dob_logger.py
+Name: dob_logger.py
 Authors: Stephan Meighen-Berger
 File to deal with the logger handling.
 The user still needs to initialze the logger
 to use this
 """
+
+"Imports"
 import logging
 import inspect
 
