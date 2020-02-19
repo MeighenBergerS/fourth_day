@@ -37,6 +37,9 @@ class dob_flood(dob_logger):
         if config['filter'] == 'average':
             self.logger.debug('Filtering by averaging.')
             self.__flood_average__(life)
+        elif config['filter'] == 'generous':
+            self.logger.debug('All species survive.')
+            self.__evolved__ = life
         else:
             self.logger.error('Filter not recognized! Please check config')
             exit()
@@ -57,8 +60,8 @@ class dob_flood(dob_logger):
                 avg_mean = np.mean(life[phyla][1])
                 avg_widt = np.mean(life[phyla][2])
                 self.__evolved__[phyla] = np.array([
-                    phyla, avg_mean, avg_widt
-                ])
+                    [phyla], [avg_mean], [avg_widt]
+                ], dtype=object)
                 self.logger.debug('1 out of %.d %s survived the flood'
                                   %(len(life[phyla][1]), phyla))
             else:
@@ -74,9 +77,9 @@ class dob_flood(dob_logger):
                     ))
                     total_count += len(life[phyla + '_' + class_name][1]) 
                 self.__evolved__[phyla] = np.array([
-                    phyla,
-                    np.mean(avg_mean),
-                    np.mean(avg_widt)
-                ])
+                    [phyla],
+                    [np.mean(avg_mean)],
+                    [np.mean(avg_widt)]
+                ], dtype=object)
                 self.logger.debug('1 out of %.d %s survived the flood'
                                   %(total_count, phyla))

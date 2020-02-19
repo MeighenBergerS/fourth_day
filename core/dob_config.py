@@ -25,7 +25,9 @@ config = {
     #       Averages the organisms of each phyla
     #       This means in the end there will be
     #       #phyla survivors
-    'filter': 'average',
+    #   - 'generous':
+    #       All species survive the flood
+    'filter': 'generous',
     # The probability distribution to use
     # Currently supported:
     #   - 'gamma':

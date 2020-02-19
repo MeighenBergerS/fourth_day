@@ -42,10 +42,13 @@ class dob_genesis(dob_logger):
         if config['pdf'] == 'gamma':
             self.logger.debug('Genesis of Gamma distributions')
             for key in life.keys():
-                param = self.__forming__(life[key])
-                self.__pdfs__[key] = (
-                    gamma.pdf(self.x, param[0], scale=param[1])
-                )
+                for idspecies, _ in enumerate(life[key][0]):
+                    param = self.__forming__(
+                        [life[key][1][idspecies], life[key][2][idspecies]]
+                    )
+                    self.__pdfs__[life[key][0][idspecies]] = (
+                        gamma.pdf(self.x, param[0], scale=param[1])
+                    )
         else:
             self.logger.error('Distribution unknown!')
             exit()
@@ -62,9 +65,9 @@ class dob_genesis(dob_logger):
                 The constructed pdf
         """
         # The mean
-        mean = float(species[1])
+        mean = species[0]
         # The FWHM
-        fwhm = float(species[2])
+        fwhm = species[1]
         # The equation to solve
         def equation(k):
             scale = mean / k
