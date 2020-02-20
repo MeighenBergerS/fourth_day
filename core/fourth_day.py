@@ -115,9 +115,6 @@ class FD(object):
         log.info('Finished forging')
         log.info('---------------------------------------------------')
         log.info('---------------------------------------------------')
-        log.info('Have a nice day!')
-        log.info('---------------------------------------------------')
-        log.info('---------------------------------------------------')
         # Closing log
         log.removeHandler(fh)
         log.removeHandler(ch)
