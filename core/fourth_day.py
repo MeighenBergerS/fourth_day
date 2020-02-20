@@ -39,6 +39,7 @@ from fd_config import config
 from fd_immaculate_conception import fd_immaculate_conception
 from fd_flood import fd_flood
 from fd_genesis import fd_genesis
+from fd_tubal_cain import fd_tubal_cain
 
 class FD(object):
     """
@@ -104,6 +105,14 @@ class FD(object):
         log.info('Starting genesis')
         self.pdfs = fd_genesis(self.evolved, log).__pdfs__
         log.info('Finished genesis')
+        log.info('---------------------------------------------------')
+        log.info('---------------------------------------------------')
+        log.info('Forging combined distribution')
+        log.info('To use custom weights for the populations, ')
+        log.info('run fd_smithing with custom weights')
+        self.smith = fd_tubal_cain(self.pdfs)
+        self.pdf_total, self.keys = self.smith.fd_smithing()
+        log.info('Finished forging')
         log.info('---------------------------------------------------')
         log.info('---------------------------------------------------')
         # Closing log
