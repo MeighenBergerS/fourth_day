@@ -72,9 +72,9 @@ class fd_tubal_cain(object):
             population = self.__population_var__
         spl = UnivariateSpline(
             config['pdf_grid'],
-            np.sum(self.__pdf_array__ * population / len(population), axis=0),
+            np.sum(self.__pdf_array__ * population / np.sum(population), axis=0),
             ext=3,
             s=0,
             k=1
         )
-        return spl, self.__keys__
+        return spl

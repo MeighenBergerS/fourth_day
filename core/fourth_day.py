@@ -48,17 +48,19 @@ class FD(object):
     stores all methods required to run the simulation
     of the bioluminescence
     Parameters:
-        -None
+        -str org_filter:
+            How to filter the organisms.
     Returns:
         -None
     """
-    def __init__(self):
+    def __init__(self, org_filter=config['filter']):
         """
         function: __init__
         Initializes the class FD.
         Here all run parameters are set.
         Parameters:
-            -None
+            -str org_filter:
+                How to filter the organisms.
         Returns:
             -None
         """
@@ -98,7 +100,7 @@ class FD(object):
         log.info('---------------------------------------------------')
         log.info('---------------------------------------------------')
         log.info('Initializing flood')
-        self.evolved = fd_flood(self.life, log).__evolved__
+        self.evolved = fd_flood(self.life, org_filter, log, ).__evolved__
         log.info('Survivors collected!')
         log.info('---------------------------------------------------')
         log.info('---------------------------------------------------')
@@ -111,11 +113,12 @@ class FD(object):
         log.info('To use custom weights for the populations, ')
         log.info('run fd_smithing with custom weights')
         self.smith = fd_tubal_cain(self.pdfs)
-        self.pdf_total, self.keys = self.smith.fd_smithing()
+        self.keys = self.smith.__keys__
+        self.pdf_total = self.smith.fd_smithing()
         log.info('Finished forging')
         log.info('---------------------------------------------------')
         log.info('---------------------------------------------------')
-        log.info('Have a nice day!')
+        log.info('May light fill your day!')
         log.info('---------------------------------------------------')
         log.info('---------------------------------------------------')
         # Closing log

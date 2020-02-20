@@ -35,7 +35,7 @@ config = {
     #       All species survive the flood
     #   - 'depth':
     #       Removes all life above the specified depth
-    'filter': 'depth',
+    'filter': 'average',
     # Used for the depth filter. Otherwise redundant
     'depth filter': 500.,
     # The probability distribution to use

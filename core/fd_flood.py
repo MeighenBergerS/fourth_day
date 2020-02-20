@@ -24,13 +24,15 @@ class fd_flood(object):
     Returns:
         -None
     """
-    def __init__(self, life, log):
+    def __init__(self, life, org_filter, log):
         """
         function: __init__
         Initializes the flood
         Parameters:
             -dic life:
                 The organisms created
+            -str org_filter:
+                The organism filter to use
             -obj log:
                 The logger
         Returns:
@@ -38,13 +40,13 @@ class fd_flood(object):
         """
         self.__log__ = log
         self.__evolved__ = {}
-        if config['filter'] == 'average':
+        if org_filter == 'average':
             self.__log__.debug('Filtering by averaging.')
             self.__flood_average__(life)
-        elif config['filter'] == 'generous':
+        elif org_filter == 'generous':
             self.__log__.debug('All species survive.')
             self.__evolved__ = life
-        elif config['filter'] == 'depth':
+        elif org_filter == 'depth':
             self.__log__.debug('All species below %f are removed'
                               %config['depth filter'])
             self.__flood_depth__(life)
