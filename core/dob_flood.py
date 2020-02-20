@@ -8,10 +8,9 @@ created by dob_vita.
 "Imports"
 from sys import exit
 import numpy as np
-from dob_logger import dob_logger
 from dob_config import config
 
-class dob_flood(dob_logger):
+class dob_flood(object):
     """
     class: dob_flood
     Filters the created organisms.
@@ -20,28 +19,37 @@ class dob_flood(dob_logger):
     Parameters:
         -dic life:
             The organisms created
+        -obj log:
+            The logger
     Returns:
         -None
     """
-    def __init__(self, life):
+    def __init__(self, life, log):
         """
         function: __init__
         Initializes the flood
         Parameters:
             -dic life:
                 The organisms created
+            -obj log:
+                The logger
         Returns:
             -None
         """
+        self.__log__ = log
         self.__evolved__ = {}
         if config['filter'] == 'average':
-            self.logger.debug('Filtering by averaging.')
+            self.__log__.debug('Filtering by averaging.')
             self.__flood_average__(life)
         elif config['filter'] == 'generous':
-            self.logger.debug('All species survive.')
+            self.__log__.debug('All species survive.')
             self.__evolved__ = life
+        elif config['filter'] == 'depth':
+            self.__log__.debug('All species below %f are removed'
+                              %config['depth filter'])
+            self.__flood_depth__(life)
         else:
-            self.logger.error('Filter not recognized! Please check config')
+            self.__log__.error('Filter not recognized! Please check config')
             exit()
 
     def __flood_average__(self, life):
@@ -62,8 +70,8 @@ class dob_flood(dob_logger):
                 self.__evolved__[phyla] = np.array([
                     [phyla], [avg_mean], [avg_widt]
                 ], dtype=object)
-                self.logger.debug('1 out of %.d %s survived the flood'
-                                  %(len(life[phyla][1]), phyla))
+                self.__log__.debug('1 out of %d %s survived the flood'
+                                   %(len(life[phyla][1]), phyla))
             else:
                 avg_mean = []
                 avg_widt = []
@@ -81,5 +89,41 @@ class dob_flood(dob_logger):
                     [np.mean(avg_mean)],
                     [np.mean(avg_widt)]
                 ], dtype=object)
-                self.logger.debug('1 out of %.d %s survived the flood'
-                                  %(total_count, phyla))
+                self.__log__.debug('1 out of %d %s survived the flood'
+                                   %(total_count, phyla))
+
+    def __flood_depth__(self, life):
+        """
+        function: __flood_depth__
+        Filters the species by removing everythin above the
+        depth specified in the config file.
+        Parameters:
+            -dic life:
+                The organisms created
+        Returns:
+            -None
+        """
+        for key in life.keys():
+            self.__evolved__[key] = [[], [], [], []]
+            for idspecies, _ in enumerate(life[key][0]):
+                if life[key][3][idspecies] >= config['depth filter']:
+                     #  The name
+                     self.__evolved__[key][0].append(
+                         life[key][0][idspecies]
+                     )
+                     # The mean emission
+                     self.__evolved__[key][1].append(
+                         life[key][1][idspecies]
+                     )
+                     # The FWHM
+                     self.__evolved__[key][2].append(
+                         life[key][2][idspecies]
+                     )
+                     # The depth
+                     self.__evolved__[key][2].append(
+                         life[key][2][idspecies]
+                     )
+            total_survive = len(self.__evolved__[key][0])
+            total_pre_flood = len(life[key][0])
+            self.__log__.debug('%d out of %d %s survived the flood'
+                               %(total_survive, total_pre_flood, key))

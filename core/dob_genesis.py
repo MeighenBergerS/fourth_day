@@ -8,13 +8,12 @@ This is used to fit the data.
 "Imports"
 from sys import exit
 import numpy as np
-from dob_logger import dob_logger
 from dob_config import config
 from scipy.stats import gamma
 from scipy.signal import peak_widths
 from scipy.optimize import root
 
-class dob_genesis(dob_logger):
+class dob_genesis(object):
     """
     class: dob_genesis
     Creates the light distributions from
@@ -22,35 +21,39 @@ class dob_genesis(dob_logger):
     Parameters:
         -dic life:
             The organisms created
+        -obj log:
+            The logger
     Returns:
         -None
     """
-    def __init__(self, life):
+    def __init__(self, life, log):
         """
         function: __init__
         initializes genesis.
         Parameters:
             -dic life:
                 The organisms created
+            -obj log:
+                The logger
         Returns:
             -None
         """
+        self.__log__ = log
         # These points are used in solving
-        # Should be more than enough
-        self.x = np.linspace(0., 2000., 2001)
+        self.__x__ = config['pdf_grid']
         self.__pdfs__ = {}
         if config['pdf'] == 'gamma':
-            self.logger.debug('Genesis of Gamma distributions')
+            self.__log__.debug('Genesis of Gamma distributions')
             for key in life.keys():
                 for idspecies, _ in enumerate(life[key][0]):
                     param = self.__forming__(
                         [life[key][1][idspecies], life[key][2][idspecies]]
                     )
                     self.__pdfs__[life[key][0][idspecies]] = (
-                        gamma.pdf(self.x, param[0], scale=param[1])
+                        gamma.pdf(self.__x__, param[0], scale=param[1])
                     )
         else:
-            self.logger.error('Distribution unknown!')
+            self.__log__.error('Distribution unknown!')
             exit()
     
     def __forming__(self, species):
@@ -71,7 +74,7 @@ class dob_genesis(dob_logger):
         # The equation to solve
         def equation(k):
             scale = mean / k
-            signal = gamma.pdf(self.x, k, scale=scale)
+            signal = gamma.pdf(self.__x__, k, scale=scale)
             peaks = signal.argmax()
             curr_fwhm = peak_widths(signal, [peaks], rel_height=0.5)
             width = (curr_fwhm[-1] - curr_fwhm[-2])[0]

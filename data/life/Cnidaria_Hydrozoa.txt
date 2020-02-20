@@ -1,6 +1,6 @@
 Aegina citrea Eschscholtz, 469, 92, B, Deep, 934
 Aeginura grimaldii Maas, 464, 88, B, Deep, 742
-Aequorea forskalea PeÂron and Lesueur, 503, 10, S, Shallow, 12
+Aequorea forskalea PeÂron and Lesueur, 503, 60, S, Shallow, 12
 Bythotiara depressa Naumov, 488, 80, P, Deep, 408
 Clytia (=Phialidium) hemisphaericum (L.), 504, 37, M, Shallow, 20
 Cunina globosa Eschscholtz, 462, 76, P, Deep, 400
@@ -13,7 +13,7 @@ Halitrephes valdiviae H.B. Bigelow, 443, 80, B, Deep, 767
 Halopsis ocellata Agassiz, 458, 99, G, Shallow, 20
 Mitrocoma cellularia (Agassiz), 505, 55, S, Shallow, 5
 Mitrocomella sp., 500, 62, S, Shallow, 8
-Obelia sp., 502, 10, S, Shallow, 3
+Obelia sp., 502, 60, S, Shallow, 3
 Octophialucium funerarium (Quoy and Gaimard), 487, 72, M, Deep, 391
 Pandea conica (Quoy and Gaimard), 470, 98, P, Deep, 450
 Pegantha laevis H.B. Bigelow, 460, 75, P, Deep, 300

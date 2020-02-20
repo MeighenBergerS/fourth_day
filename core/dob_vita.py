@@ -7,44 +7,47 @@ The information here comes from the following publications:
     -Latz, M.I., Frank, T.M. & Case, J.F.
      "Spectral composition of bioluminescence of epipelagic organisms
       from the Sargasso Sea."
-      Marine Biology 98, 441–446 (1988).
+      Marine Biology 98, 441-446 (1988)
       https://doi.org/10.1007/BF00391120
 """
 
 "Imports"
 import csv
 import numpy as np
-from dob_logger import dob_logger
 from dob_config import config
 
-class dob_vita(dob_logger):
+class dob_vita(object):
     """
     class: dob_vita
     Class to store the methods and data to create
     the relevant creatures.
     Parameters:
-        -None
+        -obj. log:
+            The logger
     Returns:
         -None
     """
 
-    def __init__(self):
+    def __init__(self, log):
         """
         function: __init__
         Initializes the class dob_vita.
         Here the data for the different phya is loaded
         Parameters:
-            -None
+            -obj. log:
+                The logger
         Returns:
             -None
         """
         self.__life__ = {}
-        self.logger.info('Loading phyla according to config')
+        log.info('Loading phyla according to config')
+        log.info('Data extracted from Latz, M.I., Frank, T.M. & Case,'+
+                     ' J.F., Marine Biology 98 (1988)')
         # Reading the data for the different phyla
         for phyla in config['phyla'].keys():
             if len(config['phyla'][phyla]) == 0:
-                self.logger.debug('No classes defined')
-                self.logger.info('Loading and parsing %s.txt' %phyla)
+                log.debug('No classes defined')
+                log.info('Loading and parsing %s.txt' %phyla)
                 # Comb Jelly phylum
                 with open('../data/life/%s.txt' %phyla, 'r') as txtfile:
                     tmp = list(
@@ -63,9 +66,9 @@ class dob_vita(dob_logger):
                         dtype=object
                     )
             else:
-                self.logger.debug('Classes defined')
+                log.debug('Classes defined')
                 for class_name in config['phyla'][phyla]:
-                    self.logger.info(
+                    log.info(
                         'Loading and parsing %s.txt'
                         %(phyla + '_' + class_name)
                     )

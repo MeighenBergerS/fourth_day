@@ -6,7 +6,13 @@ It is recommended, that only advanced users change
 the settings here.
 """
 
+"Imports"
+import numpy as np
+import logging
+
 config = {
+    # Output level
+    'debug level': logging.INFO,
     # The organisms used in the modelling
     'phyla': {
         'Ctenophores': [],
@@ -27,10 +33,20 @@ config = {
     #       #phyla survivors
     #   - 'generous':
     #       All species survive the flood
-    'filter': 'generous',
+    #   - 'depth':
+    #       Removes all life above the specified depth
+    'filter': 'depth',
+    # Used for the depth filter. Otherwise redundant
+    'depth filter': 500.,
     # The probability distribution to use
     # Currently supported:
     #   - 'gamma':
     #       Gamma probability pdf
     'pdf': 'gamma',
+
+    ###################################################
+    # More advanced
+    ###################################################
+    # pdf grid option
+    'pdf_grid': np.linspace(0., 2000., 2001)
 }
