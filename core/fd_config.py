@@ -43,7 +43,11 @@ config = {
     #   - 'gamma':
     #       Gamma probability pdf
     'pdf': 'gamma',
-
+    # The geometry of the problem.
+    # Currently only 'box' is supported
+    #   -'box':
+    #       Creates a uniform box of 1m x 1m x 1m evenly filled.
+    'geometry': 'box',
     ###################################################
     # More advanced
     ###################################################

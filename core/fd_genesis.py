@@ -25,6 +25,8 @@ class fd_genesis(object):
             The logger
     Returns:
         -None
+    "And God saw the light, that it was good:
+     and God divided the light from the darkness"
     """
     def __init__(self, life, log):
         """

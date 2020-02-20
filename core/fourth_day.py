@@ -112,7 +112,7 @@ class FD(object):
         log.info('Forging combined distribution')
         log.info('To use custom weights for the populations, ')
         log.info('run fd_smithing with custom weights')
-        self.smith = fd_tubal_cain(self.pdfs)
+        self.smith = fd_tubal_cain(self.pdfs, log)
         self.keys = self.smith.__keys__
         self.pdf_total = self.smith.fd_smithing()
         log.info('Finished forging')

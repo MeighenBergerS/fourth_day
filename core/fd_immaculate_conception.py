@@ -26,6 +26,14 @@ class fd_immaculate_conception(object):
             The logger
     Returns:
         -None
+    "We declare, pronounce, and define that the doctrine which
+     holds that the most Blessed Virgin Mary, in the first instance
+     of her conception, by a singular grace and privilege granted by
+     Almighty God, in view of the merits of Jesus Christ,
+     the Saviour of the human race,
+     was preserved free from all stain of original sin,
+     is a doctrine revealed by God and therefore to be believed
+     firmly and constantly by all the faithful."
     """
 
     def __init__(self, log):
@@ -47,7 +55,7 @@ class fd_immaculate_conception(object):
         for phyla in config['phyla'].keys():
             if len(config['phyla'][phyla]) == 0:
                 log.debug('No classes defined')
-                log.info('Loading and parsing %s.txt' %phyla)
+                log.debug('Loading and parsing %s.txt' %phyla)
                 # Comb Jelly phylum
                 with open('../data/life/%s.txt' %phyla, 'r') as txtfile:
                     tmp = list(

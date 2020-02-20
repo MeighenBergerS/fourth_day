@@ -7,6 +7,7 @@ function
 """
 
 "Imports"
+from sys import exit
 import numpy as np
 from fd_config import config
 from scipy.interpolate import UnivariateSpline
@@ -18,10 +19,13 @@ class fd_tubal_cain(object):
     Parameters:
         -dic pdfs:
             The species pdfs
+        -obj log:
+            The logger
     Returns:
         -None
+    "forger of all instruments of bronze and iron"
     """
-    def __init__(self, pdfs):
+    def __init__(self, pdfs, log):
         """
         function: __init__
         Initalizes the smith Tubal-cain.
@@ -29,10 +33,13 @@ class fd_tubal_cain(object):
         Parameters:
             -dic pdfs:
                 The species pdfs
+            -obj log:
+                The logger
         Returns:
             -None
         """
         # Saving pdf array structure for later usage
+        log.debug('Defining the species order')
         self.__keys__ = np.array(
             [
                 key
@@ -42,12 +49,14 @@ class fd_tubal_cain(object):
         # This array is fixed from now on
         # The weights for this array should correspond
         # to self.__keys__
+        log.debug('Constructing the pdf array')
         self.__pdf_array__ = np.array(
             [
                 pdfs[key]
                 for key in self.__keys__
             ]
         )
+        log.debug('Constructing a uniform population')
         self.__population_var__ = np.reshape(
             np.ones(len(self.__pdf_array__)),
             (len(self.__pdf_array__), 1)
@@ -70,6 +79,8 @@ class fd_tubal_cain(object):
         """
         if population is None:
             population = self.__population_var__
+        if population.shape != (len(self.__pdf_array__), 1):
+            exit('The shape of the population array is wrong!')
         spl = UnivariateSpline(
             config['pdf_grid'],
             np.sum(self.__pdf_array__ * population / np.sum(population), axis=0),
