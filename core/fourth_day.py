@@ -120,4 +120,3 @@ class FD(object):
         log.removeHandler(ch)
         del log, fh, ch
         logging.shutdown()
-
