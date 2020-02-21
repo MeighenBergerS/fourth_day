@@ -40,7 +40,7 @@ class fd_tubal_cain(object):
         """
         # Saving pdf array structure for later usage
         log.debug('Defining the species order')
-        self.__keys__ = np.array(
+        self.keys = np.array(
             [
                 key
                 for key in pdfs.keys()
@@ -53,7 +53,7 @@ class fd_tubal_cain(object):
         self.__pdf_array__ = np.array(
             [
                 pdfs[key]
-                for key in self.__keys__
+                for key in self.keys
             ]
         )
         log.debug('Constructing a uniform population')
