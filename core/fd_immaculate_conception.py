@@ -57,7 +57,7 @@ class fd_immaculate_conception(object):
                 log.debug('No classes defined')
                 log.debug('Loading and parsing %s.txt' %phyla)
                 # Comb Jelly phylum
-                with open('../data/life/%s.txt' %phyla, 'r') as txtfile:
+                with open('../data/life/light/%s.txt' %phyla, 'r') as txtfile:
                     tmp = list(
                         csv.reader(txtfile, delimiter=',')
                     )
@@ -80,7 +80,7 @@ class fd_immaculate_conception(object):
                         'Loading and parsing %s.txt'
                         %(phyla + '_' + class_name)
                     )
-                    with open('../data/life/%s.txt'
+                    with open('../data/life/light/%s.txt'
                               %(phyla + '_' + class_name), 'r') as txtfile:
                         tmp = list(
                             csv.reader(txtfile, delimiter=',')

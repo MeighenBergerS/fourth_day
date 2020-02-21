@@ -33,13 +33,16 @@ Notes:
 """
 
 "Imports"
-# from dob_logger import dob_logger
+# Native modules
 import logging
+# Package modules
 from fd_config import config
 from fd_immaculate_conception import fd_immaculate_conception
 from fd_flood import fd_flood
 from fd_genesis import fd_genesis
 from fd_tubal_cain import fd_tubal_cain
+from fd_adamah import fd_adamah
+from fd_temere_congressus import fd_temere_congressus as fd_rate
 
 class FD(object):
     """
@@ -124,6 +127,23 @@ class FD(object):
         log.info('Finished forging')
         log.info('---------------------------------------------------')
         log.info('---------------------------------------------------')
+        log.info('Creating the world')
+        #  The volume of interest
+        self.volume = fd_adamah(log).geometry
+        log.info('Finished world building')
+        log.info('---------------------------------------------------')
+        log.info('---------------------------------------------------')
+        log.info('Random encounter model')
+        # TODO: Make this pythonic
+        # TODO: Add TSL (total stimutable luminescence). Organisms need reg.
+        self.rate = fd_rate(log).rate
+        log.info('Finished the encounter model')
+        log.info('---------------------------------------------------')
+        log.info('---------------------------------------------------')
+        # TODO: It would make sense to add this to immaculate_conception
+        log.info('Giving species the ability to move..')
+        # MPV given in 10**10 photons
+        log.info('Movement established')
         log.info('May light fill your day!')
         log.info('---------------------------------------------------')
         log.info('---------------------------------------------------')

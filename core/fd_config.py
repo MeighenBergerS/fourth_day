@@ -48,6 +48,14 @@ config = {
     #   -'box':
     #       Creates a uniform box of 1m x 1m x 1m evenly filled.
     'geometry': 'box',
+    # The encounter model
+    # Currently available:
+    #   - "Gerritsen-Strickler":
+    #       Mathematical model found in
+    #       "Encounter Probabilities and Community Structure
+    #        in Zooplankton: a Mathematical Model", 1977
+    #       DOI: 10.1139/f77-008
+    "encounter": "Gerritsen-Strickler",
     ###################################################
     # More advanced
     ###################################################
