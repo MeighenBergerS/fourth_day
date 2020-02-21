@@ -35,13 +35,31 @@ class fd_adamah(object):
         """
         if config['geometry'] == 'box':
             log.debug('Using a box geometry')
-            self.__geom_box__()
+            self.__geom_box()
         else:
             log.error('Geometry not supported!')
             exit()
 
-    def __geom_box__(self):
+    def __geom_box(self):
         """
         function: __geom_box__
-        Constructs the box geometry 
+        Constructs the box geometry
+        Parameters:
+            -None
+        Returns:
+            -None
         """
+        # TODO: Think of a unified definition of volumn and structure
+        self.__volume = 1.
+
+    @property
+    def geometry(self):
+        """
+        function: geomerty
+        Returns the constructed geometry
+        Parameters:
+            -None
+        Returns:
+            -None
+        """
+        return self.__volume

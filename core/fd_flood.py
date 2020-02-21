@@ -38,25 +38,25 @@ class fd_flood(object):
         Returns:
             -None
         """
-        self.__log__ = log
-        self.__evolved__ = {}
+        self.__log = log
+        self.__evolved = {}
         if org_filter == 'average':
-            self.__log__.debug('Filtering by averaging.')
-            self.__flood_average__(life)
+            self.__log.debug('Filtering by averaging.')
+            self.__flood_average(life)
         elif org_filter == 'generous':
-            self.__log__.debug('All species survive.')
-            self.__evolved__ = life
+            self.__log.debug('All species survive.')
+            self.__evolved = life
         elif org_filter == 'depth':
-            self.__log__.debug('All species below %f are removed'
+            self.__log.debug('All species below %f are removed'
                               %config['depth filter'])
-            self.__flood_depth__(life)
+            self.__flood_depth(life)
         else:
-            self.__log__.error('Filter not recognized! Please check config')
+            self.__log.error('Filter not recognized! Please check config')
             exit()
 
-    def __flood_average__(self, life):
+    def __flood_average(self, life):
         """
-        function: __flood_average__
+        function: __flood_average
         Filters the phyla by averaging the constituent
         values.
         Parameters:
@@ -69,11 +69,11 @@ class fd_flood(object):
             if len(config['phyla'][phyla]) == 0:
                 avg_mean = np.mean(life[phyla][1])
                 avg_widt = np.mean(life[phyla][2])
-                self.__evolved__[phyla] = np.array([
+                self.__evolved[phyla] = np.array([
                     [phyla], [avg_mean], [avg_widt]
                 ], dtype=object)
-                self.__log__.debug('1 out of %d %s survived the flood'
-                                   %(len(life[phyla][1]), phyla))
+                self.__log.debug('1 out of %d %s survived the flood'
+                                 %(len(life[phyla][1]), phyla))
             else:
                 avg_mean = []
                 avg_widt = []
@@ -86,17 +86,17 @@ class fd_flood(object):
                         life[phyla + '_' + class_name][2]
                     ))
                     total_count += len(life[phyla + '_' + class_name][1]) 
-                self.__evolved__[phyla] = np.array([
+                self.__evolved[phyla] = np.array([
                     [phyla],
                     [np.mean(avg_mean)],
                     [np.mean(avg_widt)]
                 ], dtype=object)
-                self.__log__.debug('1 out of %d %s survived the flood'
-                                   %(total_count, phyla))
+                self.__log.debug('1 out of %d %s survived the flood'
+                                 %(total_count, phyla))
 
-    def __flood_depth__(self, life):
+    def __flood_depth(self, life):
         """
-        function: __flood_depth__
+        function: __flood_depth
         Filters the species by removing everythin above the
         depth specified in the config file.
         Parameters:
@@ -106,26 +106,39 @@ class fd_flood(object):
             -None
         """
         for key in life.keys():
-            self.__evolved__[key] = [[], [], [], []]
+            self.__evolved[key] = [[], [], [], []]
             for idspecies, _ in enumerate(life[key][0]):
                 if life[key][3][idspecies] >= config['depth filter']:
                      #  The name
-                     self.__evolved__[key][0].append(
+                     self.__evolved[key][0].append(
                          life[key][0][idspecies]
                      )
                      # The mean emission
-                     self.__evolved__[key][1].append(
+                     self.__evolved[key][1].append(
                          life[key][1][idspecies]
                      )
                      # The FWHM
-                     self.__evolved__[key][2].append(
+                     self.__evolved[key][2].append(
                          life[key][2][idspecies]
                      )
                      # The depth
-                     self.__evolved__[key][2].append(
+                     self.__evolved[key][2].append(
                          life[key][2][idspecies]
                      )
-            total_survive = len(self.__evolved__[key][0])
+            total_survive = len(self.__evolved[key][0])
             total_pre_flood = len(life[key][0])
-            self.__log__.debug('%d out of %d %s survived the flood'
-                               %(total_survive, total_pre_flood, key))
+            self.__log.debug('%d out of %d %s survived the flood'
+                             %(total_survive, total_pre_flood, key))
+
+    @property
+    def evolved(self):
+        """
+        function: evolved
+        Getter function for the survivors
+        Parameters:
+            -None
+        Returns:
+            -dic evolved:
+                The evolved species
+        """
+        return self.__evolved

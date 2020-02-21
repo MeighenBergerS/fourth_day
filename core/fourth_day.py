@@ -95,24 +95,31 @@ class FD(object):
         log.info('---------------------------------------------------')
         log.info('---------------------------------------------------')
         log.info('Creating life...')
-        self.life = fd_immaculate_conception(log)
+        # Life creation
+        self.life = fd_immaculate_conception(log).life
         log.info('Creation finished')
         log.info('---------------------------------------------------')
         log.info('---------------------------------------------------')
         log.info('Initializing flood')
-        self.evolved = fd_flood(self.life.__life__, org_filter, log)
+        # Filtered species
+        self.evolved = fd_flood(self.life, org_filter, log).evolved
         log.info('Survivors collected!')
         log.info('---------------------------------------------------')
         log.info('---------------------------------------------------')
         log.info('Starting genesis')
-        self.pdfs = fd_genesis(self.evolved.__evolved__, log)
+        # PDF creation for all species
+        self.pdfs = fd_genesis(self.evolved, log).pdfs
         log.info('Finished genesis')
         log.info('---------------------------------------------------')
         log.info('---------------------------------------------------')
         log.info('Forging combined distribution')
         log.info('To use custom weights for the populations, ')
         log.info('run fd_smithing with custom weights')
-        self.smith = fd_tubal_cain(self.pdfs.__pdfs__, log)
+        # Object used to create pdfs
+        self.smith = fd_tubal_cain(self.pdfs, log)
+        # Fetching organized keys
+        self.keys = self.smith.keys
+        # Weightless pdf distribution
         self.pdf_total = self.smith.fd_smithing()
         log.info('Finished forging')
         log.info('---------------------------------------------------')

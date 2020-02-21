@@ -40,7 +40,7 @@ class fd_tubal_cain(object):
         """
         # Saving pdf array structure for later usage
         log.debug('Defining the species order')
-        self.keys = np.array(
+        self.__keys = np.array(
             [
                 key
                 for key in pdfs.keys()
@@ -50,16 +50,16 @@ class fd_tubal_cain(object):
         # The weights for this array should correspond
         # to self.__keys__
         log.debug('Constructing the pdf array')
-        self.__pdf_array__ = np.array(
+        self.__pdf_array = np.array(
             [
                 pdfs[key]
-                for key in self.keys
+                for key in self.__keys
             ]
         )
         log.debug('Constructing a uniform population')
-        self.__population_var__ = np.reshape(
-            np.ones(len(self.__pdf_array__)),
-            (len(self.__pdf_array__), 1)
+        self.__population_var = np.reshape(
+            np.ones(len(self.__pdf_array)),
+            (len(self.__pdf_array), 1)
         )
 
     def fd_smithing(self, population=None):
@@ -78,14 +78,27 @@ class fd_tubal_cain(object):
                 The resulting spline
         """
         if population is None:
-            population = self.__population_var__
-        if population.shape != (len(self.__pdf_array__), 1):
+            population = self.__population_var
+        if population.shape != (len(self.__pdf_array), 1):
             exit('The shape of the population array is wrong!')
         spl = UnivariateSpline(
             config['pdf_grid'],
-            np.sum(self.__pdf_array__ * population / np.sum(population), axis=0),
+            np.sum(self.__pdf_array * population / np.sum(population), axis=0),
             ext=3,
             s=0,
             k=1
         )
         return spl
+
+    @property
+    def keys(self):
+        """
+        function: keys
+        Fetches the organized keys
+        Parameters:
+            -None
+        Returns:
+            -np.array keys:
+                The organized keys
+        """
+        return self.__keys

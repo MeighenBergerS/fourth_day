@@ -40,27 +40,27 @@ class fd_genesis(object):
         Returns:
             -None
         """
-        self.__log__ = log
+        self.__log = log
         # These points are used in solving
-        self.__x__ = config['pdf_grid']
-        self.__pdfs__ = {}
+        self.__x = config['pdf_grid']
+        self.__pdfs = {}
         if config['pdf'] == 'gamma':
-            self.__log__.debug('Genesis of Gamma distributions')
+            self.__log.debug('Genesis of Gamma distributions')
             for key in life.keys():
                 for idspecies, _ in enumerate(life[key][0]):
-                    param = self.__forming__(
+                    param = self.__forming(
                         [life[key][1][idspecies], life[key][2][idspecies]]
                     )
-                    self.__pdfs__[life[key][0][idspecies]] = (
-                        gamma.pdf(self.__x__, param[0], scale=param[1])
+                    self.__pdfs[life[key][0][idspecies]] = (
+                        gamma.pdf(self.__x, param[0], scale=param[1])
                     )
         else:
-            self.__log__.error('Distribution unknown!')
+            self.__log.error('Distribution unknown!')
             exit()
     
-    def __forming__(self, species):
+    def __forming(self, species):
         """
-        function: __forming__
+        function: __forming
         Creates the light pdf for the species.
         Parameters:
             -np.array species:
@@ -76,7 +76,7 @@ class fd_genesis(object):
         # The equation to solve
         def equation(k):
             scale = mean / k
-            signal = gamma.pdf(self.__x__, k, scale=scale)
+            signal = gamma.pdf(self.__x, k, scale=scale)
             peaks = signal.argmax()
             curr_fwhm = peak_widths(signal, [peaks], rel_height=0.5)
             width = (curr_fwhm[-1] - curr_fwhm[-2])[0]
@@ -84,3 +84,16 @@ class fd_genesis(object):
             return res
         res = root(equation, 100.).x[0]
         return np.array([res, mean / res])
+
+    @property
+    def pdfs(self):
+        """
+        function: pdfs
+        Getter function for the pdfs
+        Parameters:
+            -None
+        Returns:
+            -dic pdfs:
+                The light emission pdfs for the species
+        """
+        return self.__pdfs

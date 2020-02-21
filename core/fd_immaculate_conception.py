@@ -47,7 +47,7 @@ class fd_immaculate_conception(object):
         Returns:
             -None
         """
-        self.__life__ = {}
+        self.__life = {}
         log.info('Loading phyla according to config')
         log.info('Data extracted from Latz, M.I., Frank, T.M. & Case,'+
                      ' J.F., Marine Biology 98 (1988)')
@@ -64,7 +64,7 @@ class fd_immaculate_conception(object):
                     # Converting to numpy array
                     tmp = np.asarray(tmp)
                     # Relevant values
-                    self.__life__[phyla] = np.array(
+                    self.__life[phyla] = np.array(
                         [
                             tmp[:, 0].astype(str),
                             tmp[:, 1].astype(np.float32),
@@ -88,7 +88,7 @@ class fd_immaculate_conception(object):
                         # Converting to numpy array
                         tmp = np.asarray(tmp)
                         # Relevant values
-                        self.__life__[phyla + '_' + class_name] = np.array(
+                        self.__life[phyla + '_' + class_name] = np.array(
                             [
                                 tmp[:, 0].astype(str),
                                 tmp[:, 1].astype(np.float32),
@@ -97,4 +97,17 @@ class fd_immaculate_conception(object):
                             ],
                             dtype=object
                         )
+
+    @property
+    def life(self):
+        """
+        function: life
+        Getter function for created life
+        Parameters:
+            -None
+        Returns:
+            -dic life:
+                The created organisms
+        """
+        return self.__life
         
