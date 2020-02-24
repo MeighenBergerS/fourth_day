@@ -13,8 +13,8 @@ import logging
 config = {
     # Output level
     'debug level': logging.INFO,
-    # The organisms used in the modelling
-    'phyla': {
+    # The organisms used in the modelling of the light spectra
+    'phyla light': {
         'Ctenophores': [],
         'Cnidaria': [
             'Scyphomedusae', 'Hydrozoa',
@@ -25,6 +25,17 @@ config = {
             'Gammaproteobacteria'
         ]
     },
+    # The organisms used in the modelling of the movement
+    'phyla move': [
+        'Annelida',
+        'Arthropoda',
+        'Chordata',
+        'Dinoflagellata'
+    ],
+    # Material to pass through
+    # Current options:
+    #   - "water"
+    "material": "water",
     # Filter the organisms created
     # Currently supported:
     #   - 'average':
@@ -38,11 +49,16 @@ config = {
     'filter': 'average',
     # Used for the depth filter. Otherwise redundant
     'depth filter': 500.,
-    # The probability distribution to use
+    # The probability distribution to use for the light pdf
     # Currently supported:
     #   - 'gamma':
     #       Gamma probability pdf
     'pdf': 'gamma',
+    # The probability distribution to use for the movement pdf
+    # Currently supported:
+    #   - 'gauss':
+    #       A gaussian distribution
+    'pdf move': 'gauss',
     # The geometry of the problem.
     # Currently only 'box' is supported
     #   -'box':

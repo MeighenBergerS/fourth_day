@@ -52,11 +52,10 @@ class fd_immaculate_conception(object):
         log.info('Data extracted from Latz, M.I., Frank, T.M. & Case,'+
                      ' J.F., Marine Biology 98 (1988)')
         # Reading the data for the different phyla
-        for phyla in config['phyla'].keys():
-            if len(config['phyla'][phyla]) == 0:
+        for phyla in config['phyla light'].keys():
+            if len(config['phyla light'][phyla]) == 0:
                 log.debug('No classes defined')
                 log.debug('Loading and parsing %s.txt' %phyla)
-                # Comb Jelly phylum
                 with open('../data/life/light/%s.txt' %phyla, 'r') as txtfile:
                     tmp = list(
                         csv.reader(txtfile, delimiter=',')
@@ -75,7 +74,7 @@ class fd_immaculate_conception(object):
                     )
             else:
                 log.debug('Classes defined')
-                for class_name in config['phyla'][phyla]:
+                for class_name in config['phyla light'][phyla]:
                     log.info(
                         'Loading and parsing %s.txt'
                         %(phyla + '_' + class_name)

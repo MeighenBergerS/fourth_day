@@ -35,6 +35,8 @@ Notes:
 "Imports"
 # Native modules
 import logging
+import numpy as np
+from time import time
 # Package modules
 from fd_config import config
 from fd_immaculate_conception import fd_immaculate_conception
@@ -42,7 +44,8 @@ from fd_flood import fd_flood
 from fd_genesis import fd_genesis
 from fd_tubal_cain import fd_tubal_cain
 from fd_adamah import fd_adamah
-from fd_temere_congressus import fd_temere_congressus as fd_rate
+from fd_temere_congressus import fd_temere_congressus
+from fd_lucifer import fd_lucifer
 
 class FD(object):
     """
@@ -71,84 +74,121 @@ class FD(object):
         # Basic config empty for now
         logging.basicConfig()
         # Creating logger user_info
-        log = logging.getLogger(self.__class__.__name__)
-        log.setLevel(logging.DEBUG)
-        log.propagate = False
+        self.log = logging.getLogger(self.__class__.__name__)
+        self.log.setLevel(logging.DEBUG)
+        self.log.propagate = False
         # creating file handler with debug messages
-        fh = logging.FileHandler('../fd.log', mode='w')
-        fh.setLevel(logging.DEBUG)
+        self.fh = logging.FileHandler('../fd.log', mode='w')
+        self.fh.setLevel(logging.DEBUG)
         # console logger with a higher log level
-        ch = logging.StreamHandler()
-        ch.setLevel(config['debug level'])
+        self.ch = logging.StreamHandler()
+        self.ch.setLevel(config['debug level'])
         # Logging formatter
         formatter = logging.Formatter(
             fmt='%(levelname)s: %(message)s'
         )
-        fh.setFormatter(formatter)
-        ch.setFormatter(formatter)
+        self.fh.setFormatter(formatter)
+        self.ch.setFormatter(formatter)
         # Adding the handlers
-        log.addHandler(fh)
-        log.addHandler(ch)
+        self.log.addHandler(self.fh)
+        self.log.addHandler(self.ch)
 
-        log.info('---------------------------------------------------')
-        log.info('---------------------------------------------------')
-        log.info('Welcome to FD!')
-        log.info('This package will help you model deep sea' +
-                 ' bioluminescence!')
-        log.info('---------------------------------------------------')
-        log.info('---------------------------------------------------')
-        log.info('Creating life...')
+        self.log.info('---------------------------------------------------')
+        self.log.info('---------------------------------------------------')
+        self.log.info('Welcome to FD!')
+        self.log.info('This package will help you model deep sea' +
+                      ' bioluminescence!')
+        self.log.info('---------------------------------------------------')
+        self.log.info('---------------------------------------------------')
+        self.log.info('Creating life...')
         # Life creation
-        self.life = fd_immaculate_conception(log).life
-        log.info('Creation finished')
-        log.info('---------------------------------------------------')
-        log.info('---------------------------------------------------')
-        log.info('Initializing flood')
+        self.life = fd_immaculate_conception(self.log).life
+        self.log.info('Creation finished')
+        self.log.info('---------------------------------------------------')
+        self.log.info('---------------------------------------------------')
+        self.log.info('Initializing flood')
         # Filtered species
-        self.evolved = fd_flood(self.life, org_filter, log).evolved
-        log.info('Survivors collected!')
-        log.info('---------------------------------------------------')
-        log.info('---------------------------------------------------')
-        log.info('Starting genesis')
+        self.evolved = fd_flood(self.life, org_filter, self.log).evolved
+        self.log.info('Survivors collected!')
+        self.log.info('---------------------------------------------------')
+        self.log.info('---------------------------------------------------')
+        self.log.info('Starting genesis')
         # PDF creation for all species
-        self.pdfs = fd_genesis(self.evolved, log).pdfs
-        log.info('Finished genesis')
-        log.info('---------------------------------------------------')
-        log.info('---------------------------------------------------')
-        log.info('Forging combined distribution')
-        log.info('To use custom weights for the populations, ')
-        log.info('run fd_smithing with custom weights')
+        self.pdfs = fd_genesis(self.evolved, self.log).pdfs
+        self.log.info('Finished genesis')
+        self.log.info('---------------------------------------------------')
+        self.log.info('---------------------------------------------------')
+        self.log.info('Forging combined distribution')
+        self.log.info('To use custom weights for the populations, ')
+        self.log.info('run fd_smithing with custom weights')
         # Object used to create pdfs
-        self.smith = fd_tubal_cain(self.pdfs, log)
+        self.smith = fd_tubal_cain(self.pdfs, self.log)
         # Fetching organized keys
         self.keys = self.smith.keys
         # Weightless pdf distribution
         self.pdf_total = self.smith.fd_smithing()
-        log.info('Finished forging')
-        log.info('---------------------------------------------------')
-        log.info('---------------------------------------------------')
-        log.info('Creating the world')
+        self.log.info('Finished forging')
+        self.log.info('---------------------------------------------------')
+        self.log.info('---------------------------------------------------')
+        self.log.info('Creating the world')
         #  The volume of interest
-        self.volume = fd_adamah(log).geometry
-        log.info('Finished world building')
-        log.info('---------------------------------------------------')
-        log.info('---------------------------------------------------')
-        log.info('Random encounter model')
+        self.volume = fd_adamah(self.log).geometry
+        self.log.info('Finished world building')
+        self.log.info('---------------------------------------------------')
+        self.log.info('---------------------------------------------------')
+        self.log.info('Random encounter model')
         # TODO: Make this pythonic
         # TODO: Add TSL (total stimutable luminescence). Organisms need reg.
-        self.rate = fd_rate(log).rate
-        log.info('Finished the encounter model')
-        log.info('---------------------------------------------------')
-        log.info('---------------------------------------------------')
         # TODO: It would make sense to add this to immaculate_conception
-        log.info('Giving species the ability to move..')
-        # MPV given in 10**10 photons
-        log.info('Movement established')
-        log.info('May light fill your day!')
-        log.info('---------------------------------------------------')
-        log.info('---------------------------------------------------')
+        # TODO: Unify movement model with the spectra model
+        self.rate_model = fd_temere_congressus(self.log)
+        self.log.info('Finished the encounter model')
+        self.log.info('---------------------------------------------------')
+        self.log.info('---------------------------------------------------')
+        self.log.info('To run the simulation use the solve method')
+        self.log.info('---------------------------------------------------')
+        self.log.info('---------------------------------------------------')
+
+    # TODO: Creat a unified definition for velocities
+    def solve(self, population, velocity, distances, photon_count, run_count=100):
+        """
+        function: solve
+        Calculates the light yields depending on input
+        Parameters:
+            -float population:
+                The number of organisms
+            -float velocity:
+                Their mean velocity in mm/s
+            -float distances:
+                The distances to use
+            -float photon_count:
+                The mean photon count per collision
+            -int run_count:
+                The number of runs to perform
+        Returns:
+            -np.array result:
+                The resulting light yields
+        """
+        self.log.info('---------------------------------------------------')
+        self.log.info('---------------------------------------------------')
+        self.log.info('Calculating light yields')
+        start = time()
+        # The rate calculation needs to be in the loop
+        # It returns a random variable for the rate
+        result = np.array([
+            fd_lucifer(
+                self.rate_model.rate(velocity, population, self.volume * 1e6),
+                distances, self.log).yields
+            for i in range(0, run_count)
+        ]) * photon_count
+        end = time()
+        self.log.info('Finished calculation')
+        self.log.info('It took %.f seconds' %(end-start))
+        self.log.info('---------------------------------------------------')
+        self.log.info('---------------------------------------------------')
         # Closing log
-        log.removeHandler(fh)
-        log.removeHandler(ch)
-        del log, fh, ch
+        self.log.removeHandler(self.fh)
+        self.log.removeHandler(self.ch)
+        del self.log, self.fh, self.ch
         logging.shutdown()
+        return result

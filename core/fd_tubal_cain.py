@@ -1,5 +1,5 @@
 """
-Name: fd_tibal_cain.py
+Name: fd_tubal_cain.py
 Authors: Stephan Meighen-Berger
 Creats the light spectrum pdfs.
 Converts the created pdfs into a single usable
