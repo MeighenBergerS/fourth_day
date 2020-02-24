@@ -38,7 +38,7 @@ class fd_temere_congressus(object):
             self.__move = {}
             # The model
             if config['encounter'] == "Gerritsen-Strickler":
-                self.__log.debug('Using the Gerritsen_Strickler model')
+                self.__log.info('Using the Gerritsen_Strickler model')
                 self.__model = self.__Gerritsen_Strickler
             else:
                 self.__log.error("Unknown encounter model! Please check " +

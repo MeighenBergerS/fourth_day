@@ -70,4 +70,4 @@ class fd_lucifer(object):
             -float res:
                 The attenuation factor
         """
-        return np.exp(- distance / 30.)
+        return np.exp(- distance / 6.9)
