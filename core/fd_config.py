@@ -12,7 +12,9 @@ import logging
 
 config = {
     # Output level
-    'debug level': logging.INFO,
+    'debug level': logging.ERROR,
+    # Simulation type
+    'monte carlo': False,
     # The organisms used in the modelling of the light spectra
     'phyla light': {
         'Ctenophores': [],

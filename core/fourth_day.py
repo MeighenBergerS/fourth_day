@@ -46,6 +46,7 @@ from fd_tubal_cain import fd_tubal_cain
 from fd_adamah import fd_adamah
 from fd_temere_congressus import fd_temere_congressus
 from fd_lucifer import fd_lucifer
+from fd_roll_dice import fd_roll_dice
 
 class FD(object):
     """
@@ -59,7 +60,10 @@ class FD(object):
     Returns:
         -None
     """
-    def __init__(self, org_filter=config['filter']):
+    def __init__(self,
+     org_filter=config['filter'],
+     monte_carlo=config['monte carlo']
+     ):
         """
         function: __init__
         Initializes the class FD.
@@ -67,6 +71,8 @@ class FD(object):
         Parameters:
             -str org_filter:
                 How to filter the organisms.
+            -bool monte_carlo:
+                Use of monte carlo or not
         Returns:
             -None
         """
@@ -92,7 +98,8 @@ class FD(object):
         # Adding the handlers
         self.log.addHandler(self.fh)
         self.log.addHandler(self.ch)
-
+        # User parameters:
+        self.mc = monte_carlo  # Monte-Carlo switch
         self.log.info('---------------------------------------------------')
         self.log.info('---------------------------------------------------')
         self.log.info('Welcome to FD!')
@@ -150,7 +157,11 @@ class FD(object):
         self.log.info('---------------------------------------------------')
 
     # TODO: Creat a unified definition for velocities
-    def solve(self, population, velocity, distances, photon_count, run_count=100):
+    def solve(self, population, velocity,
+              distances, photon_count,
+              run_count=100,
+              seconds=100,
+              border=1e3):
         """
         function: solve
         Calculates the light yields depending on input
@@ -164,31 +175,65 @@ class FD(object):
             -float photon_count:
                 The mean photon count per collision
             -int run_count:
-                The number of runs to perform
+                The number of runs to perform,
+                only relevant for the semi-analytic approach
+            -int seconds:
+                Number of seconds to simulate. This is used by
+                the mc routines.
+            -float border:
+                The boarder size of the box
         Returns:
             -np.array result:
                 The resulting light yields
         """
-        self.log.info('---------------------------------------------------')
-        self.log.info('---------------------------------------------------')
-        self.log.info('Calculating light yields')
-        start = time()
-        # The rate calculation needs to be in the loop
-        # It returns a random variable for the rate
-        result = np.array([
-            fd_lucifer(
-                self.rate_model.rate(velocity, population, self.volume * 1e6),
-                distances, self.log).yields
-            for i in range(0, run_count)
-        ]) * photon_count
-        end = time()
-        self.log.info('Finished calculation')
-        self.log.info('It took %.f seconds' %(end-start))
-        self.log.info('---------------------------------------------------')
-        self.log.info('---------------------------------------------------')
-        # Closing log
-        self.log.removeHandler(self.fh)
-        self.log.removeHandler(self.ch)
-        del self.log, self.fh, self.ch
-        logging.shutdown()
-        return result
+        if self.mc:
+            self.log.info('Calculating light yields')
+            self.log.debug('Monte-Carlo run')
+            # The simulation
+            pdfs = self.rate_model.pdf
+            self.mc_run = fd_roll_dice(
+                pdfs[0],
+                pdfs[1],
+                pdfs[2],
+                population,
+                self.log,
+                seconds=seconds,
+                border=border
+            )
+            result = fd_lucifer(
+                self.mc_run.photon_count,
+                distances, self.log
+            ).yields * photon_count
+            self.log.info('Finished calculation')
+            self.log.info('---------------------------------------------------')
+            self.log.info('---------------------------------------------------')
+            return result, 0.
+        else:
+            self.log.debug('Semi-analytic run')
+            self.log.info('Calculating light yields')
+            start = time()
+            # The rate calculation needs to be in the loop
+            # It returns a random variable for the rate
+            result = np.array([
+                fd_lucifer(
+                    self.rate_model.rate(velocity, population, self.volume * 1e6),
+                    distances, self.log).yields
+                for i in range(0, run_count)
+            ]) * photon_count
+            # The average value
+            result_avg = (
+                fd_lucifer(
+                    self.rate_model.rate_avg(velocity, population, self.volume * 1e6),
+                    distances, self.log).yields
+            ) * photon_count
+            end = time()
+            self.log.info('Finished calculation')
+            self.log.info('It took %.f seconds' %(end-start))
+            self.log.info('---------------------------------------------------')
+            self.log.info('---------------------------------------------------')
+            # Closing log
+            self.log.removeHandler(self.fh)
+            self.log.removeHandler(self.ch)
+            del self.log, self.fh, self.ch
+            logging.shutdown()
+            return result, result_avg

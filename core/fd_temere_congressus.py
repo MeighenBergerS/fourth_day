@@ -50,14 +50,39 @@ class fd_temere_congressus(object):
             if config['pdf move'] == 'gauss':
                 self.__log.debug('Construction gaussian' +
                                 ' distributions for movement')
+                # Velocity distr
                 self.__vel_distr = self.__vel_distr_norm
+                # Velocity mean
+                self.__vel_mean = self.__distr_par[0]
+                # Radius distr
                 self.__r_distr = self.__r_distr_norm
+                # Radius mean
+                self.__r_mean = self.__distr_par[2]
+                # Emission distr
                 self.__gamma_distr = self.__gamma_distr_norm
+                # Emission mean
+                self.__gamma_mean = self.__distr_par[4]
                 self.__log.debug('Finished gaussian' +
                                 ' distributions for movement')
             else:
                 self.__log.error('Unrecognized movement distribution!')
                 exit('Check the movement distribution in the config file!')
+
+    @property
+    def pdf(self):
+        """
+        function: pdf
+        Fetches the pdfs
+        Parameters:
+            -None
+        Returns:
+            -None
+        """
+        return [
+            self.__vel_distr,
+            self.__r_distr,
+            self.__gamma_distr
+        ]
 
     def rate(self, v, n , volume):
         """
@@ -90,6 +115,32 @@ class fd_temere_congressus(object):
                 for itera in range(0, n)
             ]).mean()
         return res * n
+
+    def rate_avg(self, v, n , volume):
+        """
+        function: rate_avg
+        Calculates the average encounter rate for a single
+        point like organism.
+        Parameters:
+            -float v:
+                The velocity of the organism
+            -float n:
+                The number of background organisms
+            -float volume:
+                The size of the volume of interest
+                (in mm^3)
+        Returns:
+            -flaot Z:
+                The mean number of produced photons
+        """
+        # The velocity
+        u = self.__vel_mean
+        # The radius
+        R = self.__r_mean
+        # The light yield
+        ly = self.__gamma_mean
+        res = self.__model(v, n, volume, u, R, ly)
+        return res * n    
 
     def __Gerritsen_Strickler(self, v, n, volume, u, R, ly):
         """
