@@ -124,10 +124,30 @@ class fd_roll_dice(object):
             encounters_org = ( np.sum(
                 encounter_arr, axis=1
             ) - 1)
+            # Checking if the organisms have the energy to emit
+            light_emission = (
+                encounters_org * self.__population[:, 7] * 0.1
+            )
+            light_emission = np.array([
+                light_emission[idIt]
+                if light_emission[idIt] < self.__population[:, 8][idIt]
+                else
+                self.__population[:, 8][idIt]
+                for idIt in range(self.__pop)
+            ])
+            # Subtracting energy
+            self.__population[:, 8] = (
+                self.__population[:, 8] - light_emission
+            )
+            # Regenerating
+            self.__population[:, 8] = (
+                self.__population[:, 8] +
+                1e-3 * self.__population[:, 7]
+            )
             # The photon count
             # Assuming 0.1 of total max val is always emitted
             self.__photon_count.append(
-                np.sum(encounters_org * self.__population[:, 7] * 0.1)
+                np.sum(light_emission)
             )
             if step % 1000 == 0:
                 self.__log.debug('In step %d' %step)
