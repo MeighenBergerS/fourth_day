@@ -65,8 +65,8 @@ class fd_flood(object):
         Returns:
             -None
         """
-        for phyla in config['phyla'].keys():
-            if len(config['phyla'][phyla]) == 0:
+        for phyla in config['phyla light'].keys():
+            if len(config['phyla light'][phyla]) == 0:
                 avg_mean = np.mean(life[phyla][1])
                 avg_widt = np.mean(life[phyla][2])
                 self.__evolved[phyla] = np.array([
@@ -78,7 +78,7 @@ class fd_flood(object):
                 avg_mean = []
                 avg_widt = []
                 total_count = 0
-                for class_name in config['phyla'][phyla]:
+                for class_name in config['phyla light'][phyla]:
                     avg_mean.append(np.mean(
                         life[phyla + '_' + class_name][1]
                     ))

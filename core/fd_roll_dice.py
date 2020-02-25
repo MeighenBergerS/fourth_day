@@ -100,6 +100,7 @@ class fd_roll_dice(object):
         """
         self.__photon_count = []
         for step in range(self.__time):
+            start_pos = time()
             # Updating position
             tmp = (
                 self.__population[:, 0:3] +
@@ -112,12 +113,16 @@ class fd_roll_dice(object):
                 tmp[idIt] - self.__population[:, 3:6][idIt] * 2.
                 for idIt in range(self.__pop)
             ])
+            end_pos = time()
             # Updating velocity
+            start_vel = time()
             self.__population[:, 3:6] = (
                 self.__vel(self.__pop).reshape((self.__pop, 1)) *
                 self.__random_direction(self.__pop)
             )
+            end_vel = time()
             # Creating encounter array
+            start_enc = time()
             encounter_arr = self.__encounter()
             # Encounters per organism
             # Subtracting one due to diagonal
@@ -135,6 +140,7 @@ class fd_roll_dice(object):
                 self.__population[:, 8][idIt]
                 for idIt in range(self.__pop)
             ])
+            end_enc = time()
             # Subtracting energy
             self.__population[:, 8] = (
                 self.__population[:, 8] - light_emission
@@ -151,6 +157,15 @@ class fd_roll_dice(object):
             )
             if step % 1000 == 0:
                 self.__log.debug('In step %d' %step)
+                self.__log.debug(
+                    'Position update took %f seconds' %(end_pos-start_pos)
+                )
+                self.__log.debug(
+                    'Velocity update took %f seconds' %(end_vel-start_vel)
+                )
+                self.__log.debug(
+                    'Encounter update took %f seconds' %(end_enc-start_enc)
+                )
 
     @property
     def photon_count(self):
