@@ -1,6 +1,6 @@
 """
 Name: fd_roll_dice.py
-Authors: Stephan Meighen-Berger
+Authors: Stephan Meighen-Berger, Martina Karl
 Runs a monte-carlo (random walk) simulation
 for the organism interactions.
 """
@@ -32,7 +32,7 @@ class fd_roll_dice(object):
     "God does not roll dice!"
     """
 
-    def __init__(self, vel, r, gamma, pop, log, seconds=100, border=1e3):
+    def __init__(self, vel, r, gamma, pop, regen, log, seconds=100, border=1e3):
         """
         class: fd_roll_dice
         Initializes the class.
@@ -45,6 +45,8 @@ class fd_roll_dice(object):
                 The photon count emission distribution
             -int pop:
                 The population
+            -float regen:
+                The regeneration factor
             -obj log:
                 The logger
             -int seconds:
@@ -59,6 +61,7 @@ class fd_roll_dice(object):
         self.__vel = vel
         self.__pop = pop
         self.__border = border
+        self.__regen = regen
         # An organism is defined to have:
         #   - 3 components for position
         #   - 3 components for velocity
@@ -131,17 +134,16 @@ class fd_roll_dice(object):
             encounters_org = (np.sum(
                 encounter_arr, axis=1
             ) - 1)
-
-            # number of organisms that emit because of shearing
-            sheared_number = self.count_sheared_fired()
-            sheared = np.random.choice(self.__population[:, 7] * 0.1, sheared_number)
-            # total number of emissions from encounter and shearing.
-            # number_emit = encounters_org + sheared_number
-
-            # Checking if the organisms have the energy to emit
-            light_emission = (
+            # Vector showing which organisms fired and which didn't
+            sheared_number = self.__count_sheared_fired()
+            # Their corresponding light emission
+            sheared = self.__population[:, 7] * 0.1 * sheared_number
+            # Encounter emission
+            encounter_emission = (
                 encounters_org * self.__population[:, 7] * 0.1
             )
+            # Total light emission
+            light_emission = encounter_emission + sheared
             light_emission = np.array([
                 light_emission[idIt]
                 if light_emission[idIt] < self.__population[:, 8][idIt]
@@ -155,16 +157,29 @@ class fd_roll_dice(object):
                 self.__population[:, 8] - light_emission
             )
             # Regenerating
-            self.__population[:, 8] = (
-                self.__population[:, 8] +
-                1e-3 * self.__population[:, 7]
-            )
+            self.__population[:, 8] = np.array([
+                self.__population[:, 8][i] +
+                self.__regen * self.__population[:, 7][i]
+                if (
+                    (self.__population[:, 8][i] +
+                     self.__regen * self.__population[:, 7][i]) <
+                    self.__population[:, 7][i]
+                )
+                else
+                self.__population[:, 7][i]
+                for i in range(self.__pop)
+            ])
             # The photon count
             # Assuming 0.1 of total max val is always emitted
             self.__photon_count.append(
-                np.sum(light_emission) + np.sum(sheared))
+                [
+                    np.sum(light_emission),
+                    np.sum(encounter_emission),
+                    np.sum(sheared)
+                    ]
+            )
 
-            if step % 1000 == 0:
+            if step % 100 == 0:
                 self.__log.debug('In step %d' %step)
                 self.__log.debug(
                     'Position update took %f seconds' %(end_pos-start_pos)
@@ -245,17 +260,25 @@ class fd_roll_dice(object):
         ])
         return encounter_arr
 
-    def count_sheared_fired(self, velocity=None):
+    # TODO: Add time dependence
+    def __count_sheared_fired(self, velocity=None):
         """
-        function: count_sheared_fired
-        Args:
-            velocity: mean velocity of the water current
-
+        function: __count_sheared_fired
+        Parameters:
+            optional float velocity:
+                Mean velocity of the water current
         Returns:
-            Number of cells that sheared and fired.
+            np.array res:
+                Number of cells that sheared and fired.
         """
-
-        return binom.rvs(self.__pop, self.__cell_anxiety(velocity) * self.__time)
+        # Generating vector with 1 for fired and 0 for not
+        # TODO: Step dependence
+        res = binom.rvs(
+            1,
+            self.__cell_anxiety(velocity) * 1.,
+            size=self.__pop
+        )
+        return res
 
     def __cell_anxiety(self, velocity=None):
         """
@@ -263,8 +286,12 @@ class fd_roll_dice(object):
         Estimates the cell anxiety with alpha * ( shear_stress - min_shear_stress).
         We assume the shear stress to be in the range of 0.1 - 2 Pa and the minimally required shear stress to be 0.1.
         Here, we assume 1.1e-2 for alpha. alpha and minimally required shear stress vary for each population
+        Parameters:
+            -optional float velocity:
+                The velocity of the current
         Returns:
-            Estimated value for the cell anxiety depending of the velocity and thus the shearing
+            -float res:
+                Estimated value for the cell anxiety depending of the velocity and thus the shearing
         """
         min_shear = 0.1
         if velocity:

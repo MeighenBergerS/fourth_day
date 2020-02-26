@@ -161,7 +161,8 @@ class FD(object):
               distances, photon_count,
               run_count=100,
               seconds=100,
-              border=1e3):
+              border=1e3,
+              regen=1e-3):
         """
         function: solve
         Calculates the light yields depending on input
@@ -182,6 +183,8 @@ class FD(object):
                 the mc routines.
             -float border:
                 The boarder size of the box
+            -float regen:
+                The regeneration factor
         Returns:
             -np.array result:
                 The resulting light yields
@@ -196,18 +199,31 @@ class FD(object):
                 pdfs[1],
                 pdfs[2],
                 population,
+                regen,
                 self.log,
                 seconds=seconds,
                 border=border
             )
+            # The total emission
             result = fd_lucifer(
-                self.mc_run.photon_count,
+                self.mc_run.photon_count[:, 0],
+                distances, self.log
+            ).yields * photon_count
+            # The possible encounter emission without regen
+            result_enc = fd_lucifer(
+                self.mc_run.photon_count[:, 1],
+                distances, self.log
+            ).yields * photon_count
+            # The possible sheared emission without regen
+            result_shear = fd_lucifer(
+                self.mc_run.photon_count[:, 2],
                 distances, self.log
             ).yields * photon_count
             self.log.info('Finished calculation')
             self.log.info('---------------------------------------------------')
             self.log.info('---------------------------------------------------')
-            return result, 0.
+            return result, result_enc, result_shear
+        # TODO: Add regeneration factor to semi-analytic
         else:
             self.log.debug('Semi-analytic run')
             self.log.info('Calculating light yields')
