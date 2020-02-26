@@ -198,6 +198,7 @@ class FD(object):
                 pdfs[0],
                 pdfs[1],
                 pdfs[2],
+                velocity,
                 population,
                 regen,
                 self.log,

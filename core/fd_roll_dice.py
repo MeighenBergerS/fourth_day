@@ -32,7 +32,9 @@ class fd_roll_dice(object):
     "God does not roll dice!"
     """
 
-    def __init__(self, vel, r, gamma, pop, regen, log, seconds=100, border=1e3):
+    def __init__(self, vel, r, gamma,
+                 current_vel,
+                 pop, regen, log, seconds=100, border=1e3):
         """
         class: fd_roll_dice
         Initializes the class.
@@ -43,6 +45,9 @@ class fd_roll_dice(object):
                 The interaction range distribution
             -pdf gamma:
                 The photon count emission distribution
+            -float current_vel:
+                The current velocity used in the shear strength
+                calculation
             -int pop:
                 The population
             -float regen:
@@ -59,6 +64,7 @@ class fd_roll_dice(object):
         self.__log = log
         self.__time = seconds
         self.__vel = vel
+        self.__curr_vel = current_vel
         self.__pop = pop
         self.__border = border
         self.__regen = regen
@@ -135,7 +141,7 @@ class fd_roll_dice(object):
                 encounter_arr, axis=1
             ) - 1)
             # Vector showing which organisms fired and which didn't
-            sheared_number = self.__count_sheared_fired()
+            sheared_number = self.__count_sheared_fired(velocity=self.__curr_vel)
             # Their corresponding light emission
             sheared = self.__population[:, 7] * 0.1 * sheared_number
             # Encounter emission
@@ -266,7 +272,7 @@ class fd_roll_dice(object):
         function: __count_sheared_fired
         Parameters:
             optional float velocity:
-                Mean velocity of the water current
+                Mean velocity of the water current in m/s
         Returns:
             np.array res:
                 Number of cells that sheared and fired.
@@ -288,7 +294,7 @@ class fd_roll_dice(object):
         Here, we assume 1.1e-2 for alpha. alpha and minimally required shear stress vary for each population
         Parameters:
             -optional float velocity:
-                The velocity of the current
+                The velocity of the current in m/s
         Returns:
             -float res:
                 Estimated value for the cell anxiety depending of the velocity and thus the shearing
@@ -299,6 +305,7 @@ class fd_roll_dice(object):
             # 0.01 - 1 Pascal
             shear_stress = velocity * 0.1
         else:
+            # Standard velocity is 5m/s
             shear_stress = 0.5
 
         if shear_stress < min_shear:
