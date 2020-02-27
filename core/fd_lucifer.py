@@ -40,6 +40,7 @@ class fd_lucifer(object):
         Returns:
             -None
         """
+        log.debug('Calculating attenuated light')
         self.__light_yields = np.array([
             light_yields *self.__attenuation(dist)
             for dist in distances

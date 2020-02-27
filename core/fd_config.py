@@ -78,5 +78,7 @@ config = {
     # More advanced
     ###################################################
     # pdf grid option
-    'pdf_grid': np.linspace(0., 2000., 2001)
+    'pdf_grid': np.linspace(0., 2000., 2001),
+    # Pulse shape
+    'pulse shape': 'uniform'
 }

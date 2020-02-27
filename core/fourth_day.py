@@ -47,6 +47,7 @@ from fd_adamah import fd_adamah
 from fd_temere_congressus import fd_temere_congressus
 from fd_lucifer import fd_lucifer
 from fd_roll_dice import fd_roll_dice
+from fd_yom import fd_yom
 
 class FD(object):
     """
@@ -205,21 +206,32 @@ class FD(object):
                 seconds=seconds,
                 border=border
             )
+            self.log.debug('---------------------------------------------------')
+            self.log.debug('---------------------------------------------------')
+            # Applying pulse shapes
+            pulses = fd_yom(self.mc_run.photon_count, self.log).shaped_pulse
+            self.log.debug('---------------------------------------------------')
+            self.log.debug('---------------------------------------------------')
             # The total emission
+            self.log.debug('Total light')
             result = fd_lucifer(
-                self.mc_run.photon_count[:, 0],
+                pulses[:, 0],
                 distances, self.log
             ).yields * photon_count
             # The possible encounter emission without regen
+            self.log.debug('Encounter light')
             result_enc = fd_lucifer(
-                self.mc_run.photon_count[:, 1],
+                pulses[:, 1],
                 distances, self.log
             ).yields * photon_count
             # The possible sheared emission without regen
+            self.log.debug('Shear light')
             result_shear = fd_lucifer(
-                self.mc_run.photon_count[:, 2],
+                pulses[:, 2],
                 distances, self.log
             ).yields * photon_count
+            self.log.debug('---------------------------------------------------')
+            self.log.debug('---------------------------------------------------')
             self.log.info('Finished calculation')
             self.log.info('---------------------------------------------------')
             self.log.info('---------------------------------------------------')

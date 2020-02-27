@@ -194,7 +194,7 @@ class fd_roll_dice(object):
                     'Velocity update took %f seconds' %(end_vel-start_vel)
                 )
                 self.__log.debug(
-                    'Encounter update took %f seconds' %(end_enc-start_enc)
+                    'Emission update took %f seconds' %(end_enc-start_enc)
                 )
 
     @property
