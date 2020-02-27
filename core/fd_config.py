@@ -14,7 +14,7 @@ config = {
     # Output level
     'debug level': logging.ERROR,
     # Simulation type
-    'monte carlo': False,
+    'monte carlo': True,
     # The organisms used in the modelling of the light spectra
     'phyla light': {
         'Ctenophores': [],
@@ -74,11 +74,17 @@ config = {
     #        in Zooplankton: a Mathematical Model", 1977
     #       DOI: 10.1139/f77-008
     "encounter": "Gerritsen-Strickler",
+    # Switch to store steps or not
+    # This requires a bit more memory
+    "save population": True,
     ###################################################
     # More advanced
     ###################################################
     # pdf grid option
     'pdf_grid': np.linspace(0., 2000., 2001),
     # Pulse shape
-    'pulse shape': 'uniform'
+    'pulse shape': 'uniform',
+    # Time step to use
+    # This should be below 1
+    'time step': 0.1
 }

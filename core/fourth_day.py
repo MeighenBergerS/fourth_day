@@ -146,7 +146,6 @@ class FD(object):
         self.log.info('---------------------------------------------------')
         self.log.info('Random encounter model')
         # TODO: Make this pythonic
-        # TODO: Add TSL (total stimutable luminescence). Organisms need reg.
         # TODO: It would make sense to add this to immaculate_conception
         # TODO: Unify movement model with the spectra model
         self.rate_model = fd_temere_congressus(self.log)
@@ -157,13 +156,15 @@ class FD(object):
         self.log.info('---------------------------------------------------')
         self.log.info('---------------------------------------------------')
 
+    # TODO: Add incoming stream of organisms to the volume
     # TODO: Creat a unified definition for velocities
     def solve(self, population, velocity,
               distances, photon_count,
               run_count=100,
               seconds=100,
               border=1e3,
-              regen=1e-3):
+              regen=1e-3,
+              dt=config['time step']):
         """
         function: solve
         Calculates the light yields depending on input
@@ -186,13 +187,20 @@ class FD(object):
                 The boarder size of the box
             -float regen:
                 The regeneration factor
+            -float dt:
+                The time step to use. Needs to be below 1
         Returns:
             -np.array result:
                 The resulting light yields
         """
+        if dt > 1.:
+            self.log.error("Chosen time step too large!")
+            exit("Please run with time steps smaller than 1s!")
         if self.mc:
             self.log.info('Calculating light yields')
             self.log.debug('Monte-Carlo run')
+            # The time grid
+            self.t = np.arange(0., seconds, dt)
             # The simulation
             pdfs = self.rate_model.pdf
             self.mc_run = fd_roll_dice(
@@ -203,8 +211,9 @@ class FD(object):
                 population,
                 regen,
                 self.log,
-                seconds=seconds,
-                border=border
+                border=border,
+                dt=dt,
+                t=self.t
             )
             self.log.debug('---------------------------------------------------')
             self.log.debug('---------------------------------------------------')

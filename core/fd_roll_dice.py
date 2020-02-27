@@ -6,10 +6,11 @@ for the organism interactions.
 """
 
 "Imports"
+import sys
 import numpy as np
 from time import time
 from scipy.stats import binom
-
+from fd_config import config
 
 class fd_roll_dice(object):
     """
@@ -23,10 +24,21 @@ class fd_roll_dice(object):
             The interaction range distribution
         -pdf gamma:
             The photon count emission distribution
+        -float current_vel:
+            The current velocity used in the shear strength
+            calculation
         -int pop:
             The population
+        -float regen:
+            The regeneration factor
         -obj log:
             The logger
+        -float border:
+            The border length
+        -float dt:
+            The chosen time step
+        -np.array t:
+            The time array
     Returns:
         -None
     "God does not roll dice!"
@@ -34,7 +46,9 @@ class fd_roll_dice(object):
 
     def __init__(self, vel, r, gamma,
                  current_vel,
-                 pop, regen, log, seconds=100, border=1e3):
+                 pop, regen, log,
+                 border=1e3,
+                 dt=1., t=np.arange(0., 100., 1.)):
         """
         class: fd_roll_dice
         Initializes the class.
@@ -54,20 +68,23 @@ class fd_roll_dice(object):
                 The regeneration factor
             -obj log:
                 The logger
-            -int seconds:
-                The number of seconds to simulate
             -float border:
                 The border length
+            -float dt:
+                The chosen time step
+            -np.array t:
+                The time array
         Returns:
             -None
         """
         self.__log = log
-        self.__time = seconds
         self.__vel = vel
         self.__curr_vel = current_vel
         self.__pop = pop
         self.__border = border
         self.__regen = regen
+        self.__dt = dt
+        self.__t = t
         # An organism is defined to have:
         #   - 3 components for position
         #   - 3 components for velocity
@@ -89,6 +106,10 @@ class fd_roll_dice(object):
         max_light = np.abs(gamma(pop))
         # Giving the population the properties
         self.__population[:, 0:3] = positions
+        if config['save population']:
+            self.__log.debug("Saving the distribution of organisms")
+            self.__distribution = []
+            self.__distribution.append(positions)
         self.__population[:, 3:6] = veloc
         self.__population[:, 6] = radii
         self.__population[:, 7] = max_light
@@ -98,6 +119,7 @@ class fd_roll_dice(object):
         self.__simulation()
         end = time()
         self.__log.debug('MC simulation took %f seconds' % (end-start))
+
 
     # TODO: Add varying time steps
     def __simulation(self):
@@ -110,21 +132,24 @@ class fd_roll_dice(object):
             -None
         """
         self.__photon_count = []
-        for step in range(self.__time):
+        for step, _ in enumerate(self.__t):
             start_pos = time()
             # Updating position
             tmp = (
                 self.__population[:, 0:3] +
-                self.__population[:, 3:6]
+                self.__population[:, 3:6] * self.__dt
             )
+            # If outside box stay put
             self.__population[:, 0:3] = np.array([
                 tmp[idIt]
                 if np.all(np.abs(tmp[idIt]) < self.__border / 2.)
                 else
-                tmp[idIt] - self.__population[:, 3:6][idIt] * 2.
+                tmp[idIt] - self.__population[:, 3:6][idIt] * self.__dt
                 for idIt in range(self.__pop)
             ])
             end_pos = time()
+            if config['save population']:
+                self.__distribution.append(self.__population[:, 0:3])
             # Updating velocity
             start_vel = time()
             self.__population[:, 3:6] = (
@@ -134,7 +159,8 @@ class fd_roll_dice(object):
             end_vel = time()
             # Creating encounter array
             start_enc = time()
-            encounter_arr = self.__encounter()
+            encounter_arr = self.__encounter(self.__population[:, 0:3],
+                                             self.__population[:, 6])
             # Encounters per organism
             # Subtracting one due to diagonal
             encounters_org = (np.sum(
@@ -165,10 +191,11 @@ class fd_roll_dice(object):
             # Regenerating
             self.__population[:, 8] = np.array([
                 self.__population[:, 8][i] +
-                self.__regen * self.__population[:, 7][i]
+                self.__regen * self.__population[:, 7][i] * self.__dt
                 if (
                     (self.__population[:, 8][i] +
-                     self.__regen * self.__population[:, 7][i]) <
+                     self.__regen * self.__population[:, 7][i] *
+                     self.__dt) <
                     self.__population[:, 7][i]
                 )
                 else
@@ -220,6 +247,22 @@ class fd_roll_dice(object):
             -photon_count
         """
         return np.array(self.__population)
+    
+    @property
+    def distribution(self):
+        """
+        function: distribution
+        Fetches the population distribution
+        Parameters:
+            -None
+        Returns:
+            -photon_count
+        """
+        if config['save population']:
+            return np.array(self.__distribution)
+        else:
+            self.__log.error("Distribution was not saved!")
+            exit("Rerun with save population True in config file!")
 
     def __random_direction(self, pop):
         """
@@ -244,6 +287,31 @@ class fd_roll_dice(object):
         ).reshape((pop, 1))
         return direc
 
+    def __encounter(self, population, radii):
+        """
+        function: __encounter
+        Checks the number of encounters
+        Parameters:
+            -np.array population:
+                The positions of the organisms
+            -np.array radii:
+                Their encounter radius
+        Returns:
+            -int num_encounter:
+                The number of encounters
+        """
+        distances = (
+            np.linalg.norm(
+                population -
+                population[:, None], axis=-1
+                )
+        )
+        encounter_arr = np.array([
+            distances[idLine] < radii[idLine]
+            for idLine in range(0, len(distances))
+        ])
+        return encounter_arr
+    '''
     def __encounter(self):
         """
         function: __encounter
@@ -265,7 +333,7 @@ class fd_roll_dice(object):
             for idLine in range(0, len(distances))
         ])
         return encounter_arr
-
+    '''
     # TODO: Add time dependence
     def __count_sheared_fired(self, velocity=None):
         """
@@ -281,7 +349,7 @@ class fd_roll_dice(object):
         # TODO: Step dependence
         res = binom.rvs(
             1,
-            self.__cell_anxiety(velocity) * 1.,
+            self.__cell_anxiety(velocity) * self.__dt,
             size=self.__pop
         )
         return res
