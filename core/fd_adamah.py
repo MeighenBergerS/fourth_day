@@ -7,6 +7,8 @@ Constructs the geometry of the system
 "Imports"
 from sys import exit
 from fd_config import config
+import numpy as np
+from scipy import spatial
 
 class fd_adamah(object):
     """
@@ -33,33 +35,162 @@ class fd_adamah(object):
         "And a mist was going up from eretz and was watering the whole
         face of adamah."
         """
+        self.__dim = config['dimensions']
+        if not(self.__dim in [2,3]):
+            log("Dimensions not supported!")
+            exit("Check config file for wrong dimensions!")
+        self.__log = log
         if config['geometry'] == 'box':
-            log.debug('Using a box geometry')
+            self.__log.debug('Using a box geometry')
             self.__geom_box()
+        elif config['geometry'] == 'sphere':
+            self.__log.debug('Using a sphere geometry')
+            self.__geom_sphere()
         else:
             log.error('Geometry not supported!')
             exit()
 
     def __geom_box(self):
         """
-        function: __geom_box__
+        function: __geom_box
         Constructs the box geometry
         Parameters:
             -None
         Returns:
             -None
         """
-        # TODO: Think of a unified definition of volumn and structure
-        self.__volume = 1.
+        # The side length of the box
+        a = config['box size'] / 2.
+        self.__log.debug('The side length is %.1f' %a)
+        # The volume of the box
+        self.__volume = (a * 2.)**self.__dim
+        # The corners of the box
+        if self.__dim == 2:
+            points = np.array([
+                [a, a], [a, -a], [-a, a], [-a, -a]
+            ])
+        elif self.__dim == 3:
+            points = np.array([
+                [a, a, -a], [a, -a, -a], [-a, a, -a], [-a, -a, -a],
+                [a, a, a], [a, -a, a], [-a, a, a], [-a, -a, a]
+            ])
+        # The convex hull of the box
+        self.__log.debug('Constructing the hull')
+        self.__hull = spatial.ConvexHull(points)
+        self.__log.debug('Hull constructed')
+
+    def __geom_sphere(self):
+        """
+        function: __geom_sphere
+        Constructs the sphere geometry
+        Parameters:
+            -None
+        Returns:
+            -None
+        """
+        # The side length of the sphere
+        r = config['sphere diameter'] / 2.
+        self.__log.debug('The radius is %.1f' %r)
+        # The volume of the sphere
+        if self.__dim == 2:
+            self.__volume = r**2 * np.pi
+            points = self.__even_circle(config['sphere samples'])
+        elif self.__dim == 3:
+            self.__volume = (r * 2.)**3. * np.pi * 4./3.
+            points = self.__fibonacci_sphere(config['sphere samples'])
+        # The corners of the sphere
+        points_norm = points / np.linalg.norm(points, axis=1).reshape((len(points), 1))
+        points_r = points_norm * r
+        # The convex hull of the sphere
+        self.__log.debug('Constructing the hull')
+        self.__hull = spatial.ConvexHull(points_r)
+        self.__log.debug('Hull constructed')
+
+    def __fibonacci_sphere(self, samples):
+        """
+        function: __fibonacci_sphere
+        Constructs semi-evenly spread points on a sphere
+        Parameters:
+            -int samples:
+                Number of points
+        Returns:
+            -np.array points:
+                The point cloud
+        """
+        rnd = 1.
+        points = []
+        offset = 2./samples
+        increment = np.pi * (3. - np.sqrt(5.))
+        for i in range(samples):
+            y = ((i * offset) - 1) + (offset / 2)
+            r = np.sqrt(1 - pow(y,2))
+            phi = ((i + rnd) % samples) * increment
+            x = np.cos(phi) * r
+            z = np.sin(phi) * r
+
+            points.append([x,y,z])
+        points = np.array(points)
+        return points
+
+    def __even_circle(self, samples):
+        """
+        function: __even_circle
+        Evenly distributes points on a circle
+        Parameters:
+            -int samples:
+                Number of points
+        Returns:
+            -np.array points:
+                The point cloud
+        """
+        t = np.linspace(0., np.pi*2., samples)
+        x = np.cos(t)
+        y = np.sin(t)
+        points = np.array([
+            [x[i], y[i]]
+            for i in range(len(x))
+        ])
+        return points
+
 
     @property
-    def geometry(self):
+    def volume(self):
         """
-        function: geomerty
-        Returns the constructed geometry
+        function: volume
+        Returns the volume
         Parameters:
             -None
         Returns:
             -None
         """
         return self.__volume
+
+    @property
+    def hull(self):
+        """
+        function: hull
+        Returns the hull
+        Parameters:
+            -None
+        Returns:
+            -None
+        """
+        return self.__hull
+
+    def point_in_wold(self, point, tolerance=1e-12):
+        """
+        function point_in_world
+        Checks if the point is in the constructed volume.
+        Parameters:
+            -np.array point:
+                The point to check
+            -optional tolerance:
+                The allowed tolerance of the search
+        Returns:
+            bool:
+                Yes or no
+        """
+        return all(
+            (np.dot(eq[:-1], point) + eq[-1] <=tolerance)
+            for eq in self.__hull.equations
+        )

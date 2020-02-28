@@ -62,8 +62,7 @@ class FD(object):
         -None
     """
     def __init__(self,
-     org_filter=config['filter'],
-     monte_carlo=config['monte carlo']
+     org_filter=config['filter']
      ):
         """
         function: __init__
@@ -99,8 +98,6 @@ class FD(object):
         # Adding the handlers
         self.log.addHandler(self.fh)
         self.log.addHandler(self.ch)
-        # User parameters:
-        self.mc = monte_carlo  # Monte-Carlo switch
         self.log.info('---------------------------------------------------')
         self.log.info('---------------------------------------------------')
         self.log.info('Welcome to FD!')
@@ -140,7 +137,7 @@ class FD(object):
         self.log.info('---------------------------------------------------')
         self.log.info('Creating the world')
         #  The volume of interest
-        self.volume = fd_adamah(self.log).geometry
+        self.world = fd_adamah(self.log)
         self.log.info('Finished world building')
         self.log.info('---------------------------------------------------')
         self.log.info('---------------------------------------------------')
@@ -162,7 +159,6 @@ class FD(object):
               distances, photon_count,
               run_count=100,
               seconds=100,
-              border=1e3,
               regen=1e-3,
               dt=config['time step']):
         """
@@ -172,7 +168,7 @@ class FD(object):
             -float population:
                 The number of organisms
             -float velocity:
-                Their mean velocity in mm/s
+                Their mean velocity of the current in mm/s
             -float distances:
                 The distances to use
             -float photon_count:
@@ -183,8 +179,6 @@ class FD(object):
             -int seconds:
                 Number of seconds to simulate. This is used by
                 the mc routines.
-            -float border:
-                The boarder size of the box
             -float regen:
                 The regeneration factor
             -float dt:
@@ -196,82 +190,56 @@ class FD(object):
         if dt > 1.:
             self.log.error("Chosen time step too large!")
             exit("Please run with time steps smaller than 1s!")
-        if self.mc:
-            self.log.info('Calculating light yields')
-            self.log.debug('Monte-Carlo run')
-            # The time grid
-            self.t = np.arange(0., seconds, dt)
-            # The simulation
-            pdfs = self.rate_model.pdf
-            self.mc_run = fd_roll_dice(
-                pdfs[0],
-                pdfs[1],
-                pdfs[2],
-                velocity,
-                population,
-                regen,
-                self.log,
-                border=border,
-                dt=dt,
-                t=self.t
-            )
-            self.log.debug('---------------------------------------------------')
-            self.log.debug('---------------------------------------------------')
-            # Applying pulse shapes
-            pulses = fd_yom(self.mc_run.photon_count, self.log).shaped_pulse
-            self.log.debug('---------------------------------------------------')
-            self.log.debug('---------------------------------------------------')
-            # The total emission
-            self.log.debug('Total light')
-            result = fd_lucifer(
-                pulses[:, 0],
-                distances, self.log
-            ).yields * photon_count
-            # The possible encounter emission without regen
-            self.log.debug('Encounter light')
-            result_enc = fd_lucifer(
-                pulses[:, 1],
-                distances, self.log
-            ).yields * photon_count
-            # The possible sheared emission without regen
-            self.log.debug('Shear light')
-            result_shear = fd_lucifer(
-                pulses[:, 2],
-                distances, self.log
-            ).yields * photon_count
-            self.log.debug('---------------------------------------------------')
-            self.log.debug('---------------------------------------------------')
-            self.log.info('Finished calculation')
-            self.log.info('---------------------------------------------------')
-            self.log.info('---------------------------------------------------')
-            return result, result_enc, result_shear
-        # TODO: Add regeneration factor to semi-analytic
-        else:
-            self.log.debug('Semi-analytic run')
-            self.log.info('Calculating light yields')
-            start = time()
-            # The rate calculation needs to be in the loop
-            # It returns a random variable for the rate
-            result = np.array([
-                fd_lucifer(
-                    self.rate_model.rate(velocity, population, self.volume * 1e6),
-                    distances, self.log).yields
-                for i in range(0, run_count)
-            ]) * photon_count
-            # The average value
-            result_avg = (
-                fd_lucifer(
-                    self.rate_model.rate_avg(velocity, population, self.volume * 1e6),
-                    distances, self.log).yields
-            ) * photon_count
-            end = time()
-            self.log.info('Finished calculation')
-            self.log.info('It took %.f seconds' %(end-start))
-            self.log.info('---------------------------------------------------')
-            self.log.info('---------------------------------------------------')
-            # Closing log
-            self.log.removeHandler(self.fh)
-            self.log.removeHandler(self.ch)
-            del self.log, self.fh, self.ch
-            logging.shutdown()
-            return result, result_avg
+        self.log.info('Calculating light yields')
+        self.log.debug('Monte-Carlo run')
+        # The time grid
+        self.t = np.arange(0., seconds, dt)
+        # The simulation
+        pdfs = self.rate_model.pdf
+        # TODO: Update this to take convex hulls.
+        # TODO: This will improve the check if point cloud is
+        #       inside
+        # TODO: Add switch which removes encounter model
+        #       depending on density of the organisms
+        self.mc_run = fd_roll_dice(
+            pdfs[0],
+            pdfs[1],
+            pdfs[2],
+            velocity,
+            population,
+            regen,
+            self.world,
+            self.log,
+            dt=dt,
+            t=self.t
+        )
+        self.log.debug('---------------------------------------------------')
+        self.log.debug('---------------------------------------------------')
+        # Applying pulse shapes
+        pulses = fd_yom(self.mc_run.photon_count, self.log).shaped_pulse
+        self.log.debug('---------------------------------------------------')
+        self.log.debug('---------------------------------------------------')
+        # The total emission
+        self.log.debug('Total light')
+        result = fd_lucifer(
+            pulses[:, 0],
+            distances, self.log
+        ).yields * photon_count
+        # The possible encounter emission without regen
+        self.log.debug('Encounter light')
+        result_enc = fd_lucifer(
+            pulses[:, 1],
+            distances, self.log
+        ).yields * photon_count
+        # The possible sheared emission without regen
+        self.log.debug('Shear light')
+        result_shear = fd_lucifer(
+            pulses[:, 2],
+            distances, self.log
+        ).yields * photon_count
+        self.log.debug('---------------------------------------------------')
+        self.log.debug('---------------------------------------------------')
+        self.log.info('Finished calculation')
+        self.log.info('---------------------------------------------------')
+        self.log.info('---------------------------------------------------')
+        return result, result_enc, result_shear

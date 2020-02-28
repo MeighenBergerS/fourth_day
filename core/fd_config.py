@@ -13,8 +13,6 @@ import logging
 config = {
     # Output level
     'debug level': logging.ERROR,
-    # Simulation type
-    'monte carlo': True,
     # The organisms used in the modelling of the light spectra
     'phyla light': {
         'Ctenophores': [],
@@ -34,6 +32,10 @@ config = {
         'Chordata',
         'Dinoflagellata'
     ],
+    # Number of dimensions for the simulation
+    # Current options:
+    #   - 2, 3
+    "dimensions": 3,
     # Material to pass through
     # Current options:
     #   - "water"
@@ -65,7 +67,15 @@ config = {
     # Currently only 'box' is supported
     #   -'box':
     #       Creates a uniform box of 1m x 1m x 1m evenly filled.
-    'geometry': 'box',
+    #   -'sphere':
+    #       Creates a uniform sphere
+    'geometry': 'sphere',
+    'box size': 1e2,  # Side length in mm of box
+    'sphere diameter': 1e2,  # Radius of the sphere 
+    # Size of bounding box
+    # This box needs to surround the volume of interest
+    # It is used to create a population sample
+    'bounding box': 1.1e2,
     # The encounter model
     # Currently available:
     #   - "Gerritsen-Strickler":
@@ -86,5 +96,20 @@ config = {
     'pulse shape': 'uniform',
     # Time step to use
     # This should be below 1
-    'time step': 0.1
+    'time step': 0.1,
+    # Encounter density
+    # This decides whetcher encounters contribute or not
+    # Encounters are the most expensive calculation part
+    # This means it is recommended to turn them off if
+    # they are negligible
+    "encounter density": 2e-5,
+    # Freedom of movement
+    # How large the angle change between steps can be
+    # (for the organisms)
+    # Org. won't move with angles between the values
+    "angle change": [90, 270],
+    # Number of points to use when constructing a spherical
+    # geometry. Increasing the number increases the precision,
+    # while reducing efficiency
+    'sphere samples': int(5e1),  # Number of points to construct the sphere
 }
