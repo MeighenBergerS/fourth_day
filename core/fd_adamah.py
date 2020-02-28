@@ -9,6 +9,7 @@ from sys import exit
 from fd_config import config
 import numpy as np
 from scipy import spatial
+import pickle
 
 class fd_adamah(object):
     """
@@ -35,17 +36,26 @@ class fd_adamah(object):
         "And a mist was going up from eretz and was watering the whole
         face of adamah."
         """
-        self.__dim = config['dimensions']
-        if not(self.__dim in [2,3]):
-            log("Dimensions not supported!")
-            exit("Check config file for wrong dimensions!")
         self.__log = log
         if config['geometry'] == 'box':
+            self.__dim = config['dimensions']
+            if not(self.__dim in [2,3]):
+                log("Dimensions not supported!")
+                exit("Check config file for wrong dimensions!")
             self.__log.debug('Using a box geometry')
             self.__geom_box()
+            self.__bounding_box = config['bounding box']
         elif config['geometry'] == 'sphere':
+            self.__dim = config['dimensions']
+            if not(self.__dim in [2,3]):
+                log("Dimensions not supported!")
+                exit("Check config file for wrong dimensions!")
             self.__log.debug('Using a sphere geometry')
             self.__geom_sphere()
+            self.__bounding_box = config['bounding box']
+        elif config['geometry'] == 'custom':
+            self.__log.debug("Using custom geometry")
+            self.__geom_custom()
         else:
             log.error('Geometry not supported!')
             exit()
@@ -106,6 +116,29 @@ class fd_adamah(object):
         self.__hull = spatial.ConvexHull(points_r)
         self.__log.debug('Hull constructed')
 
+    def __geom_custom(self):
+        """
+        function: __geom_custom
+        Constructs custom geometry from a file
+        Parameters:
+            -None
+        Returns:
+            -None
+        """
+        geom_dic = pickle.load(open(
+            "..//data/detector//geometry//" +
+            config['custom geometry'],
+            'rb')
+        )
+        self.__log.debug('Constructing the hull')
+        self.__hull = spatial.ConvexHull(geom_dic['points'])
+        self.__bounding_box = geom_dic['bounding box']
+        self.__dim = geom_dic['dimensions']
+        self.__volume = geom_dic['volume']
+        self.__log.debug('Hull constructed')
+
+
+
     def __fibonacci_sphere(self, samples):
         """
         function: __fibonacci_sphere
@@ -161,7 +194,8 @@ class fd_adamah(object):
         Parameters:
             -None
         Returns:
-            -None
+            -float volume:
+                The volume
         """
         return self.__volume
 
@@ -173,9 +207,36 @@ class fd_adamah(object):
         Parameters:
             -None
         Returns:
-            -None
+            -spatial object hull:
+                The hull
         """
         return self.__hull
+
+    @property
+    def bounding_box(self):
+        """
+        function: bounding_box
+        Returns the bounding_box size
+        Parameters:
+            -None
+        Returns:
+            -float bounding_box:
+                The size of the box
+        """
+        return self.__bounding_box
+
+    @property
+    def dimensions(self):
+        """
+        function: dimensions
+        Returns the dimensions
+        Parameters:
+            -None
+        Returns:
+            -int dimensions:
+                The dimensions of the geometry
+        """
+        return self.__dim
 
     def point_in_wold(self, point, tolerance=1e-12):
         """

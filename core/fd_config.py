@@ -69,9 +69,18 @@ config = {
     #       Creates a uniform box of 1m x 1m x 1m evenly filled.
     #   -'sphere':
     #       Creates a uniform sphere
-    'geometry': 'sphere',
+    #   -'custom':
+    #       Use a custom geometry defined in a pkl file.
+    #       Place file in data/detector/geometry which needs to be a
+    #       dumped library with:
+    #           {'dimensions': d,  # dimensions as int
+    #            'bounding box': a,  # bounding box as float
+    #            'volume': v,  # The volume
+    #            'points': np.array  # point cloud as 2d array with e.g. [x,y,z]
+    'geometry': 'custom',
     'box size': 1e2,  # Side length in mm of box
-    'sphere diameter': 1e2,  # Radius of the sphere 
+    'sphere diameter': 1e2,  # Radius of the sphere
+    'custom geometry': 'example_tetrahedron.pkl',  # File for custom geometry
     # Size of bounding box
     # This box needs to surround the volume of interest
     # It is used to create a population sample

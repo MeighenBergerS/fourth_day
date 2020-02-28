@@ -99,7 +99,7 @@ class fd_roll_dice(object):
         #   - 1 component total possible light emission
         #   - 1 component current energy (possible light emission)
         # Total components: dim*dim + 3
-        self.__dim = config['dimensions']
+        self.__dim = self.__world.dimensions
         self.__dimensions = config['dimensions']**2 + 3
         self.__population = np.zeros((pop, self.__dimensions))
         # Random starting position
@@ -108,8 +108,9 @@ class fd_roll_dice(object):
         while len(positions) < pop:
             inside = True
             while inside:
-                point = np.random.uniform(low=-config['bounding box']/2.,
-                                          high=config['bounding box']/2., size=config['dimensions'])
+                point = np.random.uniform(low=-self.__world.bounding_box/2.,
+                                          high=self.__world.bounding_box/2.,
+                                          size=self.__dim)
                 inside = not(self.__world.point_in_wold(point))
             positions.append(point)
         positions = np.array(positions)
