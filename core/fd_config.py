@@ -77,7 +77,7 @@ config = {
     #            'bounding box': a,  # bounding box as float
     #            'volume': v,  # The volume
     #            'points': np.array  # point cloud as 2d array with e.g. [x,y,z]
-    'geometry': 'custom',
+    'geometry': 'sphere',
     'box size': 1e2,  # Side length in mm of box
     'sphere diameter': 1e2,  # Radius of the sphere
     'custom geometry': 'example_tetrahedron.pkl',  # File for custom geometry

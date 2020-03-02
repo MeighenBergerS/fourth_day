@@ -100,7 +100,7 @@ class fd_roll_dice(object):
         #   - 1 component current energy (possible light emission)
         # Total components: dim*dim + 3
         self.__dim = self.__world.dimensions
-        self.__dimensions = config['dimensions']**2 + 3
+        self.__dimensions = config['dimensions']*2 + 3
         self.__population = np.zeros((pop, self.__dimensions))
         # Random starting position
         # TODO: Optimize this
