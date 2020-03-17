@@ -42,7 +42,7 @@ class fd_temere_congressus(object):
                 self.__model = self.__Gerritsen_Strickler
             else:
                 self.__log.error("Unknown encounter model! Please check " +
-                                 "The config file!")
+                                "The config file!")
                 exit('Set encounter model is wrong!')
             # Distribution parameters:
             self.__encounter_params()
@@ -249,7 +249,7 @@ class fd_temere_congressus(object):
         """
         function: __vel_distr_norm:
         Gaussian velocity distribution
-        Praameters:
+        Parameters:
             -int n:
                 The sample size
         """
@@ -261,7 +261,7 @@ class fd_temere_congressus(object):
         """
         function: __r_distr_norm:
         Gaussian radii distribution
-        Praameters:
+        Parameters:
             -int n:
                 The sample size
         """
@@ -273,7 +273,7 @@ class fd_temere_congressus(object):
         """
         function: __gamma_distr_norm:
         Gaussian photon distribution
-        Praameters:
+        Parameters:
             -int n:
                 The sample size
         """

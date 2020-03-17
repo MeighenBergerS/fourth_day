@@ -1,8 +1,8 @@
 """
-Name: fd_roll_dice.py
+Name: fd_roll_dice_social.py
 Authors: Stephan Meighen-Berger, Martina Karl
 Runs a monte-carlo (random walk) simulation
-for the organism interactions.
+for the social interactions.
 """
 
 "Imports"
@@ -10,27 +10,24 @@ from sys import exit
 import numpy as np
 from time import time
 from scipy.stats import binom
+from scipy.stats import norm
+from numpy.random import choice
 from fd_config import config
 
-class fd_roll_dice(object):
+class fd_roll_dice_social(object):
     """
-    class: fd_roll_dice
+    class: fd_roll_dice_social
     Monte-carlo simulation for the light
     emissions.
     Parameters:
-        -pdf vel:
-            The velocity distribution
-        -pdf r:
-            The interaction range distribution
-        -pdf gamma:
-            The photon count emission distribution
-        -float current_vel:
-            The current velocity used in the shear strength
-            calculation
+        -mean vel:
+            The mean social velocity
+        -mean r:
+            The mean interaction range
         -int pop:
             The population
-        -float regen:
-            The regeneration factor
+        -int infected:
+            The number of infected people
         -obj log:
             The logger
         -float dt:
@@ -42,29 +39,25 @@ class fd_roll_dice(object):
     "God does not roll dice!"
     """
 
-    def __init__(self, vel, r, gamma,
-                 current_vel,
-                 pop, regen, world, log,
+    def __init__(self, vel, vel_var, r, r_var,
+                 pop, infected, world, log,
                  dt=1., t=np.arange(0., 100., 1.)):
         """
-        class: fd_roll_dice
+        function: __init__
         Initializes the class.
         Parameters:
-            -pdf vel:
-                The velocity distribution
-            -pdf r:
-                The interaction range distribution
-            -pdf gamma:
-                The photon count emission distribution
-            -float current_vel:
-                The current velocity used in the shear strength
-                calculation
+            -float vel:
+                The mean social velocity
+            -float vel_var:
+                The velocity variance
+            -float r:
+                The mean interaction range
+            -float r_var:
+                The interaction range variance
             -int pop:
                 The population
-            -float regen:
-                The regeneration factor
-            -obj world:
-                The constructed world
+            -int infected:
+                The number of infected people
             -obj log:
                 The logger
             -float dt:
@@ -75,28 +68,28 @@ class fd_roll_dice(object):
             -None
         """
         self.__log = log
-        self.__vel = vel
-        self.__curr_vel = current_vel
+        self.__vel_mean = vel
+        self.__vel_var = vel_var
+        self.__r_mean = r
+        self.__r_var = r_var
+        if config['pdf move'] == 'gauss':
+            self.__vel = self.__vel_distr_norm
+            self.__r = self.__r_distr_norm
+        else:
+            self.__log.error('Unrecognized movement distribution!')
+            exit('Check the movement distribution in the config file!')
         self.__pop = pop
         self.__world = world
-        self.__regen = regen
         self.__dt = dt
         self.__t = t
-        if (self.__pop / self.__world.volume) < config['encounter density']:
-            self.__log.debug('Encounters are irrelevant!')
-            self._bool_enc = False
-        else:
-            self.__log.debug('Encounters are relevant!')
-            self._bool_enc = True
         # An organism is defined to have:
         #   - dim components for position
         #   - dim components for velocity
         #   - 1 component encounter radius
-        #   - 1 component total possible light emission
-        #   - 1 component current energy (possible light emission)
-        # Total components: dim*dim + 3
+        #   - 1 interacted or not
+        # Total components: dim*dim + 2
         self.__dim = self.__world.dimensions
-        self.__dimensions = config['dimensions']*2 + 3
+        self.__dimensions = config['dimensions']*2 + 2
         self.__population = np.zeros((pop, self.__dimensions))
         # Random starting position
         # TODO: Optimize this
@@ -113,15 +106,22 @@ class fd_roll_dice(object):
         # Random starting velocities
         veloc = self.__vel(pop).reshape((pop, 1)) * self.__random_direction(pop)
         # Random encounter radius
-        radii = r(pop)
-        # The maximum possible light emission is random
-        max_light = np.abs(gamma(pop))
+        radii = self.__r(pop)
+        # Sick individuals
+        sick_id = choice(pop, size=infected, replace=False)
+        bool_array = np.array([
+            1
+            if i in sick_id
+            else
+            0
+            for i in range(pop)
+        ])
         # Giving the population the properties
         self.__population[:, 0:self.__dim] = positions
         self.__population[:, self.__dim:self.__dim*2] = veloc
         self.__population[:, self.__dim*2] = radii
-        self.__population[:, self.__dim*2+1] = max_light
-        self.__population[:, self.__dim*2+2] = max_light
+        # Infecting
+        self.__population[:, self.__dim*2+1] = bool_array
         if config['save population']:
             self.__log.debug("Saving the distribution of organisms")
             self.__distribution = []
@@ -143,7 +143,7 @@ class fd_roll_dice(object):
         Returns:
             -None
         """
-        self.__photon_count = []
+        self.__infections = []
         for step, _ in enumerate(self.__t):
             start_pos = time()
             # Updating position
@@ -170,69 +170,39 @@ class fd_roll_dice(object):
             end_vel = time()
             # Creating encounter array
             start_enc = time()
-            # Checking if encounters are relevant
-            if self._bool_enc:
-                # They are
-                encounter_arr = self.__encounter(self.__population[:, 0:self.__dim],
-                                                self.__population[:, self.__dim*2])
-                # Encounters per organism
-                # Subtracting one due to diagonal
-                encounters_org = (np.sum(
-                    encounter_arr, axis=1
-                ) - 1)
-                # Encounter emission
-                encounter_emission = (
-                    encounters_org * self.__population[:, self.__dim*2+1] * 0.1
+            encounter_arr = self.__encounter(self.__population[:, 0:self.__dim],
+                                            self.__population[:, self.__dim*2])
+            # Checking if encounter with infected
+            infection_arr = np.array([
+                1 if np.any(
+                    np.isin(
+                        np.nonzero(encounter_arr[i]),
+                        np.nonzero(self.__population[:, self.__dim*2+1])
+                    )
                 )
-            else:
-                # They are not
-                encounter_emission = np.zeros(self.__pop)
-            # Light from shearing
-            # Vector showing which organisms fired and which didn't
-            sheared_number = self.__count_sheared_fired(velocity=self.__curr_vel)
-            # Their corresponding light emission
-            sheared = self.__population[:, self.__dim*2+1] * 0.1 * sheared_number
-            # Total light emission
-            light_emission = encounter_emission + sheared
-            light_emission = np.array([
-                light_emission[idIt]
-                if light_emission[idIt] < self.__population[:, self.__dim*2+2][idIt]
                 else
-                self.__population[:, self.__dim*2+2][idIt]
-                for idIt in range(self.__pop)
+                0
+            for i in range(len(encounter_arr))])
+            # Can't re-infect oneself
+            infection_arr = np.array([
+                1 
+                if (
+                    (infection_arr[i] == 1) and
+                    (self.__population[:, self.__dim*2+1][i] == 0)
+                )
+                else
+                0
+            for i in range(len(infection_arr))
             ])
             end_enc = time()
-            # Subtracting energy
-            self.__population[:, self.__dim*2+2] = (
-                self.__population[:, self.__dim*2+2] - light_emission
-            )
-            # Regenerating
-            self.__population[:, self.__dim*2+2] = np.array([
-                self.__population[:, self.__dim*2+2][i] +
-                self.__regen * self.__population[:, self.__dim*2+1][i] * self.__dt
-                if (
-                    (self.__population[:, self.__dim*2+2][i] +
-                     self.__regen * self.__population[:, self.__dim*2+1][i] *
-                     self.__dt) <
-                    self.__population[:, self.__dim*2+1][i]
-                )
-                else
-                self.__population[:, self.__dim*2+1][i]
-                for i in range(self.__pop)
-            ])
-            # The photon count
-            # Assuming 0.1 of total max val is always emitted
-            self.__photon_count.append(
-                [
-                    np.sum(light_emission),
-                    np.sum(encounter_emission),
-                    np.sum(sheared)
-                    ]
-            )
+            # Adding to population
+            self.__population[:, self.__dim*2+1] += infection_arr
             if config['save population']:
                 self.__distribution.append(np.copy(
                     self.__population)
                 )
+            # Counting new infections
+            self.__infections.append(infection_arr)
             if step % (int(len(self.__t)/10)) == 0:
                 self.__log.debug('In step %d' %step)
                 self.__log.debug(
@@ -242,20 +212,20 @@ class fd_roll_dice(object):
                     'Velocity update took %f seconds' %(end_vel-start_vel)
                 )
                 self.__log.debug(
-                    'Emission update took %f seconds' %(end_enc-start_enc)
+                    'Encounter update took %f seconds' %(end_enc-start_enc)
                 )
 
     @property
-    def photon_count(self):
+    def infections(self):
         """
-        function: photon_count
-        Fetches the photon_count
+        function: infections
+        Fetches the infection count
         Parameters:
             -None
         Returns:
             -photon_count
         """
-        return np.array(self.__photon_count)
+        return np.array(self.__infections)
 
     @property
     def population(self):
@@ -351,48 +321,33 @@ class fd_roll_dice(object):
         ])
         return encounter_arr
 
-    def __count_sheared_fired(self, velocity=None):
+    def __vel_distr_norm(self, n):
         """
-        function: __count_sheared_fired
+        function: __vel_distr_norm:
+        Gaussian velocity distribution
         Parameters:
-            optional float velocity:
-                Mean velocity of the water current in m/s
-        Returns:
-            np.array res:
-                Number of cells that sheared and fired.
+            -int n:
+                The sample size
         """
-        # Generating vector with 1 for fired and 0 for not
-        # TODO: Step dependence
-        res = binom.rvs(
-            1,
-            self.__cell_anxiety(velocity) * self.__dt,
-            size=self.__pop
-        )
-        return res
+        return(norm.rvs(size=n,
+                        loc=self.__vel_mean,
+                        scale=self.__vel_var))
 
-    def __cell_anxiety(self, velocity=None):
+    def __r_distr_norm(self, n):
         """
-        function: __cell_anxiety
-        Estimates the cell anxiety with alpha * ( shear_stress - min_shear_stress).
-        We assume the shear stress to be in the range of 0.1 - 2 Pa and the minimally required shear stress to be 0.1.
-        Here, we assume 1.1e-2 for alpha. alpha and minimally required shear stress vary for each population
+        function: __r_distr_norm:
+        Gaussian radii distribution
         Parameters:
-            -optional float velocity:
-                The velocity of the current in m/s
-        Returns:
-            -float res:
-                Estimated value for the cell anxiety depending of the velocity and thus the shearing
+            -int n:
+                The sample size
         """
-        min_shear = 0.1
-        if velocity:
-            # just assume 10 percent of the velocity to be transferred to shearing. Corresponds to shearing of
-            # 0.01 - 1 Pascal
-            shear_stress = velocity * 0.1
-        else:
-            # Standard velocity is 5m/s
-            shear_stress = 0.5
-
-        if shear_stress < min_shear:
-            return 0.
-
-        return 1.e-2 * (shear_stress - min_shear)
+        encounter_r = []
+        for i in range(n):
+            res = -1
+            while res <=0:
+                res = norm.rvs(
+                    loc=self.__r_mean,
+                    scale=self.__r_var
+                )
+            encounter_r.append(res)
+        return np.array(encounter_r)

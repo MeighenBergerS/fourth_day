@@ -249,7 +249,7 @@ class fd_adamah(object):
                 The allowed tolerance of the search
         Returns:
             bool:
-                Yes or no
+                True or False
         """
         return all(
             (np.dot(eq[:-1], point) + eq[-1] <=tolerance)

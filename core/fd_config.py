@@ -35,7 +35,7 @@ config = {
     # Number of dimensions for the simulation
     # Current options:
     #   - 2, 3
-    "dimensions": 3,
+    "dimensions": 2,
     # Material to pass through
     # Current options:
     #   - "water"
@@ -77,7 +77,7 @@ config = {
     #            'bounding box': a,  # bounding box as float
     #            'volume': v,  # The volume
     #            'points': np.array  # point cloud as 2d array with e.g. [x,y,z]
-    'geometry': 'sphere',
+    'geometry': 'box',
     'box size': 1e2,  # Side length in mm of box
     'sphere diameter': 1e2,  # Radius of the sphere
     'custom geometry': 'example_tetrahedron.pkl',  # File for custom geometry
@@ -93,9 +93,25 @@ config = {
     #        in Zooplankton: a Mathematical Model", 1977
     #       DOI: 10.1139/f77-008
     "encounter": "Gerritsen-Strickler",
+    # The current model
+    # This defines how the flow of water looks
+    # This will be given by the geometry of the detector
+    # As a test case two standards are implemented:
+    #   - "constant":
+    #       Constant current in one direction
+    #   - "rotation":
+    #       A rotating current 
+    "current model": "rotation",
     # Switch to store steps or not
     # This requires a bit more memory
     "save population": True,
+    # What type of simulation to run.
+    # Current options are:
+    # "bioluminescence":
+    #   bioluminescence simulation
+    # "social distancing":
+    #   This was added as an example for the CORVID-19 virus
+    "simulation type": "social distancing",
     ###################################################
     # More advanced
     ###################################################
@@ -105,7 +121,7 @@ config = {
     'pulse shape': 'uniform',
     # Time step to use
     # This should be below 1
-    'time step': 0.1,
+    'time step': 1.,
     # Encounter density
     # This decides whetcher encounters contribute or not
     # Encounters are the most expensive calculation part
