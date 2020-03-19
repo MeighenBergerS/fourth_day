@@ -161,11 +161,14 @@ class FD(object):
             self.log.info('---------------------------------------------------')
         # Social distancing
         elif config['simulation type'] == 'social distancing':
+            # TODO: Population model
             # PDFs are dealt with by the solver
             self.log.info('Social distancing simulation run')
             self.log.info('---------------------------------------------------')
             self.log.info('---------------------------------------------------')
             self.log.info('Creating the world')
+            # TODO: Social circle models for the "world"
+            # TODO: Encounter distribution models
             #  The volume of interest
             self.world = fd_adamah(self.log)
             self.log.info('Finished world building')
