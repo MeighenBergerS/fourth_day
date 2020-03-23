@@ -104,13 +104,6 @@ config = {
     # Switch to store steps or not
     # This requires a bit more memory
     "save population": True,
-    # What type of simulation to run.
-    # Current options are:
-    # "bioluminescence":
-    #   bioluminescence simulation
-    # "social distancing":
-    #   This was added as an example for the CORVID-19 virus
-    "simulation type": "bioluminescence",
     ###################################################
     # More advanced
     ###################################################
