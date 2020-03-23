@@ -64,7 +64,6 @@ config = {
     #       A gaussian distribution
     'pdf move': 'gauss',
     # The geometry of the problem.
-    # Currently only 'box' is supported
     #   -'box':
     #       Creates a uniform box of 1m x 1m x 1m evenly filled.
     #   -'sphere':
@@ -78,13 +77,13 @@ config = {
     #            'volume': v,  # The volume
     #            'points': np.array  # point cloud as 2d array with e.g. [x,y,z]
     'geometry': 'box',
-    'box size': 1e4,  # Side length in mm of box
+    'box size': 1e3,  # Side length in mm of box
     'sphere diameter': 1e2,  # Radius of the sphere
     'custom geometry': 'example_tetrahedron.pkl',  # File for custom geometry
     # Size of bounding box
     # This box needs to surround the volume of interest
     # It is used to create a population sample
-    'bounding box': 1.1e4,
+    'bounding box': 1.1e3   	,
     # The encounter model
     # Currently available:
     #   - "Gerritsen-Strickler":
@@ -111,7 +110,7 @@ config = {
     #   bioluminescence simulation
     # "social distancing":
     #   This was added as an example for the CORVID-19 virus
-    "simulation type": "social distancing",
+    "simulation type": "bioluminescence",
     ###################################################
     # More advanced
     ###################################################
