@@ -62,6 +62,7 @@ The code is structed as
 
 - [] Simulation updates
   - [] Optimize population calculations
+    - [] Introduce more efficient matrix manipulations
   - [] Gradient field calculations
   - [] Incoming organism stream
 - [] Code structure updates
