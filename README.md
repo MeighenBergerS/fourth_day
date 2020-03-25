@@ -67,6 +67,7 @@ The code is structed as
   - [] Incoming organism stream
 - [] Code structure updates
   - [] Clean up the interface
+  - [] Add importan input handling
 - [] Quality of life updates
   - [X] Add requirements.txt
   - [X] Add INSTALL.txt
