@@ -24,7 +24,7 @@ The Model is structed as
 The emission pdfs are constructed from data taken from
 *Latz, M.I., Frank, T.M. & Case, J.F.
 "Spectral composition of bioluminescence of epipelagic organisms from the Sargasso Sea."
-Marine Biology 98, 441-446 (1988) https://doi.org/10.1007/BF00391120.*
+Marine Biology 98, 441-446 (1988) <https://doi.org/10.1007/BF00391120.>*
 
 ![Unweighted PDFs](images/Spectrum_Example.png)
 
