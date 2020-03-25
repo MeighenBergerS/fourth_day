@@ -8,7 +8,6 @@ created by dob_vita.
 "Imports"
 from sys import exit
 import numpy as np
-from fd_config import config
 
 class fd_flood(object):
     """
@@ -21,25 +20,29 @@ class fd_flood(object):
             The organisms created
         -obj log:
             The logger
+        -dic config:
+            The configuration dictionary
     Returns:
         -None
     """
-    def __init__(self, life, org_filter, log):
+    def __init__(self, life, log, config):
         """
         function: __init__
         Initializes the flood
         Parameters:
             -dic life:
                 The organisms created
-            -str org_filter:
-                The organism filter to use
             -obj log:
                 The logger
+            -dic config:
+                The configuration dictionary
         Returns:
             -None
         """
         self.__log = log
+        self.__config = config
         self.__evolved = {}
+        org_filter = self.__config['filter']
         if org_filter == 'average':
             self.__log.debug('Filtering by averaging.')
             self.__flood_average(life)
@@ -48,7 +51,7 @@ class fd_flood(object):
             self.__evolved = life
         elif org_filter == 'depth':
             self.__log.debug('All species below %f are removed'
-                              %config['depth filter'])
+                              %self.__config['depth filter'])
             self.__flood_depth(life)
         else:
             self.__log.error('Filter not recognized! Please check config')
@@ -65,8 +68,8 @@ class fd_flood(object):
         Returns:
             -None
         """
-        for phyla in config['phyla light'].keys():
-            if len(config['phyla light'][phyla]) == 0:
+        for phyla in self.__config['phyla light'].keys():
+            if len(self.__config['phyla light'][phyla]) == 0:
                 avg_mean = np.mean(life[phyla][1])
                 avg_widt = np.mean(life[phyla][2])
                 self.__evolved[phyla] = np.array([
@@ -78,7 +81,7 @@ class fd_flood(object):
                 avg_mean = []
                 avg_widt = []
                 total_count = 0
-                for class_name in config['phyla light'][phyla]:
+                for class_name in self.__config['phyla light'][phyla]:
                     avg_mean.append(np.mean(
                         life[phyla + '_' + class_name][1]
                     ))
@@ -108,7 +111,7 @@ class fd_flood(object):
         for key in life.keys():
             self.__evolved[key] = [[], [], [], []]
             for idspecies, _ in enumerate(life[key][0]):
-                if life[key][3][idspecies] >= config['depth filter']:
+                if life[key][3][idspecies] >= self.__config['depth filter']:
                      #  The name
                      self.__evolved[key][0].append(
                          life[key][0][idspecies]

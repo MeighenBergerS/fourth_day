@@ -11,58 +11,22 @@ import numpy as np
 import logging
 
 config = {
+    ###########################################################################
+    # General inputs
+    ###########################################################################
     # Output level
-    'debug level': logging.ERROR,
-    # The organisms used in the modelling of the light spectra
-    'phyla light': {
-        'Ctenophores': [],
-        'Cnidaria': [
-            'Scyphomedusae', 'Hydrozoa',
-            'Hydrozoa_Hydroidolina_Siphonophores_Calycophorae',
-            'Hydrozoa_Hydroidolina_Siphonophores_Physonectae',
-            ],
-        'Proteobacteria': [
-            'Gammaproteobacteria'
-        ]
-    },
-    # The organisms used in the modelling of the movement
-    'phyla move': [
-        'Annelida',
-        'Arthropoda',
-        'Chordata',
-        'Dinoflagellata'
-    ],
+    'debug level': logging.INFO,
+    ###########################################################################
+    # Run specific input
+    ###########################################################################
+    # Length of simulation in seconds
+    "duartion": 100,
+    # The population
+    "population": 100,
     # Number of dimensions for the simulation
     # Current options:
     #   - 2, 3
     "dimensions": 2,
-    # Material to pass through
-    # Current options:
-    #   - "water"
-    "material": "water",
-    # Filter the organisms created
-    # Currently supported:
-    #   - 'average':
-    #       Averages the organisms of each phyla
-    #       This means in the end there will be
-    #       #phyla survivors
-    #   - 'generous':
-    #       All species survive the flood
-    #   - 'depth':
-    #       Removes all life above the specified depth
-    'filter': 'average',
-    # Used for the depth filter. Otherwise redundant
-    'depth filter': 500.,
-    # The probability distribution to use for the light pdf
-    # Currently supported:
-    #   - 'gamma':
-    #       Gamma probability pdf
-    'pdf': 'gamma',
-    # The probability distribution to use for the movement pdf
-    # Currently supported:
-    #   - 'gauss':
-    #       A gaussian distribution
-    'pdf move': 'gauss',
     # The geometry of the problem.
     #   -'box':
     #       Creates a uniform box of 1m x 1m x 1m evenly filled.
@@ -83,16 +47,16 @@ config = {
     # Size of bounding box
     # This box needs to surround the volume of interest
     # It is used to create a population sample
-    'bounding box': 1.1e3   	,
-    # The encounter model
-    # Currently available:
-    #   - "Gerritsen-Strickler":
-    #       Mathematical model found in
-    #       "Encounter Probabilities and Community Structure
-    #        in Zooplankton: a Mathematical Model", 1977
-    #       DOI: 10.1139/f77-008
-    "encounter": "Gerritsen-Strickler",
-    # The current model
+    'bounding box': 1.1e3,
+    # Material to pass through
+    # Current options:
+    #   - "water"
+    "material": "water",
+    # The light attenuation factor
+    "light attenuation factor": 6.9,
+    # Water current velocity in m/s
+    "water current velocity": 5.,
+    # The water urrent model
     # This defines how the flow of water looks
     # This will be given by the geometry of the detector
     # As a test case two standards are implemented:
@@ -101,19 +65,75 @@ config = {
     #   - "rotation":
     #       A rotating current 
     "current model": "rotation",
-    # Switch to store steps or not
-    # This requires a bit more memory
-    "save population": True,
+    # Observation distance
+    "observation distance": 0.,  # in m
+    ###########################################################################
+    # Organisms inputs
+    ###########################################################################
+    # The organisms used in the modelling of the light spectra
+    'phyla light': {
+        'Ctenophores': [],
+        'Cnidaria': [
+            'Scyphomedusae', 'Hydrozoa',
+            'Hydrozoa_Hydroidolina_Siphonophores_Calycophorae',
+            'Hydrozoa_Hydroidolina_Siphonophores_Physonectae',
+            ],
+        'Proteobacteria': [
+            'Gammaproteobacteria'
+        ]
+    },
+    # The organisms used in the modelling of the movement
+    'phyla move': [
+        'Annelida',
+        'Arthropoda',
+        'Chordata',
+        'Dinoflagellata'
+    ],
+    # Filter the organisms created
+    # Currently supported:
+    #   - 'average':
+    #       Averages the organisms of each phyla
+    #       This means in the end there will be
+    #       #phyla survivors
+    #   - 'generous':
+    #       All species survive the flood
+    #   - 'depth':
+    #       Removes all life above the specified depth
+    'filter': 'average',
+    # Used for the depth filter. Otherwise redundant
+    'depth filter': 500.,  # in m
+    # The probability distribution to use for the light pdf
+    # Currently supported:
+    #   - 'gamma':
+    #       Gamma probability pdf
+    'pdf': 'gamma',
+    # The probability distribution to use for the movement pdf
+    # Currently supported:
+    #   - 'gauss':
+    #       A gaussian distribution
+    'pdf move': 'gauss',
+    # The encounter model
+    # Currently available:
+    #   - "Gerritsen-Strickler":
+    #       Mathematical model found in
+    #       "Encounter Probabilities and Community Structure
+    #        in Zooplankton: a Mathematical Model", 1977
+    #       DOI: 10.1139/f77-008
+    "encounter": "Gerritsen-Strickler",
+    # Pulse shape
+    'pulse shape': 'uniform',
+    # Average photon yield per pulse
+    'photon yield': 1.,
+    # Fraction of max energy regenerated per second
+    'regeneration': 1e-2,
     ###################################################
-    # More advanced
+    # Advanced
     ###################################################
     # pdf grid option
     'pdf_grid': np.linspace(0., 2000., 2001),
-    # Pulse shape
-    'pulse shape': 'uniform',
-    # Time step to use
+    # Time step to use in s
     # This should be below 1
-    'time step': 1.,
+    'time step': 0.1,
     # Encounter density
     # This decides whetcher encounters contribute or not
     # Encounters are the most expensive calculation part

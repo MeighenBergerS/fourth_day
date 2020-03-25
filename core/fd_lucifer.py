@@ -15,10 +15,10 @@ class fd_lucifer(object):
     Parameters:
         -np.array light_yield:
             The light yield
-        -np.array distances:
-            The observation distances
         -obj. log:
             The logger
+        -dic config:
+            The configuration dictionary
     Returns:
         -None
     "How you have fallen from heaven, morning star,
@@ -26,25 +26,24 @@ class fd_lucifer(object):
      you who once laid low the nations!"
     """
 
-    def __init__(self, light_yields, distances, log):
+    def __init__(self, light_yields, log, config):
         """
         function: __init__
         Initializes the class
         Parameters:
             -np.array light_yield:
                 The light yield
-            -np.array distances:
-                The observation distances
             -obj. log:
                 The logger
+            -dic config:
+                The configuration dictionary
         Returns:
             -None
         """
+        self.__config = config
         log.debug('Calculating attenuated light')
-        self.__light_yields = np.array([
-            light_yields *self.__attenuation(dist)
-            for dist in distances
-        ])
+        dist = config['observation distance']
+        self.__light_yields = light_yields * self.__attenuation(dist)
 
     @property
     def yields(self):
@@ -71,4 +70,4 @@ class fd_lucifer(object):
             -float res:
                 The attenuation factor
         """
-        return np.exp(- distance / 6.9)
+        return np.exp(- distance / self.__config['light attenuation factor'])

@@ -24,6 +24,8 @@ class fd_immaculate_conception(object):
     Parameters:
         -obj. log:
             The logger
+        -dic config:
+            The configuration dictionary
     Returns:
         -None
     "We declare, pronounce, and define that the doctrine which
@@ -36,7 +38,7 @@ class fd_immaculate_conception(object):
      firmly and constantly by all the faithful."
     """
 
-    def __init__(self, log):
+    def __init__(self, log, config):
         """
         function: __init__
         Initializes the class dob_vita.
@@ -44,6 +46,8 @@ class fd_immaculate_conception(object):
         Parameters:
             -obj. log:
                 The logger
+            -dic config:
+                The configuration dictionary
         Returns:
             -None
         """

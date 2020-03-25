@@ -9,7 +9,6 @@ import numpy as np
 from sys import exit
 from scipy.stats import norm
 import csv
-from fd_config import config
 
 class fd_temere_congressus(object):
     """
@@ -19,10 +18,12 @@ class fd_temere_congressus(object):
     Parameters:
         -obj log:
             The logger
+        -dic config:
+            The configuration dictionary
     Returns:
         -None
     """
-    def __init__(self, log):
+    def __init__(self, log, config):
             """
             function: __init__
             Initializes random encounter models of
@@ -30,14 +31,17 @@ class fd_temere_congressus(object):
             Parameters:
                 -obj log:
                     The logger
+                -dic config:
+                    The configuration dictionary
             Returns:
                 -None
             """
             self.__log = log
+            self.__config = config
             # Storage of the movement patterns
             self.__move = {}
             # The model
-            if config['encounter'] == "Gerritsen-Strickler":
+            if self.__config['encounter'] == "Gerritsen-Strickler":
                 self.__log.info('Using the Gerritsen_Strickler model')
                 self.__model = self.__Gerritsen_Strickler
             else:
@@ -47,7 +51,7 @@ class fd_temere_congressus(object):
             # Distribution parameters:
             self.__encounter_params()
             # The distributions
-            if config['pdf move'] == 'gauss':
+            if self.__config['pdf move'] == 'gauss':
                 self.__log.debug('Construction gaussian' +
                                 ' distributions for movement')
                 # Velocity distr
@@ -189,7 +193,7 @@ class fd_temere_congressus(object):
         Returns:
             -None
         """
-        for phyla in config['phyla move']:
+        for phyla in self.__config['phyla move']:
             self.__log.debug('Loading phyla: %s' %phyla)
             self.__log.debug('Loading and parsing %s.txt' %phyla)
             with open('../data/life/movement/%s.txt' %phyla, 'r') as txtfile:
@@ -216,32 +220,32 @@ class fd_temere_congressus(object):
             # Constructing the mean velocity
             np.mean(np.array([
                 self.__move[phyla][1].mean()
-                for phyla in config['phyla move']
+                for phyla in self.__config['phyla move']
             ])),
             # The velocity variation
             np.mean(np.array([
                 self.__move[phyla][1].var()
-                for phyla in config['phyla move']
+                for phyla in self.__config['phyla move']
             ])),
             # The mean encounter radius
             np.mean(np.array([
                 self.__move[phyla][2].mean()
-                for phyla in config['phyla move']
+                for phyla in self.__config['phyla move']
             ])),
             # The radius variation
             np.mean(np.array([
                 self.__move[phyla][2].var()
-                for phyla in config['phyla move']
+                for phyla in self.__config['phyla move']
             ])),
             # The mean photon count
             np.mean(np.array([
                 self.__move[phyla][3].mean()
-                for phyla in config['phyla move']
+                for phyla in self.__config['phyla move']
             ])),
             # photon count variation
             np.mean(np.array([
                 self.__move[phyla][3].var()
-                for phyla in config['phyla move']
+                for phyla in self.__config['phyla move']
             ]))
         ])
 

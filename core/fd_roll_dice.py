@@ -10,7 +10,6 @@ from sys import exit
 import numpy as np
 from time import time
 from scipy.stats import binom
-from fd_config import config
 
 class fd_roll_dice(object):
     """
@@ -18,23 +17,14 @@ class fd_roll_dice(object):
     Monte-carlo simulation for the light
     emissions.
     Parameters:
-        -pdf vel:
-            The velocity distribution
-        -pdf r:
-            The interaction range distribution
-        -pdf gamma:
-            The photon count emission distribution
-        -float current_vel:
-            The current velocity used in the shear strength
-            calculation
-        -int pop:
-            The population
-        -float regen:
-            The regeneration factor
+        -np.array pdfs:
+            The pdfs with [vel, r, gamma]
+        -obj world:
+            The constructed world
         -obj log:
             The logger
-        -float dt:
-            The chosen time step
+        -dic config:
+            The configuration dictionary
         -np.array t:
             The time array
     Returns:
@@ -42,47 +32,37 @@ class fd_roll_dice(object):
     "God does not roll dice!"
     """
 
-    def __init__(self, vel, r, gamma,
-                 current_vel,
-                 pop, regen, world, log,
-                 dt=1., t=np.arange(0., 100., 1.)):
+    def __init__(self, pdfs,
+                 world, log,
+                 config,
+                 t=np.arange(0., 100., 1.)):
         """
         class: fd_roll_dice
         Initializes the class.
         Parameters:
-            -pdf vel:
-                The velocity distribution
-            -pdf r:
-                The interaction range distribution
-            -pdf gamma:
-                The photon count emission distribution
-            -float current_vel:
-                The current velocity used in the shear strength
-                calculation
-            -int pop:
-                The population
-            -float regen:
-                The regeneration factor
+            -np.array pdfs:
+                The pdfs with [vel, r, gamma]
             -obj world:
                 The constructed world
             -obj log:
                 The logger
-            -float dt:
-                The chosen time step
+            -dic config:
+                The configuration dictionary
             -np.array t:
                 The time array
         Returns:
             -None
         """
         self.__log = log
-        self.__vel = vel
-        self.__curr_vel = current_vel
-        self.__pop = pop
+        self.__config = config
+        self.__vel = pdfs[0]
+        self.__curr_vel = self.__config['water current velocity']
+        self.__pop = self.__config['population']
         self.__world = world
-        self.__regen = regen
-        self.__dt = dt
+        self.__regen = self.__config['regeneration']
+        self.__dt = self.__config['time step']
         self.__t = t
-        if (self.__pop / self.__world.volume) < config['encounter density']:
+        if (self.__pop / self.__world.volume) < self.__config['encounter density']:
             self.__log.debug('Encounters are irrelevant!')
             self._bool_enc = False
         else:
@@ -96,12 +76,12 @@ class fd_roll_dice(object):
         #   - 1 component current energy (possible light emission)
         # Total components: dim*dim + 3
         self.__dim = self.__world.dimensions
-        self.__dimensions = config['dimensions']*2 + 3
-        self.__population = np.zeros((pop, self.__dimensions))
+        self.__dimensions = self.__dim*2 + 3
+        self.__population = np.zeros((self.__pop, self.__dimensions))
         # Random starting position
         # TODO: Optimize this
         positions = []
-        while len(positions) < pop:
+        while len(positions) < self.__pop:
             inside = True
             while inside:
                 point = np.random.uniform(low=-self.__world.bounding_box/2.,
@@ -111,23 +91,22 @@ class fd_roll_dice(object):
             positions.append(point)
         positions = np.array(positions)
         # Random starting velocities
-        veloc = self.__vel(pop).reshape((pop, 1)) * self.__random_direction(pop)
+        veloc = self.__vel(self.__pop).reshape((self.__pop, 1)) * self.__random_direction(self.__pop)
         # Random encounter radius
-        radii = r(pop)
+        radii = pdfs[1](self.__pop)
         # The maximum possible light emission is random
-        max_light = np.abs(gamma(pop))
+        max_light = np.abs(pdfs[2](self.__pop))
         # Giving the population the properties
         self.__population[:, 0:self.__dim] = positions
         self.__population[:, self.__dim:self.__dim*2] = veloc
         self.__population[:, self.__dim*2] = radii
         self.__population[:, self.__dim*2+1] = max_light
         self.__population[:, self.__dim*2+2] = max_light
-        if config['save population']:
-            self.__log.debug("Saving the distribution of organisms")
-            self.__distribution = []
-            self.__distribution.append(np.copy(
-                self.__population
-            ))
+        self.__log.debug("Saving the distribution of organisms")
+        self.__distribution = []
+        self.__distribution.append(np.copy(
+            self.__population
+        ))
         # Running the simulation
         start = time()
         self.__simulation()
@@ -229,10 +208,9 @@ class fd_roll_dice(object):
                     np.sum(sheared)
                     ]
             )
-            if config['save population']:
-                self.__distribution.append(np.copy(
-                    self.__population)
-                )
+            self.__distribution.append(np.copy(
+                self.__population)
+            )
             if step % (int(len(self.__t)/10)) == 0:
                 self.__log.debug('In step %d' %step)
                 self.__log.debug(
@@ -279,11 +257,7 @@ class fd_roll_dice(object):
         Returns:
             -photon_count
         """
-        if config['save population']:
-            return np.array(self.__distribution)
-        else:
-            self.__log.error("Distribution was not saved!")
-            exit("Rerun with 'save population' set to True in config file!")
+        return np.array(self.__distribution)
 
     def __random_direction(self, pop):
         """
@@ -305,8 +279,8 @@ class fd_roll_dice(object):
         # TODO: Optimize this
         for pop_i in range(pop):
             # Sample until angle is acceptable
-            angle = (config['angle change'][0] + config['angle change'][1]) / 2.
-            while (angle > config['angle change'][0] and angle < config['angle change'][1]):
+            angle = (self.__config['angle change'][0] + self.__config['angle change'][1]) / 2.
+            while (angle > self.__config['angle change'][0] and angle < self.__config['angle change'][1]):
                 new_vec = np.random.uniform(low=-1., high=1., size=self.__dim)
                 current_vec = self.__population[pop_i, self.__dim:self.__dim*2]
                 # The argument

@@ -8,7 +8,6 @@ This is used to fit the data.
 "Imports"
 from sys import exit
 import numpy as np
-from fd_config import config
 from scipy.stats import gamma
 from scipy.signal import peak_widths
 from scipy.optimize import root
@@ -23,12 +22,14 @@ class fd_genesis(object):
             The organisms created
         -obj log:
             The logger
+        -dic config
+            The configuration dictionary
     Returns:
         -None
     "And God saw the light, that it was good:
      and God divided the light from the darkness"
     """
-    def __init__(self, life, log):
+    def __init__(self, life, log, config):
         """
         function: __init__
         initializes genesis.
@@ -37,14 +38,17 @@ class fd_genesis(object):
                 The organisms created
             -obj log:
                 The logger
+            -dic config:
+                The configuration dictionary
         Returns:
             -None
         """
         self.__log = log
+        self.__config = config
         # These points are used in solving
-        self.__x = config['pdf_grid']
+        self.__x = self.__config['pdf_grid']
         self.__pdfs = {}
-        if config['pdf'] == 'gamma':
+        if self.__config['pdf'] == 'gamma':
             self.__log.debug('Genesis of Gamma distributions')
             for key in life.keys():
                 for idspecies, _ in enumerate(life[key][0]):

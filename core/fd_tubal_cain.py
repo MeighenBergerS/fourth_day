@@ -9,7 +9,6 @@ function
 "Imports"
 from sys import exit
 import numpy as np
-from fd_config import config
 from scipy.interpolate import UnivariateSpline
 
 class fd_tubal_cain(object):
@@ -21,11 +20,13 @@ class fd_tubal_cain(object):
             The species pdfs
         -obj log:
             The logger
+        -dic config:
+            The configuration dictionary
     Returns:
         -None
     "forger of all instruments of bronze and iron"
     """
-    def __init__(self, pdfs, log):
+    def __init__(self, pdfs, log, config):
         """
         function: __init__
         Initalizes the smith Tubal-cain.
@@ -35,11 +36,14 @@ class fd_tubal_cain(object):
                 The species pdfs
             -obj log:
                 The logger
+            -dic config:
+                The configuration dictionary
         Returns:
             -None
         """
         # Saving pdf array structure for later usage
         log.debug('Defining the species order')
+        self.__config = config
         self.__keys = np.array(
             [
                 key
@@ -82,7 +86,7 @@ class fd_tubal_cain(object):
         if population.shape != (len(self.__pdf_array), 1):
             exit('The shape of the population array is wrong!')
         spl = UnivariateSpline(
-            config['pdf_grid'],
+            self.__config['pdf_grid'],
             np.sum(self.__pdf_array * population / np.sum(population), axis=0),
             ext=3,
             s=0,

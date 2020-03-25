@@ -6,7 +6,6 @@ organisms
 """
 
 "Imports"
-from fd_config import config
 from sys import exit
 
 class fd_yom(object):
@@ -18,6 +17,8 @@ class fd_yom(object):
             The pulses calculated
         -obj. log:
             The logger
+        -dic config:
+            The configuration dictionary
     Returns:
         -None
     "Making the best use of the time,
@@ -26,7 +27,7 @@ class fd_yom(object):
      but understand what the will of the Lord is."
     """
 
-    def __init__(self, pulse, log):
+    def __init__(self, pulse, log, config):
         """
         function: __init__
         Initializes the class
@@ -35,6 +36,8 @@ class fd_yom(object):
                 The calculated pulses
             -obj. log:
                 The logger
+            -dic config:
+                The configuration dictionary
         Returns:
             -None
         """

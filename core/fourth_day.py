@@ -38,7 +38,7 @@ import logging
 import numpy as np
 from time import time
 # Package modules
-from fd_config import config
+from fd_config import config as confi
 from fd_immaculate_conception import fd_immaculate_conception
 from fd_flood import fd_flood
 from fd_genesis import fd_genesis
@@ -56,26 +56,25 @@ class FD(object):
     stores all methods required to run the simulation
     of the bioluminescence
     Parameters:
-        -str org_filter:
-            How to filter the organisms.
+        -dic config:
+            Configuration dictionary for the simulation
     Returns:
         -None
     """
     def __init__(self,
-     org_filter=config['filter']
-     ):
+        config=confi,
+    ):
         """
         function: __init__
         Initializes the class FD.
         Here all run parameters are set.
         Parameters:
-            -str org_filter:
-                How to filter the organisms.
-            -bool monte_carlo:
-                Use of monte carlo or not
+            -dic config:
+                Configuration dictionary for the simulation
         Returns:
             -None
         """
+        self.config = config
         "Logger"
         #TODO: Add config as parameter and remove import from other files
         # Basic config empty for now
@@ -85,11 +84,11 @@ class FD(object):
         self.log.setLevel(logging.DEBUG)
         self.log.propagate = False
         # creating file handler with debug messages
-        self.fh = logging.FileHandler('../fd.log', mode='w')
+        self.fh = logging.FileHandler('../run/fd.log', mode='w')
         self.fh.setLevel(logging.DEBUG)
         # console logger with a higher log level
         self.ch = logging.StreamHandler()
-        self.ch.setLevel(config['debug level'])
+        self.ch.setLevel(self.config['debug level'])
         # Logging formatter
         formatter = logging.Formatter(
             fmt='%(levelname)s: %(message)s'
@@ -108,19 +107,19 @@ class FD(object):
         self.log.info('---------------------------------------------------')
         self.log.info('Creating life...')
         # Life creation
-        self.life = fd_immaculate_conception(self.log).life
+        self.__life = fd_immaculate_conception(self.log, self.config).life
         self.log.info('Creation finished')
         self.log.info('---------------------------------------------------')
         self.log.info('---------------------------------------------------')
         self.log.info('Initializing flood')
         # Filtered species
-        self.evolved = fd_flood(self.life, org_filter, self.log).evolved
+        self.__evolved = fd_flood(self.__life, self.log, self.config).evolved
         self.log.info('Survivors collected!')
         self.log.info('---------------------------------------------------')
         self.log.info('---------------------------------------------------')
         self.log.info('Starting genesis')
         # PDF creation for all species
-        self.pdfs = fd_genesis(self.evolved, self.log).pdfs
+        self.__pdfs = fd_genesis(self.__evolved, self.log, self.config).pdfs
         self.log.info('Finished genesis')
         self.log.info('---------------------------------------------------')
         self.log.info('---------------------------------------------------')
@@ -128,17 +127,17 @@ class FD(object):
         self.log.info('To use custom weights for the populations, ')
         self.log.info('run fd_smithing with custom weights')
         # Object used to create pdfs
-        self.smith = fd_tubal_cain(self.pdfs, self.log)
+        self.__smith = fd_tubal_cain(self.__pdfs, self.log, self.config)
         # Fetching organized keys
-        self.keys = self.smith.keys
+        self.__keys = self.__smith.keys
         # Weightless pdf distribution
-        self.pdf_total = self.smith.fd_smithing()
+        self.__pdf_total = self.__smith.fd_smithing()
         self.log.info('Finished forging')
         self.log.info('---------------------------------------------------')
         self.log.info('---------------------------------------------------')
         self.log.info('Creating the world')
         #  The volume of interest
-        self.world = fd_adamah(self.log)
+        self.__world = fd_adamah(self.log, self.config)
         self.log.info('Finished world building')
         self.log.info('---------------------------------------------------')
         self.log.info('---------------------------------------------------')
@@ -146,7 +145,7 @@ class FD(object):
         # TODO: Make this pythonic
         # TODO: It would make sense to add this to immaculate_conception
         # TODO: Unify movement model with the spectra model
-        self.rate_model = fd_temere_congressus(self.log)
+        self.__rate_model = fd_temere_congressus(self.log, self.config)
         self.log.info('Finished the encounter model')
         self.log.info('---------------------------------------------------')
         self.log.info('---------------------------------------------------')
@@ -155,91 +154,132 @@ class FD(object):
         self.log.info('---------------------------------------------------')
 
     # TODO: Add incoming stream of organisms to the volume
-    # TODO: Creat a unified definition for velocities
-    def solve(self, population, velocity,
-              distances, photon_count,
-              seconds=100,
-              regen=1e-3,
-              dt=config['time step']):
+    def sim(self):
         """
-        function: solve
+        function: sim
         Calculates the light yields depending on input
         Parameters:
-            -float population:
-                The number of organisms
-            -float velocity:
-                The mean velocity of the current in m/s,
-                or the mean "social" velocity 
-            -float distances:
-                The distances to use. For a social run,
-                this is the mean infection distance
-            -float photon_count:
-                The mean photon count per collision.
-                Unused in social simulations
-            -int seconds:
-                Number of seconds to simulate. This is used by
-                the mc routines.
-            -float regen:
-                The regeneration factor
-            -float dt:
-                The time step to use. Needs to be below 1
+            -None
         Returns:
-            -np.array result:
-                The resulting light yields
+            -None
         """
-        if dt > 1.:
+        self.log.info('---------------------------------------------------')
+        self.log.info('---------------------------------------------------')
+        if self.config['time step'] > 1.:
             self.log.error("Chosen time step too large!")
             exit("Please run with time steps smaller than 1s!")
         self.log.info('Calculating light yields')
         self.log.debug('Monte-Carlo run')
         # The time grid
-        self.t = np.arange(0., seconds, dt)
+        self.__t = np.arange(0., self.config['duartion'], self.config['time step'])
         # The simulation
-        pdfs = self.rate_model.pdf
-        # TODO: Update this to take convex hulls.
-        # TODO: This will improve the check if point cloud is
-        #       inside
-        # TODO: Add switch which removes encounter model
-        #       depending on density of the organisms
-        self.mc_run = fd_roll_dice(
-            pdfs[0],
-            pdfs[1],
-            pdfs[2],
-            velocity,
-            population,
-            regen,
-            self.world,
+        self.__mc_run = fd_roll_dice(
+            self.__rate_model.pdf,
+            self.__world,
             self.log,
-            dt=dt,
-            t=self.t
+            self.config,
+            t=self.__t
         )
         self.log.debug('---------------------------------------------------')
         self.log.debug('---------------------------------------------------')
         # Applying pulse shapes
-        pulses = fd_yom(self.mc_run.photon_count, self.log).shaped_pulse
+        pulses = fd_yom(self.__mc_run.photon_count, self.log, self.config).shaped_pulse
         self.log.debug('---------------------------------------------------')
         self.log.debug('---------------------------------------------------')
         # The total emission
         self.log.debug('Total light')
         result = fd_lucifer(
             pulses[:, 0],
-            distances, self.log
-        ).yields * photon_count
+            self.log,
+            self.config
+        ).yields * self.config['photon yield']
         # The possible encounter emission without regen
         self.log.debug('Encounter light')
         result_enc = fd_lucifer(
             pulses[:, 1],
-            distances, self.log
-        ).yields * photon_count
+            self.log,
+            self.config
+        ).yields * self.config['photon yield']
         # The possible sheared emission without regen
         self.log.debug('Shear light')
         result_shear = fd_lucifer(
             pulses[:, 2],
-            distances, self.log
-        ).yields * photon_count
+            self.log,
+            self.config
+        ).yields * self.config['photon yield']
+        # Collecting results
+        self.__results = result
+        self.__results_enc = result_enc
+        self.__results_shear = result_shear
+        self.__history = self.__mc_run.distribution
         self.log.debug('---------------------------------------------------')
         self.log.debug('---------------------------------------------------')
         self.log.info('Finished calculation')
+        self.log.info('Get the results by typing self.results')
+        self.log.info('Structure of dictionray:')
+        self.log.info('["t", "total", "encounter", "shear", "history"]')
+        self.log.debug('Dumping config into ../run/config.txt')
+        with open('../run/config.txt', 'w') as f:
+            for item in self.config.keys():
+                print(item + ': ' + str(self.config[item]), file=f)
+        self.log.debug('Finished dump')
         self.log.info('---------------------------------------------------')
         self.log.info('---------------------------------------------------')
-        return result, result_enc, result_shear
+
+    @property
+    def results(self):
+        """
+        function: results
+        Fetches the simulation results
+        Parameters:
+            -None
+        Returns:
+            -dictionary:
+                ["t", "total", "encounter", "shear", "history"]
+        """
+        return {
+            't': self.__t,
+            'total': self.__results,
+            'encounter': self.__results_enc,
+            'shear': self.__results_shear,
+            'history': self.__history
+        }
+
+    @property
+    def world_size(self):
+        """
+        function: world_size
+        Fetches the size of the world used
+        Parameters:
+            -None
+        Returns:
+            -float:
+                The world size
+        """
+        return self.__world.bounding_box
+
+    @property
+    def pdfs(self):
+        """
+        function: pdfs
+        Fetches the light emission pdfs
+        Parameters:
+            -None
+        Returns:
+            -dic:
+                The pdf dictionary
+        """
+        return self.__pdfs
+
+    @property
+    def pdf_total(self):
+        """
+        function: pdf_total
+        Fetches the weighted sums of light emission pdfs
+        Parameters:
+            -None
+        Returns:
+            -scipy.Univariate spline objecy:
+                The total pdf
+        """
+        return self.__pdf_total
