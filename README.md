@@ -50,6 +50,7 @@ total = results['total']
 ```
 
 This generates results of the form
+
 ![Example results](images/MC_Example.png)
 
 ## Code structure
