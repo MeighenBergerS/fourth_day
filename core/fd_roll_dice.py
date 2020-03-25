@@ -123,8 +123,8 @@ class fd_roll_dice(object):
             -None
         """
         self.__photon_count = []
+        start = time()
         for step, _ in enumerate(self.__t):
-            start_pos = time()
             # Updating position
             tmp = (
                 self.__population[:, 0:self.__dim] +
@@ -139,16 +139,12 @@ class fd_roll_dice(object):
                 tmp[idIt] - self.__population[:, self.__dim:self.__dim*2][idIt] * self.__dt
                 for idIt in range(self.__pop)
             ])
-            end_pos = time()
             # Updating velocity
-            start_vel = time()
             self.__population[:, self.__dim:self.__dim*2] = (
                 self.__vel(self.__pop).reshape((self.__pop, 1)) *
                 self.__random_direction(self.__pop)
             )
-            end_vel = time()
             # Creating encounter array
-            start_enc = time()
             # Checking if encounters are relevant
             if self._bool_enc:
                 # They are
@@ -180,7 +176,6 @@ class fd_roll_dice(object):
                 self.__population[:, self.__dim*2+2][idIt]
                 for idIt in range(self.__pop)
             ])
-            end_enc = time()
             # Subtracting energy
             self.__population[:, self.__dim*2+2] = (
                 self.__population[:, self.__dim*2+2] - light_emission
@@ -212,16 +207,12 @@ class fd_roll_dice(object):
                 self.__population)
             )
             if step % (int(len(self.__t)/10)) == 0:
+                end = time()
                 self.__log.debug('In step %d' %step)
                 self.__log.debug(
-                    'Position update took %f seconds' %(end_pos-start_pos)
+                    'Last round of simulations took %f seconds' %(end-start)
                 )
-                self.__log.debug(
-                    'Velocity update took %f seconds' %(end_vel-start_vel)
-                )
-                self.__log.debug(
-                    'Emission update took %f seconds' %(end_enc-start_enc)
-                )
+                start = time()
 
     @property
     def photon_count(self):

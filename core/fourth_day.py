@@ -103,6 +103,11 @@ class FD(object):
         self.log.info('Welcome to FD!')
         self.log.info('This package will help you model deep sea' +
                       ' bioluminescence! (And some other things)')
+        self.log.debug('Trying to catch some config errors')
+        if not(self.config.keys() == confi.keys()):
+            self.log.error('Wrong keys were added to config file!' +
+                           'Please check your input')
+            exit('Unknown keys found in config. Please check!')
         self.log.info('---------------------------------------------------')
         self.log.info('---------------------------------------------------')
         self.log.info('Creating life...')
@@ -218,13 +223,24 @@ class FD(object):
         self.log.info('Get the results by typing self.results')
         self.log.info('Structure of dictionray:')
         self.log.info('["t", "total", "encounter", "shear", "history"]')
-        self.log.debug('Dumping config into ../run/config.txt')
+        self.log.debug('    t: The time array')
+        self.log.debug('    total: The total emissions at each point in time')
+        self.log.debug('    encounter: The encounter emissions at each point in time')
+        self.log.debug('    shear: The shear emissions at each point in time')
+        self.log.debug('    history: The population at every point in time')
+
+        self.log.debug('Dumping run settings into ../run/config.txt')
         with open('../run/config.txt', 'w') as f:
             for item in self.config.keys():
                 print(item + ': ' + str(self.config[item]), file=f)
         self.log.debug('Finished dump')
         self.log.info('---------------------------------------------------')
         self.log.info('---------------------------------------------------')
+        # Closing log
+        self.log.removeHandler(self.fh)
+        self.log.removeHandler(self.ch)
+        del self.log, self.fh, self.ch
+        logging.shutdown()
 
     @property
     def results(self):
