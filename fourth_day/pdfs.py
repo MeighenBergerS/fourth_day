@@ -15,6 +15,7 @@ _log = logging.getLogger(__name__)
 
 class Probability(object, metaclass=abc.ABCMeta):
     """ Abstract class to interface to the probabilities
+
     Parameters
     ----------
     pdf : object
@@ -33,6 +34,7 @@ class Probability(object, metaclass=abc.ABCMeta):
         ----------
         values : np.array
             The values to flatten
+
         Returns
         -------
         None
@@ -41,22 +43,25 @@ class Probability(object, metaclass=abc.ABCMeta):
 
 
 class PDF(object, metaclass=abc.ABCMeta):
-    """
-    class: PDF
-    Interface class for the pdfs.
+    """ Interface class for the pdfs.
     One layer inbetween to allow different
     pdf packages such as scipy and numpy
-    Parameters:
-        -class pdf_interface:
-            Interface class to the pdf
-            classes
-    Returns:
-        -None
+
+    Parameters
+    ----------
+    pdf_interface : class
+        Interface class to the pdf
+        classes
+
+    Returns
+    -------
+    None
     """
 
     @abc.abstractmethod
     def rvs(self, num: int) -> np.ndarray:
         """ Random variate sampling, filled with the subclasses definition
+
         Parameters
         ----------
         num : int
@@ -97,6 +102,7 @@ class ScipyPDF(PDF, metaclass=abc.ABCMeta):
     """
     def rvs(self, num: int, dtype: Optional[type] = None) -> np.ndarray:
         """ Calculates the random variates
+
         Parameters
         ----------
         num : int
@@ -119,6 +125,7 @@ class ScipyPDF(PDF, metaclass=abc.ABCMeta):
     def pdf(self, points: Union[float, np.ndarray],
             dtype: Optional[type] = None) -> np.ndarray:
         """ Calculates the probabilities
+
         Parameters
         ----------
         points : np.ndarray
@@ -179,6 +186,7 @@ class Normal(ScipyPDF):
 
 class Gamma(ScipyPDF):
     """ Class for the scaled gamma distribution
+
     Parameters
     ----------
     mean : Union[float, np.array]
@@ -197,6 +205,7 @@ class Gamma(ScipyPDF):
             sd: Union[float, np.ndarray],
             max_val=None) -> None:
         """ Initializes the scaled gamma distribution
+
         Parameters
         ----------
         mean : Union[float, np.array]

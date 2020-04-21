@@ -33,26 +33,27 @@ _baseconfig = {
         # Scenario class
         "class": "StandardScenario",
         # Length of simulation in seconds
-        "duartion": 100,
+        "duration": 100,
         # The population
         "population size": 100,
-        # Observation distance
-        "observation distance": 0.,  # in m
         # Starting distribution
         # -Uniform:
         #   Organisms are randomly distributed at the beginning
         "inital distribution": "Uniform",
         # Injection rate
         # Number of organisms to inject per second
-        "injection rate": 10.,
+        "injection rate": 10,
     },
+    ###########################################################################
+    # Geometry input
+    ###########################################################################
     "geometry": {
         # Number of dimensions for the simulation
         # Current options:
         #   - 2
         "dimensions": 2,
         # The geometry of the problem.
-        #   -'box':
+        #   -'box' only one supported:
         #       Creates a uniform box of 1m x 1m x 1m evenly filled.
         #   -'sphere':
         #       Creates a uniform sphere
@@ -78,19 +79,10 @@ _baseconfig = {
     # Water inputs
     ###########################################################################
     "water": {
-        # The light attenuation factor
-        "light attenuation factor": 6.9,
         # Water current velocity in m/s
-        "water current velocity": 5.,
-        # The water urrent model
-        # This defines how the flow of water looks
-        # This will be given by the geometry of the detector
-        # As a test case two standards are implemented:
-        #   - "constant":
-        #       Constant current in one direction
-        #   - "rotation":
-        #       A rotating current 
-        "current model": "rotation",
+        "water current velocity": 0.5,
+        # Current angle
+        "water current angle": 0.,
     },
     ###########################################################################
     # Organisms inputs
@@ -157,7 +149,11 @@ _baseconfig = {
         'regeneration': 1e-3,
         # TODO: Make this a distribution using data
         # Emission duration
-        'emission duration': 3.
+        'emission duration': 3.,
+        # Minimal shear stress
+        'minimal shear stress': 0.1,
+        # Proportionality factor for shear
+        'alpha': 1e-2,
     },
     ###################################################
     # Advanced
@@ -167,9 +163,9 @@ _baseconfig = {
         # How large the angle change between steps can be
         # (for the organisms)
         # Org. won't move with angles between the values
-        "angle change": [0.785398, 5.48033],
+        "angle change": [np.pi/4., 7. * np.pi / 4.],
         # Samples for directions
-        "angle samples": 50,
+        "angle samples": 100,
         # Number of points to use when constructing a spherical
         # geometry. Increasing the number increases the precision,
         # while reducing efficiency

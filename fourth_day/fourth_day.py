@@ -225,4 +225,4 @@ class Fourth_Day(object):
         statistics : dic
                 Stores the results from the simulation
         """
-        return np.arange(0., config['scenario']["duartion"])
+        return range(self._mc_run.iterations)

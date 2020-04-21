@@ -74,6 +74,7 @@ class MC_sim(object):
                 "angle": 0.,
                 "radius": 0.,
                 "energy": 1.,
+                "observed": True,
                 "max_emission": 0.,
                 "emission fraction": (
                     config["organisms"]["emission fraction"]
@@ -84,6 +85,8 @@ class MC_sim(object):
                 "is_emitting": False,
                 "emission_duration": 0,
                 "encounter photons": 0,
+                "shear photons": 0.,
+                "photons": 0.
             },
             index=np.arange(config['scenario']["population size"]),
         )
@@ -139,14 +142,22 @@ class MC_sim(object):
             self._population,
             life,
             world,
+            possible_species
         )
         _log.debug("Finished the state machine")
         # Running the simulation
         _log.debug("Launching the simulation")
         start = time()
+        self._iterations = 0
         self._statistics = []
-        for _ in range(config['scenario']["duartion"]):
-            self._statistics.append(copy.deepcopy(self._sm.update()))
+        for _ in range(config['scenario']["duration"]):
+            res = copy.deepcopy(self._sm.update())
+            self._statistics.append(res[0])
+            if res[1]:
+                # No more observed organisms
+                _log.debug("No more observed organisms")
+                break
+            self._iterations += 1
         end = time()
         _log.debug("Finished the simulation")
         _log.info("MC simulation took %f seconds" % (end - start))
@@ -163,6 +174,21 @@ class MC_sim(object):
         Returns
         -------
         statistics : dic
-                Stores the results from the simulation
+            Stores the results from the simulation
         """
-        return self._statistics      
+        return self._statistics
+
+    @property
+    def iterations(self):
+        """ Getter functions for the simulation iterations
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        iterations : float
+            Number of iterations
+        """
+        return self._iterations
