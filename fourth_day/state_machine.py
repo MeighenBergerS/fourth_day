@@ -11,6 +11,7 @@ import pandas as pd  # type: ignore
 from .config import config
 from .genesis import Genesis
 from .adamah import Adamah
+from .current import Current
 
 
 class FourthDayStateMachine(object):
@@ -31,18 +32,17 @@ class FourthDayStateMachine(object):
         initial: pd.DataFrame,
         life: Genesis,
         world: Adamah,
+        current: Current,
         possible_species: np.array
     ):
         self._rstate = config["runtime"]['random state']
         self._population = initial
         self._life = life
         self._world = world
+        self._current = current
         self._possible_species = possible_species
         self._pop_size = config['scenario']['population size']
         # TODO: Make this position dependent
-        # Water
-        self._water_current = config["water"]["water current velocity"]
-        self._water_angle = config['water']["water current angle"]
         # Organism shear property
         self._min_shear = config['organisms']['minimal shear stress']
         # angle samples
@@ -103,12 +103,10 @@ class FourthDayStateMachine(object):
         ) * (self._population.loc[:,
                                   'velocity'].values).reshape(
             (len(self._population.loc[:, 'velocity'].values), 1)
-        ) + self._water_current * np.array(
-            list(zip(np.cos(np.ones(self._pop_size) *
-                            self._water_angle),
-                     np.sin(np.ones(self._pop_size) *
-                            self._water_angle))
-        )))
+        ) + self._current.current_vel(
+                self._population.loc[:, 'pos_x'].values,
+                self._population.loc[:, 'pos_y'].values
+        ))
         # TODO: Optimize this
         # Checking if these are inside and observed
         new_observation_mask = np.array([
@@ -143,10 +141,11 @@ class FourthDayStateMachine(object):
         shear_bool = np.zeros(self._pop_size, dtype=bool)
         shear_bool[new_observation_mask] = np.array(
             self._count_sheared_fired(
-                observation_count,
-                self._water_current),
+                self._current.gradient.ev(
+                    self._population.loc[new_observation_mask, 'pos_x'].values,
+                    self._population.loc[new_observation_mask, 'pos_y'].values
+                )),
             dtype=bool)
-
         # Only those not currently emitting can emit
         currently_emitting = np.ones(self._pop_size, dtype=bool)
         currently_emitting[new_observation_mask] = np.invert(
@@ -159,8 +158,7 @@ class FourthDayStateMachine(object):
         # Fetching shear emitters
         new_emitters_shear = np.logical_and(shear_bool, currently_emitting)
         # Assume shearing only happens when no encounter
-        new_emitters_shear = np.logical_xor(new_emitters_shear,
-                                            new_emitters_enc)
+        new_emitters_shear[new_emitters_enc] = False
 
         # Enough energy for a burst?
         burst_bool = np.zeros(self._pop_size, dtype=bool)
@@ -187,8 +185,8 @@ class FourthDayStateMachine(object):
                                  'emission fraction'].values
         )
         # New energy
-        successful_burst = np.logical_and(successful_burst_enc,
-                                          successful_burst_shear)
+        successful_burst = np.logical_or(successful_burst_enc,
+                                         successful_burst_shear)
         new_energy = (
             self._population.loc[successful_burst,
                                  'energy'].values -
@@ -197,8 +195,12 @@ class FourthDayStateMachine(object):
         )
         # Updating population
         # Position
-        self._population.loc[new_observation_mask, 'pos_x'] = new_position[new_observation_mask, 0]
-        self._population.loc[new_observation_mask, 'pos_y'] = new_position[new_observation_mask, 1]
+        self._population.loc[observation_mask, 'pos_x'] = (
+            new_position[observation_mask, 0]
+        )
+        self._population.loc[observation_mask, 'pos_y'] = (
+            new_position[observation_mask, 1]
+        )
         # Velocity
         self._population.loc[new_observation_mask, 'velocity'] = new_velocities
         # Angles
@@ -247,13 +249,13 @@ class FourthDayStateMachine(object):
             for i in range(int(self._injetion_counter)):
                 self._population.loc[self._pop_size + i] = [
                     self._rstate.choice(self._possible_species, 1)[0],  # Species
-                    -config['geometry']['box size']/2.,  # position x
+                    0.,  # position x
                     self._rstate.uniform(
-                        low=-config['geometry']['box size']/2.,
-                        high=config['geometry']['box size']/2.,
+                        low=0.,
+                        high=self._world.y,
                         size=1)[0],  # position y
                     0., # self._life.Movement["vel"].rvs(1) / 1e3,  # velocity
-                    config['water']['water current angle'], # angle
+                    0., # angle
                     self._life.Movement['rad'].rvs(1)[0] / 1e3,  # radius
                     1.,  # energy
                     True,  # observed
@@ -296,13 +298,13 @@ class FourthDayStateMachine(object):
         ])
         return encounter_arr
 
-    def _count_sheared_fired(self, count, velocity=None) -> np.ndarray:
+    def _count_sheared_fired(self, velocity) -> np.ndarray:
         """ Counts the number fires due to shearing
 
         Parameters
         ----------
-        velocity : optional float
-            Mean velocity of the water current in m/s
+        velocity : np.array
+            Position dependent water velocity
 
         Returns
         -------
@@ -314,34 +316,21 @@ class FourthDayStateMachine(object):
         res = self._rstate.binomial(
             1,
             self._cell_anxiety(velocity),
-            count
         )
         return res
 
-    def _cell_anxiety(self, velocity=None) -> float:
-        """ Estimates the cell anxiety with alpha * ( shear_stress - min_shear_stress).
-        We assume the shear stress to be in the range of 0.1 - 2 Pa and the minimally required shear stress to be 0.1.
-        Here, we assume 1.1e-2 for alpha. alpha and minimally required shear stress vary for each population
+    def _cell_anxiety(self, velocity: np.array) -> np.array:
+        """ Estimates the cell anxiety with alpha * velocity
 
         Parameters
         ----------
-        velocity : optional float
+        velocity : np.array
             The velocity of the current in m/s
 
         Returns
         -------
-        res : float
-            Estimated value for the cell anxiety depending of the velocity and thus the shearing
+        res : np.array
+            Estimated value for the cell anxiety depending on the shearing
         """
-        if velocity:
-            # just assume 10 percent of the velocity to be transferred to shearing. Corresponds to shearing of
-            # 0.01 - 1 Pascal
-            shear_stress = velocity * 0.1
-        else:
-            # Standard velocity is 5m/s
-            shear_stress = 0.5
 
-        if shear_stress < self._min_shear:
-            return 0.
-
-        return config['organisms']['alpha'] * (shear_stress - self._min_shear)
+        return config['organisms']['alpha'] * velocity

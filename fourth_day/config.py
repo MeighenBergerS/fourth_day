@@ -48,41 +48,25 @@ _baseconfig = {
     # Geometry input
     ###########################################################################
     "geometry": {
-        # Number of dimensions for the simulation
-        # Current options:
-        #   - 2
-        "dimensions": 2,
         # The geometry of the problem.
-        #   -'box' only one supported:
-        #       Creates a uniform box of 1m x 1m x 1m evenly filled.
-        #   -'sphere':
-        #       Creates a uniform sphere
-        #   -'custom':
-        #       Use a custom geometry defined in a pkl file.
-        #       Place file in data/detector/geometry which needs to be a
-        #       dumped library with:
-        #           {'dimensions': d,  # dimensions as int
-        #            'bounding box': a,  # bounding box as float
-        #            'volume': v,  # The volume
-        #            'points': np.array  # point cloud as 2d array with e.g.
-        #             [x,y,z]
-        'volume': 'box',
-        'box size': 1e0,  # Side length in m of box
-        'sphere diameter': 1e0,  # Radius of the sphere
-        'custom geometry': 'example_tetrahedron.pkl',  # File
-        # Size of bounding box
-        # This box needs to surround the volume of interest
-        # It is used to create a population sample
-        'bounding box': 1.1e0,
+        #   -'rectangle'
+        #       Constructs a rectangle defined by the user
+        'volume': {
+            "function": 'rectangle',  # the geometry type
+            "x_length": 6.,  # in meters
+            "y_length": 3.  # in meters
+        },
     },
     ###########################################################################
     # Water inputs
     ###########################################################################
     "water": {
-        # Water current velocity in m/s
-        "water current velocity": 0.5,
-        # Current angle
-        "water current angle": 0.,
+        # Current model
+        # supported: parabola
+        "model": {
+            "name": "parabola",
+            "norm": 0.6,
+        },
     },
     ###########################################################################
     # Organisms inputs
@@ -153,7 +137,7 @@ _baseconfig = {
         # Minimal shear stress
         'minimal shear stress': 0.1,
         # Proportionality factor for shear
-        'alpha': 1e-2,
+        'alpha': 1.,
     },
     ###################################################
     # Advanced
@@ -169,7 +153,9 @@ _baseconfig = {
         # Number of points to use when constructing a spherical
         # geometry. Increasing the number increases the precision,
         # while reducing efficiency
-        'sphere samples': int(5e1),  # Number of points to construct the sphere   
+        'sphere samples': int(5e1),  # Number of points to construct the sphere
+        # Water grid size in m
+        'water grid size': 1e-2,
     },
 }
 

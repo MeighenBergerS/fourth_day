@@ -17,6 +17,7 @@ from .config import config
 from .state_machine import FourthDayStateMachine
 from .genesis import Genesis
 from .adamah import Adamah
+from .current import Current
 
 
 _log = logging.getLogger(__name__)
@@ -43,7 +44,7 @@ class MC_sim(object):
         Wrong starting distribution
     """
 
-    def __init__(self, life: Genesis, world: Adamah):
+    def __init__(self, life: Genesis, world: Adamah, current: Current):
         """ Initializes the monte-carlo simulation for the light
         emissions.
 
@@ -53,6 +54,8 @@ class MC_sim(object):
             The organisms
         world : Adamah
             The world
+        current : Current
+            The water current
 
         Returns
         -------
@@ -103,24 +106,23 @@ class MC_sim(object):
         # Distributing positions
         # TODO: Optimize this
         if config["scenario"]["inital distribution"] == "Uniform":
-            positions = []
-            while len(positions) < self._pop_size:
-                inside = True
-                while inside:
-                    point = (
-                        config["runtime"]['random state'].uniform(
-                            low=-world.bounding_box/2.,
-                            high=world.bounding_box/2.,
-                            size=world.dimensions)
-                    )
-                    inside = not(world.point_in_wold(point))
-                positions.append(point)
-            positions = np.array(positions)
+            x_coords = (
+                config["runtime"]['random state'].uniform(
+                    low=0.,
+                    high=world.x,
+                    size=self._pop_size)
+            )
+            y_coords = (
+                config["runtime"]['random state'].uniform(
+                    low=0.,
+                    high=world.y,
+                    size=self._pop_size)
+            )
         else:
             _log.error("Unrecognized starting distribution. Check the config")
             raise ValueError("Starting distribution is set wrong!")
-        self._population.loc[:, "pos_x"] = positions[:, 0]
-        self._population.loc[:, "pos_y"] = positions[:, 1]
+        self._population.loc[:, "pos_x"] = x_coords
+        self._population.loc[:, "pos_y"] = y_coords
         # Distributing the radii
         self._population.loc[:, 'radius'] = (
             life.Movement['rad'].rvs(self._pop_size) / 1e3
@@ -142,6 +144,7 @@ class MC_sim(object):
             self._population,
             life,
             world,
+            current,
             possible_species
         )
         _log.debug("Finished the state machine")

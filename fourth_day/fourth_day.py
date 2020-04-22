@@ -45,6 +45,7 @@ from time import time
 from .config import config
 from .genesis import Genesis
 from .adamah import Adamah
+from .current import Current
 from .mc_sim import MC_sim
 
 # unless we put this class in __init__, __name__ will be contagion.contagion
@@ -134,6 +135,11 @@ class Fourth_Day(object):
         _log.info('Finished world building')
         _log.info('---------------------------------------------------')
         _log.info('---------------------------------------------------')
+        _log.info('Constructing the current')
+        self._current = Current()
+        _log.info('Finished the current')
+        _log.info('---------------------------------------------------')
+        _log.info('---------------------------------------------------')
         _log.info('To run the simulation use the sim method')
         _log.info('---------------------------------------------------')
         _log.info('---------------------------------------------------')
@@ -156,7 +162,8 @@ class Fourth_Day(object):
         # The simulation
         self._mc_run = MC_sim(
             self._life,
-            self._world
+            self._world,
+            self._current
         )
         _log.debug('---------------------------------------------------')
         _log.debug('---------------------------------------------------')
