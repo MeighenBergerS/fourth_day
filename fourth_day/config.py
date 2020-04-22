@@ -143,17 +143,6 @@ _baseconfig = {
     # Advanced
     ###################################################
     "advanced" : {
-        # Freedom of movement
-        # How large the angle change between steps can be
-        # (for the organisms)
-        # Org. won't move with angles between the values
-        "angle change": [np.pi/4., 7. * np.pi / 4.],
-        # Samples for directions
-        "angle samples": 100,
-        # Number of points to use when constructing a spherical
-        # geometry. Increasing the number increases the precision,
-        # while reducing efficiency
-        'sphere samples': int(5e1),  # Number of points to construct the sphere
         # Water grid size in m
         'water grid size': 1e-2,
     },

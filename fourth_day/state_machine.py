@@ -45,20 +45,9 @@ class FourthDayStateMachine(object):
         # TODO: Make this position dependent
         # Organism shear property
         self._min_shear = config['organisms']['minimal shear stress']
-        # angle samples
-        lower_sample = np.linspace(
-            0.,
-            config['advanced']["angle change"][0],
-            config['advanced']['angle samples']
-        )
-        upper_sample = np.linspace(
-            config['advanced']["angle change"][1],
-            2. * np.pi,
-            config['advanced']['angle samples']
-        )
-        self._angle_samples = np.concatenate((lower_sample, upper_sample))
         self._injection_rate = config['scenario']["injection rate"]
         self._injetion_counter = 0
+        self._step = 0
 
     def update(self):
         """ Updates the state by making one time step
@@ -105,7 +94,8 @@ class FourthDayStateMachine(object):
             (len(self._population.loc[:, 'velocity'].values), 1)
         ) + self._current.current_vel(
                 self._population.loc[:, 'pos_x'].values,
-                self._population.loc[:, 'pos_y'].values
+                self._population.loc[:, 'pos_y'].values,
+                self._step
         ))
         # TODO: Optimize this
         # Checking if these are inside and observed
@@ -115,18 +105,14 @@ class FourthDayStateMachine(object):
         ])
         observation_count = np.sum(new_observation_mask)
         if observation_count == 0:
+            self._step += 1
             return [self._population, True]
         # New velocities
         # Organism movement
         new_velocities = self._life.Movement["vel"].rvs(observation_count) / 1e3
         # New angles
-        new_angles = (self._rstate.choice(self._angle_samples,
-                                          observation_count) +
-                      self._population.loc[new_observation_mask,
-                                           'angle'].values)
-        # Projecting
-        new_angles_cos = np.cos(new_angles)
-        new_angles = np.arccos(new_angles_cos)
+        new_angles = np.pi * self._rstate.uniform(0.,
+                                                  2., size=observation_count)
         # Checking encounters
         encounter_count = (np.sum(
             self._encounter(new_position[new_observation_mask]), axis=1
@@ -141,9 +127,10 @@ class FourthDayStateMachine(object):
         shear_bool = np.zeros(self._pop_size, dtype=bool)
         shear_bool[new_observation_mask] = np.array(
             self._count_sheared_fired(
-                self._current.gradient.ev(
+                self._current.gradient(
                     self._population.loc[new_observation_mask, 'pos_x'].values,
-                    self._population.loc[new_observation_mask, 'pos_y'].values
+                    self._population.loc[new_observation_mask, 'pos_y'].values,
+                    self._step
                 )),
             dtype=bool)
         # Only those not currently emitting can emit
@@ -272,6 +259,7 @@ class FourthDayStateMachine(object):
             self._injetion_counter = 0.
         else:
             self._injetion_counter += self._injection_rate
+        self._step += 1
         return [self._population, False]
 
     def _encounter(self, positions: np.ndarray) -> np.ndarray:

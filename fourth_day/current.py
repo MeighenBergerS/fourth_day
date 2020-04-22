@@ -41,7 +41,7 @@ class Current(object):
         else:
             _log.error('Current model not supported! Check the config file')
             raise ValueError('Unsupported current model')
-        self._gradient_constructor()
+        self._gradient = self._gradient_constructor
 
     @property
     def gradient(self) -> np.array:
@@ -79,25 +79,37 @@ class Current(object):
         """
         return self._vel_func
 
-    def _gradient_constructor(self):
+    def _gradient_constructor(self, x: np.array, y: np.array, step: int):
         """ Constructs the gradient field
 
         Parameters
         ----------
+        x : np.array
+            The x coordinates
+        y : np.array
+            The y coordinates
+        step : int
+            The current time step
+
+        Returns
+        -------
+        np.array
+            The gradient field
         """
-        vel_field = self._vel_field(self._x_grid, self._y_grid)
+        vel_field = self._vel_field(self._x_grid, self._y_grid, step)
         gradient_fields = np.gradient(
             vel_field, self._grid_size, self._grid_size
         )
         # Constructing the absolute values
         gradient_fields_norm = np.linalg.norm(gradient_fields, axis=0).T
-        self._gradient = RectBivariateSpline(
+        gradient = RectBivariateSpline(
             self._x_grid,
             self._y_grid,
             gradient_fields_norm
         )
+        return gradient.ev(x, y)
 
-    def _parabola_field(self, x: np.array, y: np.array) -> np.array:
+    def _parabola_field(self, x: np.array, y: np.array, step: int) -> np.array:
         """ Constructs a parabolic velocity field
 
         Parameters
@@ -106,6 +118,8 @@ class Current(object):
             The x coordinates
         y : np.array
             The y coordinates
+        step : int
+            The current time step
 
         Returns
         -------
@@ -117,7 +131,7 @@ class Current(object):
             for _ in x
         ]).T
 
-    def _parabola_vel(self, x: np.array, y: np.array) -> np.array:
+    def _parabola_vel(self, x: np.array, y: np.array, step: int) -> np.array:
         """ Constructs a parabolic velocity
 
         Parameters
@@ -126,6 +140,8 @@ class Current(object):
             The x coordinates
         y : np.array
             The y coordinates
+        step : int
+            The current time step
 
         Returns
         -------
