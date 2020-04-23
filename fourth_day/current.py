@@ -5,6 +5,7 @@ Authors: Stephan Meighen-Berger
 Handles current construction or loading
 """
 import logging
+import os
 import numpy as np
 from scipy.interpolate import interp2d, RectBivariateSpline
 from .config import config
@@ -41,6 +42,9 @@ class Current(object):
             self._gradient = self._gradient_constructor_parab
         elif model_name == 'custom':
             self._save_string = conf_dict['save string']
+            self._number_of_files = (len(
+                os.listdir(self._save_string)
+            ) - 1)
             # TODO: Make this load only once
             self._vel_func = self._vel_constructor_custom
             self._gradient = self._gradient_constructor_custom
@@ -132,11 +136,11 @@ class Current(object):
         self._vel_field = np.load(self._save_string +
                                   "data_" + str(step) + ".npy")
         self._x_vel_field = np.reshape(
-            self._vel_field[:, 0] * 100.,
+            self._vel_field[:, 0] * 10.,
             (self._x_grid.shape[0], self._y_grid.shape[0])
         )
         self._y_vel_field = np.reshape(
-            self._vel_field[:, 1] * 100.,
+            self._vel_field[:, 1] * 10.,
             (self._x_grid.shape[0], self._y_grid.shape[0])
         )
 
@@ -157,7 +161,8 @@ class Current(object):
         np.array
             The velocities
         """
-        i = step % 75
+        # Repeat if not enough files
+        i = step % self._number_of_files
         self._data_loader(i)
         x_vel = RectBivariateSpline(
             self._x_grid,

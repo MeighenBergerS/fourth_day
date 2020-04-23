@@ -263,6 +263,8 @@ class FourthDayStateMachine(object):
         else:
             self._injetion_counter += self._injection_rate
         self._step += 1
+        if self._step % 100 == 0:
+            _log.debug("Finished step %d" %self._step)
         return [self._population, False]
 
     def _encounter(self, positions: np.ndarray) -> np.ndarray:
