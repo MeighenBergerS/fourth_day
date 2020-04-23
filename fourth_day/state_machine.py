@@ -7,11 +7,14 @@ Constructs the state machine
 
 import numpy as np  # type: ignore
 import pandas as pd  # type: ignore
+import logging
 
 from .config import config
 from .genesis import Genesis
 from .adamah import Adamah
 from .current import Current
+
+_log = logging.getLogger(__name__)
 
 
 class FourthDayStateMachine(object):
@@ -286,28 +289,37 @@ class FourthDayStateMachine(object):
         ])
         return encounter_arr
 
-    def _count_sheared_fired(self, velocity) -> np.ndarray:
+    def _count_sheared_fired(self, gradient: np.array) -> np.ndarray:
         """ Counts the number fires due to shearing
 
         Parameters
         ----------
         velocity : np.array
-            Position dependent water velocity
+            Position dependent water gradient
 
         Returns
         -------
         res : np.array
             Number of cells that sheared and fired.
+
+        Raises
+        ------
+        ValueError
+            Probability is wring
         """
         # Generating vector with 1 for fired and 0 for not
-        # TODO: Step dependence
-        res = self._rstate.binomial(
-            1,
-            self._cell_anxiety(velocity),
-        )
+        try:
+            res = self._rstate.binomial(
+                1,
+                self._cell_anxiety(gradient),
+            )
+        except:
+            _log.error('Probability > 1 or < 0. Check construction')
+            raise ValueError("Probability too high or low!")
+            
         return res
 
-    def _cell_anxiety(self, velocity: np.array) -> np.array:
+    def _cell_anxiety(self, gradient: np.array) -> np.array:
         """ Estimates the cell anxiety with alpha * velocity
 
         Parameters
@@ -320,5 +332,7 @@ class FourthDayStateMachine(object):
         res : np.array
             Estimated value for the cell anxiety depending on the shearing
         """
-
-        return config['organisms']['alpha'] * velocity
+        # TODO: Normalize this
+        res = config['organisms']['alpha'] * np.abs(gradient)
+        res[res > 0.99] = 0.99
+        return res

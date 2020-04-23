@@ -66,7 +66,7 @@ _baseconfig = {
         "model": {
             "name": "custom",
             "norm": 0.6,  # Not required with custom
-            "save string": "../data/current/Parabolic/"
+            "save string": "../data/current/regular_values_npy/"
         },
     },
     ###########################################################################

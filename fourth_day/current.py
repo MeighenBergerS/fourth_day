@@ -114,8 +114,34 @@ class Current(object):
         )
         return gradient.ev(x, y)
 
+    def _data_loader(self, step):
+        """ Loads the custom current data
+
+        Parameters
+        ----------
+        step : int
+            The current step
+
+        Returns
+        -------
+        None
+        """
+        self._grid = np.load(self._save_string + "xy_coords.npy")
+        self._x_grid = np.unique(self._grid[0] - self._grid[0][0])
+        self._y_grid = np.unique(self._grid[1] - self._grid[1][0])
+        self._vel_field = np.load(self._save_string +
+                                  "data_" + str(step) + ".npy")
+        self._x_vel_field = np.reshape(
+            self._vel_field[:, 0] * 100.,
+            (self._x_grid.shape[0], self._y_grid.shape[0])
+        )
+        self._y_vel_field = np.reshape(
+            self._vel_field[:, 1] * 100.,
+            (self._x_grid.shape[0], self._y_grid.shape[0])
+        )
+
     def _vel_constructor_custom(self, x: np.array, y: np.array, step: int):
-        """ "Fetches the velocity data
+        """ Fetches the velocity data
 
         Parameters
         ----------
@@ -131,19 +157,17 @@ class Current(object):
         np.array
             The velocities
         """
-        x_vel_field = np.load(self._save_string +
-                              "x_step_" + str(step) + ".npy")
-        y_vel_field = np.load(self._save_string +
-                              "y_step_" + str(step) + ".npy")
+        i = step % 75
+        self._data_loader(i)
         x_vel = RectBivariateSpline(
             self._x_grid,
             self._y_grid,
-            x_vel_field
+            self._x_vel_field
         )
         y_vel = RectBivariateSpline(
             self._x_grid,
             self._y_grid,
-            y_vel_field
+            self._y_vel_field
         )
         return np.array(list(zip(x_vel.ev(x, y),y_vel.ev(x, y))))
 
@@ -166,19 +190,15 @@ class Current(object):
         np.array
             The gradient field
         """
-        x_vel_field = np.load(self._save_string +
-                              "x_step_" + str(step) + ".npy")
-        y_vel_field = np.load(self._save_string +
-                              "y_step_" + str(step) + ".npy")
         x_gradient_fields = np.gradient(
-            x_vel_field.T, self._grid_size, self._grid_size
+            self._x_vel_field, self._x_grid, self._y_grid
         )
         y_gradient_fields = np.gradient(
-            y_vel_field.T, self._grid_size, self._grid_size
+            self._y_vel_field, self._x_grid, self._y_grid
         )
         gradient_fields = x_gradient_fields + y_gradient_fields
         # Constructing the absolute values
-        gradient_fields_norm = np.linalg.norm(gradient_fields, axis=0).T
+        gradient_fields_norm = np.linalg.norm(gradient_fields, axis=0)
         gradient = RectBivariateSpline(
             self._x_grid,
             self._y_grid,
