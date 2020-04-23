@@ -62,10 +62,11 @@ _baseconfig = {
     ###########################################################################
     "water": {
         # Current model
-        # supported: parabola
+        # supported: parabola, custom
         "model": {
-            "name": "parabola",
-            "norm": 0.6,
+            "name": "custom",
+            "norm": 0.6,  # Not required with custom
+            "save string": "../data/current/Parabolic/"
         },
     },
     ###########################################################################

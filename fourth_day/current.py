@@ -38,10 +38,15 @@ class Current(object):
             self._norm = conf_dict['norm']
             self._vel_func = self._parabola_vel
             self._vel_field = self._parabola_field
+            self._gradient = self._gradient_constructor_parab
+        elif model_name == 'custom':
+            self._save_string = conf_dict['save string']
+            # TODO: Make this load only once
+            self._vel_func = self._vel_constructor_custom
+            self._gradient = self._gradient_constructor_custom
         else:
             _log.error('Current model not supported! Check the config file')
             raise ValueError('Unsupported current model')
-        self._gradient = self._gradient_constructor
 
     @property
     def gradient(self) -> np.array:
@@ -79,7 +84,7 @@ class Current(object):
         """
         return self._vel_func
 
-    def _gradient_constructor(self, x: np.array, y: np.array, step: int):
+    def _gradient_constructor_parab(self, x: np.array, y: np.array, step: int):
         """ Constructs the gradient field
 
         Parameters
@@ -100,6 +105,78 @@ class Current(object):
         gradient_fields = np.gradient(
             vel_field, self._grid_size, self._grid_size
         )
+        # Constructing the absolute values
+        gradient_fields_norm = np.linalg.norm(gradient_fields, axis=0).T
+        gradient = RectBivariateSpline(
+            self._x_grid,
+            self._y_grid,
+            gradient_fields_norm
+        )
+        return gradient.ev(x, y)
+
+    def _vel_constructor_custom(self, x: np.array, y: np.array, step: int):
+        """ "Fetches the velocity data
+
+        Parameters
+        ----------
+        x : np.array
+            The x coordinates
+        y : np.array
+            The y coordinates
+        step : int
+            The current time step
+
+        Returns
+        -------
+        np.array
+            The velocities
+        """
+        x_vel_field = np.load(self._save_string +
+                              "x_step_" + str(step) + ".npy")
+        y_vel_field = np.load(self._save_string +
+                              "y_step_" + str(step) + ".npy")
+        x_vel = RectBivariateSpline(
+            self._x_grid,
+            self._y_grid,
+            x_vel_field
+        )
+        y_vel = RectBivariateSpline(
+            self._x_grid,
+            self._y_grid,
+            y_vel_field
+        )
+        return np.array(list(zip(x_vel.ev(x, y),y_vel.ev(x, y))))
+
+    def _gradient_constructor_custom(
+        self, x: np.array, y: np.array, step: int
+    ):
+        """ Constructs the gradient field
+
+        Parameters
+        ----------
+        x : np.array
+            The x coordinates
+        y : np.array
+            The y coordinates
+        step : int
+            The current time step
+
+        Returns
+        -------
+        np.array
+            The gradient field
+        """
+        x_vel_field = np.load(self._save_string +
+                              "x_step_" + str(step) + ".npy")
+        y_vel_field = np.load(self._save_string +
+                              "y_step_" + str(step) + ".npy")
+        x_gradient_fields = np.gradient(
+            x_vel_field.T, self._grid_size, self._grid_size
+        )
+        y_gradient_fields = np.gradient(
+            y_vel_field.T, self._grid_size, self._grid_size
+        )
+        gradient_fields = x_gradient_fields + y_gradient_fields
         # Constructing the absolute values
         gradient_fields_norm = np.linalg.norm(gradient_fields, axis=0).T
         gradient = RectBivariateSpline(
