@@ -101,6 +101,48 @@ class FourthDayStateMachine(object):
                 self._step
         ))
         # TODO: Optimize this
+        # Keeping organisms outside of exclusion zone
+        if config['scenario']['exclusion']:
+            # Checking which new points are inside
+            exclusion_mask = np.array([
+                self._world.point_in_exclusion(point)
+                for point in new_position
+            ])
+            if np.sum(exclusion_mask) > 0:
+                # Setting them near the boundary if yes
+                mid_point = (
+                    current_pos[exclusion_mask] +
+                    (new_position[exclusion_mask] /
+                     current_pos[exclusion_mask]) / 2.
+                )
+                new_points = np.array([
+                    self._world.find_intersection(
+                        self._world.exclusion,
+                        point
+                    )
+                    for point in mid_point
+                ])
+                # Connection vector
+                center_vec = np.array(list(zip(
+                    new_points[:, 0] -
+                    config["geometry"]["exclusion"]["x_pos"],
+                    new_points[:, 1] -
+                    config["geometry"]["exclusion"]["y_pos"]
+                )))
+                # Normalizing
+                norm = np.linalg.norm(center_vec, axis=1)
+                center_vec = np.array([
+                    center_vec[i] / norm[i]
+                    for i in range(len(center_vec))
+                ])
+                # Bouncing back
+                new_points = (
+                    new_points + center_vec * config['scenario']['bounce back']
+                )
+                # Reassigning
+                new_position[exclusion_mask] = new_points
+            
+        # TODO: Optimize this
         # Checking if these are inside and observed
         new_observation_mask = np.array([
             self._world.point_in_wold(position)

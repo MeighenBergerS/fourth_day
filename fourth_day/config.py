@@ -43,6 +43,9 @@ _baseconfig = {
         # Injection rate
         # Number of organisms to inject per second
         "injection rate": 10,
+        "exclusion": True,
+        # Bounce back
+        "bounce back": 0.001
     },
     ###########################################################################
     # Geometry input
@@ -56,6 +59,13 @@ _baseconfig = {
             "x_length": 6.,  # in meters
             "y_length": 3.  # in meters
         },
+        # Exclusion e.g. detector
+        "exclusion": {
+            "function": "sphere",
+            "radius": 0.3,
+            "x_pos": 1.5,
+            "y_pos": 2.,
+        }
     },
     ###########################################################################
     # Water inputs
@@ -146,6 +156,7 @@ _baseconfig = {
     "advanced" : {
         # Water grid size in m
         'water grid size': 1e-2,
+        'sphere sample': 50
     },
 }
 

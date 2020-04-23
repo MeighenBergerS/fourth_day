@@ -136,11 +136,11 @@ class Current(object):
         self._vel_field = np.load(self._save_string +
                                   "data_" + str(step) + ".npy")
         self._x_vel_field = np.reshape(
-            self._vel_field[:, 0] * 10.,
+            self._vel_field[:, 0] * 50.,
             (self._x_grid.shape[0], self._y_grid.shape[0])
         )
         self._y_vel_field = np.reshape(
-            self._vel_field[:, 1] * 10.,
+            self._vel_field[:, 1] * 50.,
             (self._x_grid.shape[0], self._y_grid.shape[0])
         )
 

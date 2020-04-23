@@ -87,6 +87,34 @@ class Adamah(object):
         _log.debug('Constructing the hull')
         self._hull = spatial.ConvexHull(points)
         _log.debug('Hull constructed')
+        if config['scenario']['exclusion']:
+            _log.debug("Construction exclusion zone")
+            self._exclusion = spatial.ConvexHull(
+                self._even_circle(config['advanced']['sphere sample'])
+            )
+
+    def _even_circle(self, samples):
+        """
+        function: _even_circle
+        Evenly distributes points on a circle
+        Parameters:
+            -int samples:
+                Number of points
+        Returns:
+            -np.array points:
+                The point cloud
+        """
+        t = np.linspace(0., np.pi*2., samples)
+        pos_x = config['geometry']['exclusion']['x_pos']
+        pos_y = config['geometry']['exclusion']['y_pos']
+        rad = config['geometry']['exclusion']['radius']
+        x = rad * np.cos(t) + pos_x
+        y = rad * np.sin(t) + pos_y
+        points = np.array([
+            [x[i], y[i]]
+            for i in range(len(x))
+        ])
+        return points
 
     @property
     def volume(self) -> float:
@@ -115,6 +143,20 @@ class Adamah(object):
             The hull of the world
         """
         return self._hull
+
+    @property
+    def exclusion(self):
+        """ Returns the exclusion
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        exclusion : spatial.object
+            The hull of the exclusion zone
+        """
+        return self._exclusion
 
     @property
     def x(self):
@@ -160,3 +202,65 @@ class Adamah(object):
             (np.dot(eq[:-1], point) + eq[-1] <=tolerance)
             for eq in self._hull.equations
         )
+
+    def point_in_exclusion(self, point: np.ndarray, tolerance=1e-12) -> bool:
+        """ Checks if the point lies inside the exclusion
+
+        Parameters
+        ----------
+        point: np.ndarray:
+            Point to check
+
+        Returns
+        bool
+            Truth or not if inside
+        """
+        return all(
+            (np.dot(eq[:-1], point) + eq[-1] <=tolerance)
+            for eq in self._exclusion.equations
+        )
+
+
+    # TODO: Add comments
+    def _normalize(self, v):
+        norm = np.linalg.norm(v)
+        if norm == 0: 
+            return v
+        return v / norm
+
+    def find_intersection(self, hull, ray_point):
+        # normalise ray_point
+        unit_ray = self._normalize(ray_point)
+        # find the closest line/plane/hyperplane in the hull:
+        closest_plane = None
+        closest_plane_distance = 0
+        for plane in hull.equations:
+            normal = plane[:-1]
+            distance = plane[-1]
+            # if plane passes through the origin then return the origin
+            if distance == 0:
+                return np.multiply(ray_point, 0) # return n-dimensional zero vector 
+            # if distance is negative then flip the sign of both the
+            # normal and the distance:       
+            if distance < 0:
+                np.multiply(normal, -1)
+                distance = distance * -1
+            # find out how much we move along the plane normal for
+            # every unit distance along the ray normal:
+            dot_product = np.dot(normal, unit_ray)
+            # check the dot product is positive, if not then the
+            # plane is in the opposite direction to the rayL
+            if dot_product > 0:  
+                # calculate the distance of the plane
+                # along the ray normal:          
+                ray_distance = distance / dot_product
+                # is this the closest so far:
+                if closest_plane is None or ray_distance < closest_plane_distance:
+                    closest_plane = plane
+                    closest_plane_distance = ray_distance
+        # was there no valid plane? (should never happen):
+        if closest_plane is None:
+            return None
+        # return the point along the unit_ray of the closest plane,
+        # which will be the intersection point
+        return np.multiply(unit_ray, closest_plane_distance)
