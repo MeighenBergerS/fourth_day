@@ -30,19 +30,16 @@ A basic running example to interface with the package
 
 ```python
 # Importing the package
-import fourth_day as FD
-# Importing the config file
-import fd_config as config
+from fourth_day import Fourth_Day, config
 # Creating fourth day object
-contagion = CONTAGION(config=config)
+fd = Fourth_Day()
 # Running the simulation
 fd.sim()
-# Results are fetched using
-results = fd.results
 # The time array
-t = results['t']
+t = fd.time
 # The total emission
-total = results['total']
+data = np.array([np.sum(fd.statistics[i].loc[:, 'photons'].values)
+                 for i in range(len(fd.t))])
 ```
 
 This generates results of the form
