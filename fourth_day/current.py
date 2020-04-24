@@ -7,7 +7,7 @@ Handles current construction or loading
 import logging
 import os
 import numpy as np
-from scipy.interpolate import interp2d, RectBivariateSpline
+from scipy.interpolate import RectBivariateSpline
 from .config import config
 
 _log = logging.getLogger(__name__)

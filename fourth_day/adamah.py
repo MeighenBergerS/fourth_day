@@ -12,6 +12,7 @@ from scipy import spatial
 import pickle
 import logging
 from .config import config
+from .functions import normalize
 
 
 _log = logging.getLogger(__name__)
@@ -220,47 +221,41 @@ class Adamah(object):
             for eq in self._exclusion.equations
         )
 
+    # TODO: Make some cross-checks to check validity
+    def find_intersection(self, hull: spatial.ConvexHull,
+                          ray_point: np.array) -> np.array:
+        """ Finds the closest point on the hull to the ray_point
 
-    # TODO: Add comments
-    def _normalize(self, v):
-        norm = np.linalg.norm(v)
-        if norm == 0: 
-            return v
-        return v / norm
+        Parameters
+        ----------
+        hull : spatial.ConvexHull
+            Convex hull object defining the volume
+        ray_point : np.array
+            The point used to check
 
-    def find_intersection(self, hull, ray_point):
-        # normalise ray_point
-        unit_ray = self._normalize(ray_point)
-        # find the closest line/plane/hyperplane in the hull:
+        Returns
+        -------
+        np.array
+            The closest point on the hull
+        """
+        unit_ray = normalize(ray_point)
         closest_plane = None
         closest_plane_distance = 0
         for plane in hull.equations:
             normal = plane[:-1]
             distance = plane[-1]
-            # if plane passes through the origin then return the origin
             if distance == 0:
-                return np.multiply(ray_point, 0) # return n-dimensional zero vector 
-            # if distance is negative then flip the sign of both the
-            # normal and the distance:       
+                return np.multiply(ray_point, 0)
             if distance < 0:
                 np.multiply(normal, -1)
                 distance = distance * -1
-            # find out how much we move along the plane normal for
-            # every unit distance along the ray normal:
             dot_product = np.dot(normal, unit_ray)
-            # check the dot product is positive, if not then the
-            # plane is in the opposite direction to the rayL
             if dot_product > 0:  
-                # calculate the distance of the plane
-                # along the ray normal:          
                 ray_distance = distance / dot_product
-                # is this the closest so far:
                 if closest_plane is None or ray_distance < closest_plane_distance:
                     closest_plane = plane
                     closest_plane_distance = ray_distance
-        # was there no valid plane? (should never happen):
         if closest_plane is None:
+            _log.warning("Something went wrong. No closest point found")
             return None
-        # return the point along the unit_ray of the closest plane,
-        # which will be the intersection point
         return np.multiply(unit_ray, closest_plane_distance)
