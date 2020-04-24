@@ -115,9 +115,12 @@ class FourthDayStateMachine(object):
         new_velocities, new_angles = self._update_movement(observation_count)
         # ---------------------------------------------------------------------
         # Checking encounters
-        encounter_count = (np.sum(
-            self._encounter(new_position[new_observation_mask]), axis=1
-        ) - 1)  # Subtracting 1 for the diagonal
+        if config['scenario']['encounters']:
+            encounter_count = (np.sum(
+                self._encounter(new_position[new_observation_mask]), axis=1
+            ) - 1)  # Subtracting 1 for the diagonal
+        else:
+            encounter_count = np.zeros(len(new_observation_mask))
         # Encounter bool array
         encounter_bool = np.zeros(self._pop_size, dtype=bool)
         encounter_bool[new_observation_mask] = np.array(encounter_count,

@@ -45,7 +45,9 @@ _baseconfig = {
         "injection rate": 10,
         "exclusion": True,
         # Bounce back
-        "bounce back": 0.001
+        "bounce back": 0.001,
+        # Encounters on / off
+        "encounters": False,
     },
     ###########################################################################
     # Geometry input
