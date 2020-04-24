@@ -54,18 +54,8 @@ This generates results of the form
 The code is structed as
 ![Sketch of the model](images/Structure.png)
 
-## TODO
+## Code profile
 
-- [] Simulation updates
-  - [] Optimize population calculations
-    - [] Introduce more efficient matrix manipulations
-  - [] Gradient field calculations
-  - [] Incoming organism stream
-- [] Code structure updates
-  - [] Clean up the interface
-  - [] Add importan input handling
-- [] Quality of life updates
-  - [X] Add requirements.txt
-  - [X] Add INSTALL.txt
-  - [] Check if installation
-  - [] Add writer class for config output
+The most expensive part is the encounter simulation.
+For high depths this can be turned off
+![Sketch of the model](images/CodeProfile.png)
