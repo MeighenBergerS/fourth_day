@@ -54,5 +54,6 @@ The code is structed as
 ## Code profile
 
 The most expensive part is the encounter simulation.
-For high depths this can be turned off
+For high depths this can be turned off. Generated using
+<https://github.com/pwaller/pyprof2calltree/>
 ![Sketch of the model](images/CodeProfile.png)
