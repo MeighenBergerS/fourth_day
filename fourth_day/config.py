@@ -112,7 +112,7 @@ _baseconfig = {
         #       All species survive the flood
         #   - 'depth':
         #       Removes all life above the specified depth
-        'filter': 'generous',
+        'filter': 'depth',
         # Used for the depth filter. Otherwise redundant
         'depth filter': 500.,  # in m
         # The probability distribution to use for the light pdf

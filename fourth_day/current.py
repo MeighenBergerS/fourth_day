@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 Name: state_machine.py
-Authors: Stephan Meighen-Berger
+Authors: Stephan Meighen-Berger, Golo Wimmer
 Handles current construction or loading
 """
 import logging

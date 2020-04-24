@@ -94,14 +94,16 @@ class MC_sim(object):
             index=np.arange(config['scenario']["population size"]),
         )
         # TODO: Optimize
-        # Distributiing species
+        # Distributing species
         possible_species = []
         for key in life.Evolved:
             for subtype in life.Evolved[key][0]:
-                possible_species.append(key + ' ' + subtype)
+                possible_species.append(subtype)
         possible_species =np.array(possible_species)
-        self._population.loc[:, 'species'] = config["runtime"]['random state'].choice(
-            possible_species, self._pop_size
+        self._population.loc[:, 'species'] = (
+            config["runtime"]['random state'].choice(
+                possible_species, self._pop_size
+            )
         )
         # Distributing positions
         # TODO: Optimize this
