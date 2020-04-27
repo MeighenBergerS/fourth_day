@@ -80,12 +80,17 @@ class FourthDayStateMachine(object):
             0.
         )
         # ---------------------------------------------------------------------
-        # The currently state
+        # The current state
         observation_mask = self._population.loc[:, 'observed'].values
         # Current positions
         current_pos = np.array(
             list(zip(self._population.loc[:, 'pos_x'].values,
                      self._population.loc[:, 'pos_y'].values))
+        )
+        # ---------------------------------------------------------------------
+        # The water current at this step
+        self._vel_x, self._vel_y, self._gradient = (
+            self._current.current(current_pos, self._step)
         )
         # ---------------------------------------------------------------------
         # New positions
@@ -120,7 +125,7 @@ class FourthDayStateMachine(object):
                 self._encounter(new_position[new_observation_mask]), axis=1
             ) - 1)  # Subtracting 1 for the diagonal
         else:
-            encounter_count = np.zeros(len(new_observation_mask))
+            encounter_count = np.zeros(np.sum(new_observation_mask))
         # Encounter bool array
         encounter_bool = np.zeros(self._pop_size, dtype=bool)
         encounter_bool[new_observation_mask] = np.array(encounter_count,
@@ -130,11 +135,8 @@ class FourthDayStateMachine(object):
         shear_bool = np.zeros(self._pop_size, dtype=bool)
         shear_bool[new_observation_mask] = np.array(
             self._count_sheared_fired(
-                self._current.gradient(
-                    self._population.loc[new_observation_mask, 'pos_x'].values,
-                    self._population.loc[new_observation_mask, 'pos_y'].values,
-                    self._step
-                )),
+                self._gradient[new_observation_mask]
+            ),
             dtype=bool)
         # ---------------------------------------------------------------------
         # Only those not currently emitting can emit
@@ -272,11 +274,8 @@ class FourthDayStateMachine(object):
         ) * (self._population.loc[:,
                                   'velocity'].values).reshape(
             (len(self._population.loc[:, 'velocity'].values), 1)
-        ) + self._current.current_vel(
-                self._population.loc[:, 'pos_x'].values,
-                self._population.loc[:, 'pos_y'].values,
-                self._step
-        ))
+        ) + list(zip(self._vel_x, self._vel_y))
+        )
         return new_position
 
     def _exclusion_check(self, positions: np.array,
@@ -453,8 +452,8 @@ class FourthDayStateMachine(object):
 
         Parameters
         ----------
-        velocity : np.array
-            The velocity of the current in m/s
+        gradient : np.array
+            The gradient of the current in m/s
 
         Returns
         -------

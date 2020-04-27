@@ -33,7 +33,7 @@ _baseconfig = {
         # Scenario class
         "class": "StandardScenario",
         # Length of simulation in seconds
-        "duration": 100,
+        "duration": 75,
         # The population
         "population size": 100,
         # Starting distribution
@@ -58,15 +58,15 @@ _baseconfig = {
         #       Constructs a rectangle defined by the user
         'volume': {
             "function": 'rectangle',  # the geometry type
-            "x_length": 6.,  # in meters
-            "y_length": 3.  # in meters
+            "x_length": 40.,  # in meters
+            "y_length": 20.  # in meters
         },
         # Exclusion e.g. detector
         "exclusion": {
             "function": "sphere",
             "radius": 0.3,
-            "x_pos": 1.5,
-            "y_pos": 2.,
+            "x_pos": 5.,
+            "y_pos": 10.,
         }
     },
     ###########################################################################
