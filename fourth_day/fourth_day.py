@@ -232,4 +232,7 @@ class Fourth_Day(object):
         statistics : dic
                 Stores the results from the simulation
         """
-        return range(self._mc_run.iterations)
+        return (
+            np.arange(self._mc_run.iterations) *
+            config['water']['model']['time step']
+        )

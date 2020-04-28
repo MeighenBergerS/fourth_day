@@ -48,9 +48,10 @@ class FourthDayStateMachine(object):
         # TODO: Make this position dependent
         # Organism shear property
         self._min_shear = config['organisms']['minimal shear stress']
-        self._injection_rate = config['scenario']["injection rate"]
+        self._injection_rate = config['scenario']["injection"]["rate"]
         self._injetion_counter = 0
         self._step = 0
+        self._time_step = config['water']['model']['time step']
 
     def update(self):
         """ Updates the state by making one time step
@@ -89,9 +90,16 @@ class FourthDayStateMachine(object):
         )
         # ---------------------------------------------------------------------
         # The water current at this step
-        self._vel_x, self._vel_y, self._gradient = (
-            self._current.current(current_pos, self._step)
+        self._vel_x, self._vel_y, _ = (
+            self._current.velocities(current_pos, self._step)
         )
+        self._gradient = (
+            self._current.gradients(current_pos, self._step)
+        ).flatten()
+        # The time step
+        self._vel_x = self._vel_x * self._time_step
+        self._vel_y = self._vel_y * self._time_step
+        self._gradient = self._gradient * self._time_step
         # ---------------------------------------------------------------------
         # New positions
         new_position = self._update_position(current_pos)
@@ -133,11 +141,9 @@ class FourthDayStateMachine(object):
         # ---------------------------------------------------------------------
         # Shearing
         shear_bool = np.zeros(self._pop_size, dtype=bool)
-        shear_bool[new_observation_mask] = np.array(
-            self._count_sheared_fired(
+        shear_bool[new_observation_mask] = self._count_sheared_fired(
                 self._gradient[new_observation_mask]
-            ),
-            dtype=bool)
+        )
         # ---------------------------------------------------------------------
         # Only those not currently emitting can emit
         currently_emitting = np.ones(self._pop_size, dtype=bool)
@@ -354,13 +360,17 @@ class FourthDayStateMachine(object):
             list[1]: The angles
         """
         # New velocities
-        new_velocities = (
-            self._life.Movement["vel"].rvs(count) / 1e3  # Given in mm/s
-        )
-        # New angles
-        new_angles = (
-            np.pi * self._rstate.uniform(0., 2., size=count)
-        )
+        if config['scenario']['organism movement']:
+            new_velocities = ((
+                self._life.Movement["vel"].rvs(count) / 1e3  # Given in mm/s
+            ) * self._time_step)
+            # New angles
+            new_angles = (
+                np.pi * self._rstate.uniform(0., 2., size=count)
+            )
+        else:
+            new_velocities = np.zeros(count)
+            new_angles = np.zeros(count)
         return [new_velocities, new_angles]
 
     def _update_inection(self, i: int):
@@ -375,8 +385,8 @@ class FourthDayStateMachine(object):
             self._rstate.choice(self._possible_species, 1)[0],  # Species
             0.,  # position x
             self._rstate.uniform(
-                low=0.,
-                high=self._world.y,
+                low=config["scenario"]["injection"]['y range'][0],
+                high=config["scenario"]["injection"]['y range'][1],
                 size=1)[0],  # position y
             0., # self._life.Movement["vel"].rvs(1) / 1e3,  # velocity
             0., # angle
@@ -438,7 +448,7 @@ class FourthDayStateMachine(object):
         # Generating vector with 1 for fired and 0 for not
         try:
             res = self._rstate.binomial(
-                1,
+                1.,
                 self._cell_anxiety(gradient),
             )
         except:

@@ -42,12 +42,17 @@ _baseconfig = {
         "inital distribution": "Uniform",
         # Injection rate
         # Number of organisms to inject per second
-        "injection rate": 10,
+        "injection": {
+            "rate": 10,
+            "y range": [5., 15.],
+        },
         "exclusion": True,
         # Bounce back
         "bounce back": 0.001,
         # Encounters on / off
         "encounters": False,
+        # Switch for organisms movement
+        "organism movement": True,
     },
     ###########################################################################
     # Geometry input
@@ -78,7 +83,9 @@ _baseconfig = {
         "model": {
             "name": "custom",
             "norm": 0.6,  # Not required with custom
-            "save string": "../data/current/regular_values_npy/"
+            "save string velocities": "../data/current/benchmark/vel/",
+            "save string gradients": "../data/current/benchmark/grad/",
+            "time step": 60,  # Number of seconds between frames
         },
     },
     ###########################################################################

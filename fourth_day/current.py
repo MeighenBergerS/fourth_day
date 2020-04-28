@@ -5,6 +5,7 @@ Authors: Stephan Meighen-Berger, Golo Wimmer
 Handles current construction or loading
 """
 import logging
+import os
 import numpy as np
 from scipy.interpolate import LinearNDInterpolator as LinNDInterp
 from scipy.spatial import Delaunay
@@ -30,17 +31,47 @@ class Current(object):
         model_name = conf_dict.pop("name")
         if model_name == 'custom':
             _log.debug('Loading custom model: ' + model_name)
-            self._save_string = conf_dict['save string']
-            # Mesh loaded
-            self._build_triangulation()
-            # TODO: Make this load only once
+            self._save_string_vel = conf_dict['save string velocities']
+            self._save_string_grad = conf_dict['save string gradients']
+            self._number_of_current_steps = (
+                len(os.listdir(self._save_string_vel)) - 2
+            )
+            if self._number_of_current_steps < config['scenario']['duration']:
+                _log.debug("Duration longer than current simulations!" +
+                           " Using them in a cyclic fashion")
+            # Velocity loader
+            self._velocities = Current_Loader(
+                self._save_string_vel, self._number_of_current_steps
+            )
+            # Gradient loader
+            self._gradients = Current_Loader(
+                self._save_string_grad, self._number_of_current_steps
+            )
         else:
             _log.error('Current model not supported! Check the config file')
             raise ValueError('Unsupported current model')
 
     @property
-    def current(self) -> np.array:
-        """ Getter function for the current data
+    def velocities(self) -> np.array:
+        """ Getter function for the current velocities
+
+        Parameters
+        ----------
+        x : np.array
+            The x coordinates
+        y : np.array
+            The y coordinates
+
+        Returns
+        -------
+        np.array
+            The velocity field
+        """
+        return self._velocities.evaluate_data_at_coords
+
+    @property
+    def gradients(self) -> np.array:
+        """ Getter function for the current gradients
 
         Parameters
         ----------
@@ -54,7 +85,27 @@ class Current(object):
         np.array
             The gradient field
         """
-        return self._evaluate_data_at_coords
+        return self._gradients.evaluate_data_at_coords
+
+class Current_Loader(object):
+    """ Loads the current
+
+    Parameters
+    ----------
+    savestring : str
+        The location of the data
+    num_data_files : int
+        Number of data files
+
+    Raises
+    ------
+    ValueError
+        Unsupported water current model
+    """
+    def __init__(self, savestring: str, num_data_files: int):
+        self._number_of_current_steps = num_data_files
+        self._save_string = savestring
+        self._build_triangulation()
 
     def _build_triangulation(self):
         """ Build Delauny triangulation based on loaded coordinate array given
@@ -76,9 +127,13 @@ class Current(object):
             The current step
         """
         # Load data from numpy arrays and do post-processing
+        if out_nr > self._number_of_current_steps:
+            i_step = out_nr % self._number_of_current_steps
+        else:
+            i_step = out_nr
         if isinstance(out_nr, int):
             data = np.load('{0}/data_{1}.npy'.format(self._save_string,
-                                                     out_nr))
+                                                     i_step))
         else:
             raise AttributeError('When loading data from numpy array, '\
                                  'out_nr must be an integer')
@@ -96,7 +151,7 @@ class Current(object):
             self._vector_data = False
         return None
 
-    def _evaluate_data_at_coords(self, coords: np.array,
+    def evaluate_data_at_coords(self, coords: np.array,
                                  out_nr: int, data_max=1):
         """Evaluate data at a speficied coordiante array of shape (n, 2), for n
         coordinates. Optionally also pass a magnitude multiplication factor;
