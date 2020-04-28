@@ -47,6 +47,13 @@ class Current(object):
             self._gradients = Current_Loader(
                 self._save_string_grad, self._number_of_current_steps
             )
+        elif model_name == 'None':
+            self._velocities = No_Current(
+                True
+            )
+            self._gradients = No_Current(
+                False
+            )
         else:
             _log.error('Current model not supported! Check the config file')
             raise ValueError('Unsupported current model')
@@ -86,6 +93,42 @@ class Current(object):
             The gradient field
         """
         return self._gradients.evaluate_data_at_coords
+
+class No_Current(object):
+    """ No current
+
+    Parameters
+    ----------
+    vel_grad_switch : bool
+        Switches between the two outputs
+
+    Raises
+    ------
+    ValueError
+        Unsupported water current model
+    """
+    def __init__(self, vel_grad_switch: bool):
+        self._switch = vel_grad_switch
+
+    def evaluate_data_at_coords(self, coords: np.array, out_nr: int) -> np.array:
+        """ Returns a zero array in the shape of the input
+
+        Parameters
+        ----------
+        coords : np.array
+            Positional coordinates
+        out_nr : int
+            The current step
+
+        Returns
+        -------
+        np.zeros
+            Depending on switch the shapes will be different
+        """
+        if self._switch:
+            return np.zeros((3, len(coords)))
+        else:
+            return np.zeros(len(coords))
 
 class Current_Loader(object):
     """ Loads the current
@@ -169,13 +212,8 @@ class Current_Loader(object):
 
         Returns
         -------
-        list : [x_vel, y_vel, grad]
-            x_vel : np.array
-                The x velocities
-            y_vel : np.array
-                The y velocities
-            grad : np.array
-                The L-2 norm gradient values        
+        np.array
+            The velocities or gradients depending on setup       
         """
         # Check if coordinate array has correct shape
         attribute_error_flag = False
