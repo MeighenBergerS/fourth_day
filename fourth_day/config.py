@@ -79,10 +79,10 @@ _baseconfig = {
     ###########################################################################
     "water": {
         # Current model
-        # supported: parabola, custom
+        # supported: none, parabolic, custom
         "model": {
             "name": "custom",
-            "norm": 0.6,  # Not required with custom
+            "norm": 0.6,  # Not required with custom, none
             "save string velocities": "../data/current/benchmark/vel/",
             "save string gradients": "../data/current/benchmark/grad/",
             "time step": 60,  # Number of seconds between frames

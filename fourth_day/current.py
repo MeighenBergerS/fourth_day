@@ -47,11 +47,20 @@ class Current(object):
             self._gradients = Current_Loader(
                 self._save_string_grad, self._number_of_current_steps
             )
-        elif model_name == 'None':
+        elif model_name == 'none':
+            _log.debug("Run without water current")
             self._velocities = No_Current(
                 True
             )
             self._gradients = No_Current(
+                False
+            )
+        elif model_name == 'parabolic':
+            _log.debug("Run with parabolic water current")
+            self._velocities = Parabolic_Current(
+                True
+            )
+            self._gradients = Parabolic_Current(
                 False
             )
         else:
@@ -129,6 +138,53 @@ class No_Current(object):
             return np.zeros((3, len(coords)))
         else:
             return np.zeros(len(coords))
+
+class Parabolic_Current(object):
+    """ Parabolic current
+
+    Parameters
+    ----------
+    vel_grad_switch : bool
+        Switches between the two outputs
+
+    Raises
+    ------
+    ValueError
+        Unsupported water current model
+    """
+    def __init__(self, vel_grad_switch: bool):
+        self._switch = vel_grad_switch
+        self._Ly = config['geometry']['volume']['y_length']
+        self._norm = config['water']['model']['norm']
+
+    def evaluate_data_at_coords(self, coords: np.array, out_nr: int) -> np.array:
+        """ Returns a zero array in the shape of the input
+
+        Parameters
+        ----------
+        coords : np.array
+            Positional coordinates
+        out_nr : int
+            The current step
+
+        Returns
+        -------
+        np.array
+            Depending on switch the shapes will be different
+        """
+        vel_x = (
+            self._norm * coords[:, 1] * (self._Ly - coords[:, 1]) / self._Ly**2
+        )
+        vel_y = np.zeros(len(coords))
+        vel_abs = np.linalg.norm([vel_x, vel_y], axis=0)
+        # Only single component
+        gradients = np.gradient(vel_x, coords[:, 1])
+        if self._switch:
+            return np.array(
+                [vel_x, vel_y, vel_abs]
+            )
+        else:
+            return gradients
 
 class Current_Loader(object):
     """ Loads the current
