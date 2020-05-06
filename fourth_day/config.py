@@ -86,6 +86,9 @@ _baseconfig = {
         #       Requires a normalization factor (the water velocity)
         #   homogeneous:
         #       Requires a normalization factor (the water velocity)
+        #   potential cylinder:
+        #       Requires the spherical exclusion zone and the normalization
+        #       factor (the water velocity)
         #   custom:
         #       Requires the directory and the npy files to be constructed
         "model": {
@@ -174,7 +177,7 @@ _baseconfig = {
     ###################################################
     "advanced" : {
         # Water grid size in m
-        'water grid size': 1e-2,
+        'water grid size': 1e-1,
         'sphere sample': 50
     },
 }
