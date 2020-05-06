@@ -47,6 +47,7 @@ from .genesis import Genesis
 from .adamah import Adamah
 from .current import Current
 from .mc_sim import MC_sim
+from .vtu_npy_handlers import vtu_npy_converter
 
 # unless we put this class in __init__, __name__ will be contagion.contagion
 _log = logging.getLogger("fourth_day")
@@ -136,7 +137,10 @@ class Fourth_Day(object):
         _log.info('---------------------------------------------------')
         _log.info('---------------------------------------------------')
         _log.info('Constructing the current')
+        #  The current
         self._current = Current()
+        # This needs to be called explicitely vor conversion of vtu files
+        self._current_construction = vtu_npy_converter()
         _log.info('Finished the current')
         _log.info('---------------------------------------------------')
         _log.info('---------------------------------------------------')

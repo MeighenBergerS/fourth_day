@@ -79,13 +79,23 @@ _baseconfig = {
     ###########################################################################
     "water": {
         # Current model
-        # supported: none, parabolic, custom
+        # supported: none, parabolic, custom, homogeneous
+        #   none:
+        #       Requires no additional input
+        #   parabolic:
+        #       Requires a normalization factor (the water velocity)
+        #   homogeneous:
+        #       Requires a normalization factor (the water velocity)
+        #   custom:
+        #       Requires the directory and the npy files to be constructed
         "model": {
-            "name": "custom",
+            "name": "none",
             "norm": 0.6,  # Not required with custom, none
-            "save string velocities": "../data/current/benchmark/vel/",
-            "save string gradients": "../data/current/benchmark/grad/",
-            "time step": 60,  # Number of seconds between frames
+            "directory": "../data/current/5cm_flow/",
+            "vtu name": 'Navier_Stokes_flow',
+            "vtu number": 240,  # Which files to use, can be a list
+            "vtu cores": 6,  # Number of cores used to generate the vtu files
+            "time step": 1,  # Number of seconds between frames
         },
     },
     ###########################################################################

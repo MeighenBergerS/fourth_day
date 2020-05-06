@@ -31,8 +31,12 @@ class Current(object):
         model_name = conf_dict.pop("name")
         if model_name == 'custom':
             _log.debug('Loading custom model: ' + model_name)
-            self._save_string_vel = conf_dict['save string velocities']
-            self._save_string_grad = conf_dict['save string gradients']
+            self._save_string_vel = (
+                conf_dict['directory'] + 'npy_values_vel/'
+            )
+            self._save_string_grad = (
+                conf_dict['directory'] + 'npy_values_grad/'
+            )
             self._number_of_current_steps = (
                 len(os.listdir(self._save_string_vel)) - 2
             )
@@ -61,6 +65,14 @@ class Current(object):
                 True
             )
             self._gradients = Parabolic_Current(
+                False
+            )
+        elif model_name == 'homogeneous':
+            _log.debug("Run with homogeneous water current")
+            self._velocities = Homogeneous_Current(
+                True
+            )
+            self._gradients = Homogeneous_Current(
                 False
             )
         else:
@@ -138,6 +150,50 @@ class No_Current(object):
             return np.zeros((3, len(coords)))
         else:
             return np.zeros(len(coords))
+
+class Homogeneous_Current(object):
+    """ Homogeneous current
+
+    Parameters
+    ----------
+    vel_grad_switch : bool
+        Switches between the two outputs
+
+    Raises
+    ------
+    ValueError
+        Unsupported water current model
+    """
+    def __init__(self, vel_grad_switch: bool):
+        self._switch = vel_grad_switch
+        self._norm = config['water']['model']['norm']
+
+    def evaluate_data_at_coords(self, coords: np.array, out_nr: int) -> np.array:
+        """ Returns a zero array in the shape of the input
+
+        Parameters
+        ----------
+        coords : np.array
+            Positional coordinates
+        out_nr : int
+            The current step
+
+        Returns
+        -------
+        np.array
+            Depending on switch the shapes will be different
+        """
+        vel_x = np.ones(len(coords)) * self._norm
+        vel_y = np.zeros(len(coords))
+        vel_abs = np.linalg.norm([vel_x, vel_y], axis=0)
+        # Only single component
+        gradients = np.gradient(vel_x, coords[:, 1])
+        if self._switch:
+            return np.array(
+                [vel_x, vel_y, vel_abs]
+            )
+        else:
+            return gradients
 
 class Parabolic_Current(object):
     """ Parabolic current
