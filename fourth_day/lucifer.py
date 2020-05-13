@@ -9,6 +9,7 @@ import logging
 import pandas as pd
 import numpy as np
 from scipy.interpolate import interp1d
+from time import time
 from .config import config
 from .genesis import Genesis
 
@@ -114,7 +115,7 @@ class Lucifer(object):
             The attenuated photon counts depending on time
         """
         _log.debug("Launching the attenuation calculation")
-
+        start = time()
         tmp_emission = []
         for pop in statistics:
             emission_mask = pop.loc[:, 'is_emitting'].values
@@ -132,6 +133,8 @@ class Lucifer(object):
             )
         emission = np.array(tmp_emission)
         _log.debug("Finished the attenuation calculation")
+        end = time()
+        _log.info("Propagation simulation took %f seconds" % (end - start))
         return emission
 
 
