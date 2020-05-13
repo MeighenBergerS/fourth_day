@@ -48,6 +48,7 @@ from .adamah import Adamah
 from .current import Current
 from .mc_sim import MC_sim
 from .vtu_npy_handlers import vtu_npy_converter
+from .lucifer import Lucifer
 
 # unless we put this class in __init__, __name__ will be contagion.contagion
 _log = logging.getLogger("fourth_day")
@@ -188,13 +189,19 @@ class Fourth_Day(object):
         # ).yields * config['photon yield']
         # Collecting results
         self._statistics = self._mc_run.statistics
+        if config['scenario']["light prop"]:
+            _log.info("Calculating light yields at the detector")
+            self._lucifer = Lucifer()
+            self._light_yields = self._lucifer.light_bringer(
+                self._statistics,
+                self._life
+            )
         _log.debug('---------------------------------------------------')
         _log.debug('---------------------------------------------------')
         _log.info('Finished calculation')
         _log.info('Get the results by typing self.results')
         _log.info('Structure of dictionray:')
         _log.info(self._statistics[0].keys())
-        _log.debug('Dumping run settings into ../run/config.txt')
         _log.debug(
             "Dumping run settings into %s",
             config["general"]["config location"],
@@ -233,10 +240,35 @@ class Fourth_Day(object):
 
         Returns
         -------
-        statistics : dic
-                Stores the results from the simulation
+        t : np.array
+            The time array
         """
         return (
             np.arange(self._mc_run.iterations) *
             config['water']['model']['time step']
         )
+
+    @property
+    def light_yields(self):
+        """ Getter function for the light yields. The switch needs to be true
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        light_yields : np.array
+            The light yield of the detector
+
+        Raises
+        ------
+            ValueError
+                When the correct switches were't set in the config
+        """
+        if config['scenario']["light prop"]:
+            return self._light_yields
+        else:
+            raise ValueError(
+                "Light yields not calculated! Check the config file"
+            )

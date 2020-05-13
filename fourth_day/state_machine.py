@@ -50,7 +50,7 @@ class FourthDayStateMachine(object):
         self._min_shear = config['organisms']['minimal shear stress']
         self._injection_rate = config['scenario']["injection"]["rate"]
         self._injetion_counter = 0
-        self._step = 0
+        self._step = config['advanced']['starting step']
         self._time_step = config['water']['model']['time step']
 
     def update(self):
@@ -70,16 +70,6 @@ class FourthDayStateMachine(object):
         """
         # ---------------------------------------------------------------------
         # Cleaning up before update
-        # Previous photons don't count
-        self._population.loc[:, 'encounter photons'] = (
-            0.
-        )
-        self._population.loc[:, 'shear photons'] = (
-            0.
-        )
-        self._population.loc[:, 'photons'] = (
-            0.
-        )
         # ---------------------------------------------------------------------
         # The current state
         observation_mask = self._population.loc[:, 'observed'].values
@@ -106,9 +96,10 @@ class FourthDayStateMachine(object):
         # TODO: Optimize this
         # ---------------------------------------------------------------------
         # Checking if these are inside and observed
-        # This mask is used to reduce the calculation load
+        # This mask is used to reduce the calculation load and only
+        # use observed organisms
         new_observation_mask = np.array([
-            self._world.point_in_wold(position)
+            self._world.point_in_obs(position)
             for position in new_position
         ])
         observation_count = np.sum(new_observation_mask)
@@ -175,11 +166,19 @@ class FourthDayStateMachine(object):
             self._population.loc[successful_burst_enc,
                                  'emission fraction'].values
         )
+        # Spread evenly over the emission duration
+        encounter_photons = (
+            encounter_photons / config['organisms']['emission duration']
+        )
         shear_photons = (
             self._population.loc[successful_burst_shear,
                                  'max_emission'].values *
             self._population.loc[successful_burst_shear,
                                  'emission fraction'].values
+        )
+        # Spread evenly over the emission duration
+        shear_photons = (
+            shear_photons / config['organisms']['emission duration']
         )
         # ---------------------------------------------------------------------
         # New energy
@@ -239,6 +238,15 @@ class FourthDayStateMachine(object):
             dtype=bool
         ))
         self._population.loc[stopped_emitting_bool, 'is_emitting'] = False
+        self._population.loc[stopped_emitting_bool, 'encounter photons'] = (
+            np.zeros(np.sum(stopped_emitting_bool))
+        )
+        self._population.loc[stopped_emitting_bool, 'shear photons'] = (
+            np.zeros(np.sum(stopped_emitting_bool))
+        )
+        self._population.loc[stopped_emitting_bool, 'photons'] = (
+            np.zeros(np.sum(stopped_emitting_bool))
+        )
         # The new observed
         self._population.loc[:, "observed"] = new_observation_mask
         # ---------------------------------------------------------------------
@@ -246,7 +254,7 @@ class FourthDayStateMachine(object):
         # TODO: Optimize
         if self._injetion_counter > 1:
             for i in range(int(self._injetion_counter)):
-                self._update_inection(i)
+                self._update_injection(i)
             self._pop_size += int(self._injetion_counter)
             self._injetion_counter = 0.
         else:
@@ -373,7 +381,7 @@ class FourthDayStateMachine(object):
             new_angles = np.zeros(count)
         return [new_velocities, new_angles]
 
-    def _update_inection(self, i: int):
+    def _update_injection(self, i: int):
         """ Injects new organisms into the system
 
         Parameters

@@ -53,6 +53,12 @@ _baseconfig = {
         "encounters": False,
         # Switch for organisms movement
         "organism movement": True,
+        # Light propagation
+        "light prop": {
+            "switch": False,
+            "x_pos": 5.,
+            "y_pos": 10.,
+        }
     },
     ###########################################################################
     # Geometry input
@@ -64,7 +70,16 @@ _baseconfig = {
         'volume': {
             "function": 'rectangle',  # the geometry type
             "x_length": 40.,  # in meters
-            "y_length": 20.  # in meters
+            "y_length": 20.,  # in meters
+            "offset": None,  # The bounding volume requires no offset
+        },
+        # The observation area. It is recommended to keep this smaller than
+        # the volume.
+        'observation': {
+            "function": 'rectangle',
+            "x_length": 40.,  # in meters
+            "y_length": 5.,  # in meters
+            "offset": np.array([0., 7.5]),  # The offset of [0,0] (bottom left)
         },
         # Exclusion e.g. detector
         "exclusion": {
@@ -94,7 +109,7 @@ _baseconfig = {
         "model": {
             "name": "none",
             "norm": 0.6,  # Not required with custom, none
-            "directory": "../data/current/5cm_flow/",
+            "directory": "../data/current/benchmark/",
             "vtu name": 'Navier_Stokes_flow',
             "vtu number": 240,  # Which files to use, can be a list
             "vtu cores": 6,  # Number of cores used to generate the vtu files
@@ -178,7 +193,8 @@ _baseconfig = {
     "advanced" : {
         # Water grid size in m
         'water grid size': 1e-1,
-        'sphere sample': 50
+        'sphere sample': 50,
+        'starting step': 0,
     },
 }
 

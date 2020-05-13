@@ -52,15 +52,37 @@ class Adamah(object):
         ValueError
             Geometry not recognized
         """
+        # The simulation volume
         conf_dict = dict(config['geometry']['volume'])
         function_name = conf_dict.pop("function")
         if function_name == 'rectangle':
-            self.rectangle(**conf_dict)
+            self._hull = self.rectangle(**conf_dict)
+            # used for sampling later on
+            self._x = conf_dict['x_length']
+            self._y = conf_dict['y_length']
+            _log.debug('Hull constructed')
         else:
             _log.error('Volume not supported! Check the config file')
             raise ValueError('Unsupported volume')
+        # The observation volume
+        conf_dict = dict(config['geometry']['observation'])
+        function_name = conf_dict.pop("function")
+        if function_name == 'rectangle':
+            self._observed = self.rectangle(**conf_dict)
+            _log.debug('Observation volume constructed')
+        else:
+            _log.error('Volume not supported! Check the config file')
+            raise ValueError('Unsupported volume for observation.')
+        # The exclusion volume
+        if config['scenario']['exclusion']:
+            _log.debug("Construction exclusion zone")
+            self._exclusion = spatial.ConvexHull(
+                self._even_circle(config['advanced']['sphere sample'])
+            )
+            _log.debug("Finished exclusion zone")
 
-    def rectangle(self, x_length: float, y_length: float):
+
+    def rectangle(self, x_length: float, y_length: float, offset=None):
         """ Constructs the rectangle geometry
 
         Parameters
@@ -69,30 +91,36 @@ class Adamah(object):
             The x length
         y : float
             The y length
+        offset : np.array
+            The offset of the volume
 
         Returns
         -------
         None
         """
-        # The side length of the box
-        self._x = x_length
-        self._y = y_length
-        _log.debug('The side lengths are %.1f and %.1f' %(self._x, self._y))
-        # The volume of the box
-        self._volume = (self._x * (self._y*2.))
-        # The corners of the box
-        points = np.array([
-            [0., 0.], [0., self._y], [self._x, 0.], [self._x, self._y]
-        ])
-        # The convex hull of the box
         _log.debug('Constructing the hull')
-        self._hull = spatial.ConvexHull(points)
-        _log.debug('Hull constructed')
-        if config['scenario']['exclusion']:
-            _log.debug("Construction exclusion zone")
-            self._exclusion = spatial.ConvexHull(
-                self._even_circle(config['advanced']['sphere sample'])
+        # The side length of the box
+        x = x_length
+        y = y_length
+        _log.debug('The side lengths are %.1f and %.1f' %(x, y))
+        # The volume of the box
+        self._volume = (x * (y*2.))
+        # The corners of the box
+        if offset is None:
+            _log.debug("Offset not set. Corner in [0,0]")
+            points = np.array([
+                [0., 0.], [0., y], [x, 0.], [x, y]
+            ])
+        else:
+            _log.debug("Offset set. Corner in offset")
+            points = (
+                np.array([
+                    [0., 0.], [0., y], [x, 0.], [x, y]
+                ]) +
+                offset
             )
+        # The convex hull of the box
+        return spatial.ConvexHull(points)
 
     def _even_circle(self, samples):
         """
@@ -202,6 +230,23 @@ class Adamah(object):
         return all(
             (np.dot(eq[:-1], point) + eq[-1] <=tolerance)
             for eq in self._hull.equations
+        )
+
+    def point_in_obs(self, point: np.ndarray, tolerance=1e-12) -> bool:
+        """ Checks if the point lies inside the observed volume
+
+        Parameters
+        ----------
+        point: np.ndarray:
+            Point to check
+
+        Returns
+        bool
+            Truth or not if inside
+        """
+        return all(
+            (np.dot(eq[:-1], point) + eq[-1] <=tolerance)
+            for eq in self._observed.equations
         )
 
     def point_in_exclusion(self, point: np.ndarray, tolerance=1e-12) -> bool:

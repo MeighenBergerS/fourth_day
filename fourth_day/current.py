@@ -10,7 +10,6 @@ import numpy as np
 from scipy.interpolate import LinearNDInterpolator as LinNDInterp
 from scipy.spatial import Delaunay
 from .config import config
-from .functions import interp2d_pairs
 
 _log = logging.getLogger(__name__)
 
@@ -220,7 +219,8 @@ class Parabolic_Current(object):
         self._Ly = config['geometry']['volume']['y_length']
         self._norm = config['water']['model']['norm']
 
-    def evaluate_data_at_coords(self, coords: np.array, out_nr: int) -> np.array:
+    def evaluate_data_at_coords(self,
+        coords: np.array, out_nr: int) -> np.array:
         """ Returns a zero array in the shape of the input
 
         Parameters
@@ -298,16 +298,17 @@ class Potential_Cylinder_Current(object):
             config['geometry']['volume']['y_length'],
             config['advanced']['water grid size']
         )
-        # Coordinate transform to set (0,0) in the center of the cylinder
-        self._tri = np.array(np.meshgrid(
-            self._x_grid - self._x_pos, self._y_grid - self._y_pos
+        self._data_points = np.array(np.meshgrid(
+            self._x_grid, self._y_grid
         )).T.reshape(-1,2)
+        self._tri = Delaunay(self._data_points)
 
     def _construct_interpolators(self):
         """ Builds interpoaltors based on self._tri settings.
         """
-        x = self._tri[:, 0]
-        y = self._tri[:, 1]
+        # Coordinate transform to set (0,0) in the center of the cylinder
+        x = self._data_points[:, 0] - self._x_pos
+        y = self._data_points[:, 1] - self._y_pos
         # Convert to polar coordinates
         r = np.sqrt(x**2 + y**2)
         # Ignoring error messages
@@ -320,7 +321,7 @@ class Potential_Cylinder_Current(object):
                 self._norm * (1. - self._rad**2. / r**2.) * np.cos(theta)
             )
             vel_theta = (
-                -self._norm * (1. + self._rad**2. / r**2.) * np.sin(theta)
+                -self._norm * (1. + self._rad**2. / r**2.) * np.sin(theta) / r
             )
             vel_r[ ~ np.isfinite(vel_r)] = 0.  # -inf inf NaN
             vel_theta[ ~ np.isfinite(vel_theta)] = 0.  # -inf inf NaN
@@ -329,26 +330,27 @@ class Potential_Cylinder_Current(object):
         vel_y = vel_r * np.sin(theta) + r * vel_theta * np.cos(theta)
         # The absolute values
         vel_abs = np.linalg.norm([vel_x, vel_y], axis=0)
-        # Reshaping for the interpolators
-        vel_x = np.reshape(vel_x, (len(self._x_grid), len(self._y_grid)))
-        vel_y = np.reshape(vel_y, (len(self._x_grid), len(self._y_grid)))
-        vel_abs = np.reshape(vel_abs, (len(self._x_grid), len(self._y_grid)))
+        # Reshaping for gradients
+        vel_x_calc = np.reshape(vel_x, (len(self._x_grid), len(self._y_grid)))
+        vel_y_calc = np.reshape(vel_y, (len(self._x_grid), len(self._y_grid)))
         # The gradients
-        grads_x = np.gradient(vel_x, self._x_grid, self._y_grid)
-        grads_y = np.gradient(vel_y, self._x_grid, self._y_grid)
-        gradients = np.linalg.norm(grads_x + grads_y, axis=0)
+        grads_x = np.gradient(vel_x_calc, self._x_grid, self._y_grid)
+        grads_y = np.gradient(vel_y_calc, self._x_grid, self._y_grid)
+        gradients = np.linalg.norm(grads_x + grads_y, axis=0).reshape(
+            (len(self._data_points))
+        )
         # The interpolators
-        self._spl_vel_x = interp2d_pairs(
-            self._x_grid, self._y_grid, vel_x.T
+        self._spl_vel_x = LinNDInterp(
+            self._tri, vel_x, fill_value=0.
         )
-        self._spl_vel_y = interp2d_pairs(
-            self._x_grid, self._y_grid, vel_y.T
+        self._spl_vel_y = LinNDInterp(
+            self._tri, vel_y, fill_value=0.
         )
-        self._spl_vel_abs = interp2d_pairs(
-            self._x_grid, self._y_grid, vel_abs.T
+        self._spl_vel_abs = LinNDInterp(
+            self._tri, vel_abs, fill_value=0.
         )
-        self._spl_grad = interp2d_pairs(
-            self._x_grid, self._y_grid, gradients.T
+        self._spl_grad = LinNDInterp(
+            self._tri, gradients, fill_value=0.
         )
 
     def evaluate_data_at_coords(self, coords: np.array, out_nr: int) -> np.array:
@@ -367,17 +369,15 @@ class Potential_Cylinder_Current(object):
             Depending on switch the shapes will be different
         """
         # Fetching results
-        print(self._spl_vel_x([0., 10., 20.], [0., 10., 20.]))
-        print(self._spl_vel_y([0., 10., 20.], [0., 10., 20.]))
         if self._switch:
             vel_x = self._spl_vel_x(coords[:, 0], coords[:, 1])
             vel_y = self._spl_vel_y(coords[:, 0], coords[:, 1])
-            vel_abs = self._spl_vel_abs(coords[:, 0], coords[:, 1])
+            vel_abs = (self._spl_vel_abs(coords[:, 0], coords[:, 1]))
             return np.array(
                 [vel_x, vel_y, vel_abs]
             )
         else:
-            return np.nan_to_num(self._spl_grad(coords[:, 0], coords[:, 1]))
+            return self._spl_grad(coords[:, 0], coords[:, 1])
 
 class Current_Loader(object):
     """ Loads the current
@@ -420,9 +420,12 @@ class Current_Loader(object):
         """
         # Load data from numpy arrays and do post-processing
         if out_nr > self._number_of_current_steps:
-            i_step = out_nr % self._number_of_current_steps
+            i_step = (
+                (out_nr % self._number_of_current_steps) +
+                config['advanced']['starting step']
+            )
         else:
-            i_step = out_nr
+            i_step = out_nr + config['advanced']['starting step']
         if isinstance(out_nr, int):
             data = np.load('{0}/data_{1}.npy'.format(self._save_string,
                                                      i_step))
