@@ -93,9 +93,13 @@ class Lucifer(object):
             (pos_y - self._det_pos[1])**2
         )
         attenuation_factor = self._att_func(wavelengths)
-        
+        #  Beer-Lambdert law
+        # TODO: Update this, so that curvature is accounted for
+        factors = np.exp(-paths * attenuation_factor) / (paths)**2
+        # More than half can never reach the detector
+        factors[factors > 1./2.] = 1./2.
         return (
-            photon_counts * np.exp(paths * attenuation_factor) / (paths)**2
+            photon_counts * factors
         )
 
     def light_bringer(self, statistics: pd.DataFrame,
