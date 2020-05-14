@@ -71,10 +71,21 @@ class FourthDayStateMachine(object):
                 If simulation is done
         """
         # ---------------------------------------------------------------------
-        # Cleaning up before update
-        # ---------------------------------------------------------------------
-        # The current state
+        # The currently observed
         observation_mask = self._population.loc[:, 'observed'].values
+        # ---------------------------------------------------------------------
+        # Cleaning up before update
+        # Organisms that are unobserved can't produce photons
+        self._population.loc[~observation_mask, 'encounter photons'] = (
+            np.zeros(np.sum(~observation_mask))
+        )
+        self._population.loc[~observation_mask, 'shear photons'] = (
+            np.zeros(np.sum(~observation_mask))
+        )
+        self._population.loc[~observation_mask, 'photons'] = (
+            np.zeros(np.sum(~observation_mask))
+        )
+        # ---------------------------------------------------------------------
         # Current positions
         current_pos = np.array(
             list(zip(self._population.loc[:, 'pos_x'].values,
