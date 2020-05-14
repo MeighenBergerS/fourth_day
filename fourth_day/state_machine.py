@@ -48,10 +48,12 @@ class FourthDayStateMachine(object):
         # TODO: Make this position dependent
         # Organism shear property
         self._min_shear = config['organisms']['minimal shear stress']
-        self._injection_rate = config['scenario']["injection"]["rate"]
         self._injetion_counter = 0
         self._step = config['advanced']['starting step']
         self._time_step = config['water']['model']['time step']
+        self._injection_rate = (
+            config['scenario']["injection"]["rate"] * self._time_step
+        )
 
     def update(self):
         """ Updates the state by making one time step

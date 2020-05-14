@@ -163,41 +163,25 @@ class Fourth_Day(object):
         """
         _log.info('---------------------------------------------------')
         _log.info('---------------------------------------------------')
-        _log.info('Calculating light yields')
+        _log.info('Calculating photon bursts')
         # The simulation
         self._mc_run = MC_sim(
             self._life,
             self._world,
             self._current
         )
-        _log.debug('---------------------------------------------------')
-        _log.debug('---------------------------------------------------')
-        # The total emission
-        _log.debug('Total light')
-        # result = Lucifer(
-        #     pulses[:, 0],
-        # ).yields * config['photon yield']
-        # The possible encounter emission without regen
-        _log.debug('Encounter light')
-        # result_enc = Lucifer(
-        #     pulses[:, 1],
-        # ).yields * config['photon yield']
-        # The possible sheared emission without regen
-        _log.debug('Shear light')
-        # result_shear = Lucifer(
-        #     pulses[:, 2],
-        # ).yields * config['photon yield']
-        # Collecting results
         self._statistics = self._mc_run.statistics
+        _log.info('---------------------------------------------------')
+        _log.info('---------------------------------------------------')
         if config['scenario']["light prop"]:
-            _log.info("Calculating light yields at the detector")
+            _log.info("Calculating photon yields at the detector")
             self._lucifer = Lucifer()
             self._light_yields = self._lucifer.light_bringer(
                 self._statistics,
                 self._life
             )
-        _log.debug('---------------------------------------------------')
-        _log.debug('---------------------------------------------------')
+        _log.info('---------------------------------------------------')
+        _log.info('---------------------------------------------------')
         _log.info('Finished calculation')
         _log.info('Get the results by typing self.results')
         _log.info('Structure of dictionray:')

@@ -178,7 +178,7 @@ _baseconfig = {
         # Emission fraction per pulse
         'emission fraction': 0.1,
         # Fraction of max energy regenerated per second
-        'regeneration': 1e-3,
+        'regeneration': 1e-4,
         # TODO: Make this a distribution using data
         # Emission duration
         'emission duration': 3.,
