@@ -17,7 +17,7 @@ import time
 # Time_cut
 t_cut = 20
 data_count = 300
-photon_count = 1e0
+photon_count = 1e2
 # Loading data
 binned_data = []
 times = []
@@ -54,11 +54,13 @@ num_data = len(binned_data[0])
 
 # Noise function
 def noise_func(data_points, spatial_dim):
-    return np.random.uniform(
+    noise = np.random.uniform(
         low=low_time / high_time,
         high=1.,
         size=(data_points, spatial_dim)
     )
+    noise[noise[:, 0].argsort()]
+    return noise
 
 
 # Parameters
@@ -115,6 +117,22 @@ def make_generator_model(input_size):
     model.add(layers.BatchNormalization())
     model.add(layers.LeakyReLU())
     # Additional layers
+    # -----------------
+    model.add(layers.Dense(50))
+    model.add(layers.BatchNormalization())
+    model.add(layers.LeakyReLU())
+    # -----------------
+    model.add(layers.Dense(50))
+    model.add(layers.BatchNormalization())
+    model.add(layers.LeakyReLU())
+    # -----------------
+    model.add(layers.Dense(50))
+    model.add(layers.BatchNormalization())
+    model.add(layers.LeakyReLU())
+    # -----------------
+    model.add(layers.Dense(50))
+    model.add(layers.BatchNormalization())
+    model.add(layers.LeakyReLU())
     # -----------------
     model.add(layers.Dense(50))
     model.add(layers.BatchNormalization())
@@ -205,6 +223,26 @@ def make_discriminator_model(input_size):
     model.add(layers.LeakyReLU())
     model.add(layers.Dropout(0.3))
     # -----------------
+    model.add(layers.Dense(50))
+    model.add(layers.LeakyReLU())
+    model.add(layers.Dropout(0.3))
+    # -----------------
+    model.add(layers.Dense(50))
+    model.add(layers.LeakyReLU())
+    model.add(layers.Dropout(0.3))
+    # -----------------
+    model.add(layers.Dense(50))
+    model.add(layers.LeakyReLU())
+    model.add(layers.Dropout(0.3))
+    # -----------------
+    model.add(layers.Dense(50))
+    model.add(layers.LeakyReLU())
+    model.add(layers.Dropout(0.3))
+    # -----------------
+    model.add(layers.Dense(50))
+    model.add(layers.LeakyReLU())
+    model.add(layers.Dropout(0.3))
+    # -----------------
     # The output layer
     model.add(layers.Flatten())
     model.add(layers.Dense(1))
@@ -219,6 +257,7 @@ def make_discriminator_model(input_size):
 
 # The loss functions
 # This method returns a helper function to compute cross entropy loss
+# Make this a wassserstein loss
 cross_entropy = tf.keras.losses.BinaryCrossentropy(from_logits=True)
 
 # The discriminator loss
@@ -307,7 +346,7 @@ def generate_and_save_images(model, epoch, test_input, image_batch):
                 image_batch[:, 1],
                 color='k', s=10.)
     plt.xlim(low_time / high_time, 1.)
-    plt.ylim(0., 1.)
+    plt.ylim(0., 1e2)
     plt.xlabel(r'$t$', fontsize=30.)
     plt.ylabel(r'Squashed Counts', fontsize=30.)
     plt.tick_params(axis = 'both', which = 'major', labelsize=30./2, direction='in')
