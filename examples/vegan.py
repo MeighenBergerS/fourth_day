@@ -522,7 +522,7 @@ def train(
                 train_step(dataset[batch_id], generator, critic,
                            gan, data_points, spatial_dim, critic_training)
             )
-        if epoch%1 == 0:
+        if epoch%10 == 0:
             end = time.time()
             generate_and_save_images(
                 generator,
