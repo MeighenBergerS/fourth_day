@@ -10,10 +10,30 @@ Starting points for the script:
 """
 
 import tensorflow as tf
+import os
 from tensorflow.keras import layers
 import numpy as np
 import matplotlib.pyplot as plt
 import time
+
+# Setting options for conda installation (and others)
+# TF tries to hog all of the gpu memory
+_SESSION = None
+if _SESSION is None:
+    if not os.environ.get('OMP_NUM_THREADS'):
+        # Tensorflow >= 2.0 doesn't currently support these options
+        # Run in compatability mode
+        config = tf.compat.v1.ConfigProto(allow_soft_placement=True)
+        config.gpu_options.allow_growth=True
+    else:
+        num_thread = int(os.environ.get('OMP_NUM_THREADS'))
+        config = tf.ConfigProto(intra_op_parallelism_threads=num_thread,
+                                allow_soft_placement=True)
+        config.gpu_options.allow_growth=True
+    # Tensorflow >= 2.0 doesn't currently support these options
+    # Run in compatability mode
+    _SESSION = tf.compat.v1.Session(config=config)
+session = _SESSION
 
 # Data
 # Time_cut
@@ -56,15 +76,15 @@ times = np.array(times)
 low_time = np.amin(times)
 high_time = np.amax(times)
 
-# Normalizing
-times = times / high_time
+# Normalizing to 0.1 and 0.9
+times = times / (high_time * 1.25) + 0.1
 
 # Result ranges
 low_data = np.amin(binned_data)
 high_data = np.amax(binned_data)
 
-# Normalizing
-binned_data = binned_data / high_data
+# Normalizing to 0.1 and 0.9
+binned_data = binned_data / (high_data * 1.25) + 0.1
 
 # Number of data points
 num_data = len(binned_data[0])
@@ -225,12 +245,12 @@ def make_generator_model(input_size):
     model.add(layers.LeakyReLU(alpha=0.2))
     # -----------------
     # Output
+    # We want values between 0 and 1
     model.add(layers.Dense(
         input_size[1],
-        kernel_initializer=init
+        kernel_initializer=init,
+        activation='sigmoid'
     ))
-    # We want positive values
-    model.add(layers.ReLU())
     return model
 
 def make_critic_model(input_size):
@@ -487,7 +507,10 @@ def train(
     disc_real_arr = []
     disc_fake_arr = []
     gan_loss_arr = []
-    seed = np.array([noise_func(data_points, dimensions)])
+    seed = np.array([
+        noise_func(data_points, dimensions)
+        for _ in range(split_count)
+    ])
     for epoch in range(epochs):
         batches_per_epoch = int(len(dataset) / batch_size)
         batch_ids = np.random.randint(
@@ -552,14 +575,15 @@ def generate_and_save_images(model, epoch, noise_seed, data_sample):
     # This is so all layers run in inference mode (batchnorm).
     predictions = model(noise_seed, training=False)
     plt.figure(figsize=(20., 20. * 6. / 8.))
-    plt.scatter(predictions[:, 0],
-                predictions[:, 1],
-                color='r', s=10.)
+    for predic in predictions:
+        plt.scatter(predic[:, 0],
+                    predic[:, 1],
+                    color='r', s=10.)
     for subset in data_sample:
         plt.scatter(subset[:, 0],
                     subset[:, 1],
                     color='k', s=10.)
-    plt.xlim(low_time / high_time, 1.)
+    plt.xlim(0., 1.)
     plt.ylim(0., 1.)
     plt.xlabel(r'$t$', fontsize=30.)
     plt.ylabel(r'Squashed Counts', fontsize=30.)
@@ -569,9 +593,12 @@ def generate_and_save_images(model, epoch, noise_seed, data_sample):
     plt.grid(True)
     plt.close()
     plt.figure(figsize=(20., 20. * 6. / 8.))
-    plt.scatter(predictions[:, 0],
-                predictions[:, 1],
-                color='r', s=10.)
+    for predic in predictions:
+        plt.scatter(predic[:, 0],
+                    predic[:, 1],
+                    color='r', s=10.)
+    plt.xlim(0., 1.)
+    plt.ylim(0., 1.)
     plt.xlabel(r'$t$', fontsize=30.)
     plt.ylabel(r'Squashed Counts', fontsize=30.)
     plt.tick_params(axis = 'both', which = 'major', labelsize=30./2, direction='in')
