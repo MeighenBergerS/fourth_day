@@ -124,10 +124,15 @@ class vegan(object):
         #     np.array([list(zip(self._times[i],self._binned_data[i]))
         #               for i in range(len(self._binned_data))])
         # )
+        # The labels
+        self._true_labels_for_data = self._true_labels()
         # Converting to tensorflow dataset
         self._tf_train_dataset = tf.data.Dataset.from_tensor_slices(
-            self._np_train_dataset,
+            (self._np_train_dataset)
         )
+        # self._tf_train_dataset = tf.data.Dataset.from_tensor_slices(
+        #     (self._np_train_dataset, self._true_labels_for_data)
+        # )
 
     def _wasserstein_loss(self, y_true, y_pred):
         """ The wasserstein loss. The loss function scores
@@ -166,8 +171,8 @@ class vegan(object):
         model = tf.keras.Sequential()
         # Input layer
         model.add(layers.Dense(
-                output_dim * 2,
-                input_shape=(2, self._noise_dim),
+                self._noise_dim,
+                input_shape=(self._noise_dim,),
                 kernel_initializer=init
         ))
         model.add(layers.BatchNormalization())
@@ -175,28 +180,28 @@ class vegan(object):
         # Additional layers
         # -----------------
         model.add(layers.Dense(
-            output_dim,
+            output_dim * 2,
             kernel_initializer=init
         ))
         model.add(layers.BatchNormalization())
         model.add(layers.LeakyReLU(alpha=0.2))
         # -----------------
         model.add(layers.Dense(
-            output_dim,
+            output_dim * 2,
             kernel_initializer=init
         ))
         model.add(layers.BatchNormalization())
         model.add(layers.LeakyReLU(alpha=0.2))
         # -----------------
         model.add(layers.Dense(
-            output_dim,
+            output_dim * 2,
             kernel_initializer=init
         ))
         model.add(layers.BatchNormalization())
         model.add(layers.LeakyReLU(alpha=0.2))
         # -----------------
         model.add(layers.Dense(
-            output_dim,
+            output_dim * 2,
             kernel_initializer=init
         ))
         model.add(layers.BatchNormalization())
@@ -205,7 +210,7 @@ class vegan(object):
         # Output
         # We want values between 0 and 1
         model.add(layers.Dense(
-            output_dim,
+            output_dim * 2,
             kernel_initializer=init,
             activation='sigmoid'
         ))
@@ -232,8 +237,8 @@ class vegan(object):
         model = tf.keras.Sequential()
         # Adding the input layer
         model.add(layers.Dense(
-                input_size * 2,
-                input_shape=(2, input_size),
+                input_size*2,
+                input_shape=(input_size * 2,),
                 kernel_initializer=init,
                 kernel_constraint=constr
         ))
@@ -290,7 +295,7 @@ class vegan(object):
         # Lr suggested for WGAN
         opt = tf.keras.optimizers.RMSprop(lr=0.00005)
         # Compiling the model
-        model.compile(loss=self._wasserstein_loss, optimizer=opt, run_eagerly=False)
+        model.compile(loss=self._wasserstein_loss, optimizer=opt, run_eagerly=True)
         return model
 
     # Combining the networks
@@ -322,8 +327,13 @@ class vegan(object):
         # The loss function
         opt = tf.keras.optimizers.RMSprop(lr=0.00005)
         # Compiling the model
-        model.compile(loss=self._wasserstein_loss, optimizer=opt, run_eagerly=False)
+        model.compile(loss=self._wasserstein_loss, optimizer=opt, run_eagerly=True)
         return model
+
+    def _generate_noise(self):
+        """ Generates a noise vector for the generator
+        """
+        return tf.random.uniform([self._batch_size, self._noise_dim])
 
     def _generate_fake_data(self, generator):
         """ Uses the generator to construct fake data
@@ -340,14 +350,17 @@ class vegan(object):
         fake_labels : The fake labels
             The fake labels for the sample
         """
-        noise_input = tf.random.uniform([self._batch_size, self._noise_dim, 2])
-        sample = generator.predict(noise_input)
-        return sample
+        noise_input = self._generate_noise()
+        sample = generator.predict(noise_input, steps=1)
+
+        return tf.data.Dataset.from_tensor_slice(
+            sample
+        )
 
     # Notice the use of `tf.function`
     # This annotation causes the function to be "compiled".
     def _train_step(self,
-            data, dis_true, dis_false, generator, critic, gan
+            data, generator, critic, gan
         ):
         """ Defines a training step for the network training
 
@@ -355,10 +368,6 @@ class vegan(object):
         ----------
         data : np.array
             The training data sample
-        dis_true : tf.distributed_values_from_function
-            Object to create distributed truth values
-        dis_false : tf.distributed_values_from_function
-            Object to create distributed false values
         generator : tf.keras.model
             The generator model
         critic : tf.keras.model
@@ -381,30 +390,33 @@ class vegan(object):
         gan_loss = float
         for _ in range(5):
             # Training on real data
+            print(data)
             disc_loss_real_step = critic.train_on_batch(
-                data, dis_true
+                data
             )
             # Training on fake data
             fake_sample = self._generate_fake_data(
                 generator
             )
             disc_loss_fake_step = critic.train_on_batch(
-                fake_sample,
-                dis_false
+                fake_sample
             )
         # Training the entire gan model
-        noise_input = tf.random.uniform([self._batch_size, self._noise_dim, 2])
+        noise_input = self._generate_noise()
+        gan_seed = tf.data.Dataset.from_tensor_slice(
+            (noise_input,
+             tf.ones([self._batch_size, 1], dtype=tf.dtype.float23))
+        )
         # Update the entire gan
         gan_loss = gan.train_on_batch(
-            noise_input,
-            dis_false
+            gan_seed
         )
         return disc_loss_real_step, disc_loss_fake_step, gan_loss
 
     # Training function
-    @tf.function
+    # @tf.function # Predict has problems with this
     def _train(self,
-            dataset, dis_true, dis_false,
+            dataset,
             generator, critic, gan):
         """ The training routine for the WGAN
 
@@ -412,10 +424,6 @@ class vegan(object):
         ----------
         dataset : np.array
             The data set
-        dis_true : tf.distributed_values_from_function
-            Object to create distributed truth values
-        dis_false : tf.distributed_values_from_function
-            Object to create distributed false values
         generator : tf.keras.model
             The generator model
         critic : tf.keras.model
@@ -462,7 +470,6 @@ class vegan(object):
                 disc_real_step, disc_fake_step, gan_loss_step = (
                     self._train_step(
                         next_element,
-                        dis_true, dis_false,
                         generator, critic, gan)
                 )
             if epoch%10 == 0:
@@ -516,11 +523,13 @@ class vegan(object):
         # Notice `training` is set to False.
         # This is so all layers run in inference mode (batchnorm).
         predictions = model(noise_seed, training=False)
+        predictions_reshape = (
+            tf.reshape(predictions, shape = (2, self._num_data))
+        )
         plt.figure(figsize=(20., 20. * 6. / 8.))
-        for predic in predictions:
-            plt.scatter(predic[:, 0],
-                        predic[:, 1],
-                        color='r', s=10.)
+        plt.scatter(predictions_reshape[0, :],
+                    predictions_reshape[1, :],
+                    color='r', s=10.)
         plt.xlim(0., 1.)
         plt.ylim(0., 1.)
         plt.xlabel(r'$t$', fontsize=30.)
@@ -536,23 +545,12 @@ class vegan(object):
     def _true_labels(self):
         """ Helper function to create true labels inside of strategy
         """
-        return tf.data.experimental.to_variant(
-            tf.data.Dataset.from_tensor_slices(tf.math.negative(
-                tf.ones([self._batch_size, 1], dtype=tf.dtypes.float32)
+        return (-(
+                np.ones((len(self._binned_data), 1), dtype=np.float32)
             ))
-        )
-
-    def _false_labels(self):
-        """ Helper function to create false labels inside of strategy
-        """
-        return tf.data.experimental.to_variant(
-            tf.data.Dataset.from_tensor_slices(
-                tf.ones([self._batch_size, 1], dtype=tf.dtypes.float32)
-            )
-        )
 
     def start_training(self, epochs, batch_size=64, dimensions=2,
-                       buffer_size=10000, noise_dim=100):
+                       buffer_size=10000, noise_dim=100, strategy=False):
         """ Runs the training of the neural network
 
         Parameters
@@ -567,6 +565,8 @@ class vegan(object):
             Ussed to shuffle the data
         noise_dim : int
             Dimensions of the noise vector
+        strategy : bool
+            Distribution strategy to use. Still buggy
 
         Returns
         -------
@@ -582,35 +582,48 @@ class vegan(object):
         self._noise_dim = noise_dim
         self._batch_size = batch_size
         self._max_batch_size = len(self._binned_data)
-        self._strategy = tf.distribute.MirroredStrategy()
-        print('Number of devices: {}'.format(self._strategy.num_replicas_in_sync))
-        # Batch size
-        batch_size_per_replica = batch_size * self._strategy.num_replicas_in_sync
-        # Converting data for strategy
-        # Add batch and shuffle here
-        train_set = (
-            self._tf_train_dataset.shuffle(
-                buffer_size
-            ).batch(batch_size_per_replica)
-        )
-        # Creating strategy data
-        strategy_data = (
-            # self._strategy.experimental_distribute_dataset(train_set)
-            train_set
-        )
-        # Shuffling and batching here
-        with self._strategy.scope():
-            distributed_truth = (
-                self._true_labels()
+        if strategy:
+            print("-----------------------------------------------")
+            print("-----------------------------------------------")
+            print("Running with mirrored strategy")
+            self._strategy = tf.distribute.MirroredStrategy()
+            print('Number of devices: {}'.format(self._strategy.num_replicas_in_sync))
+            print("-----------------------------------------------")
+            print("-----------------------------------------------")
+            # Batch size
+            batch_size_per_replica = batch_size * self._strategy.num_replicas_in_sync
+            # Converting data for strategy
+            # Add batch and shuffle here
+            train_set = (
+                self._tf_train_dataset.shuffle(
+                    buffer_size
+                ).batch(batch_size_per_replica)
             )
-            distributed_false = (
-                self._false_labels
+            # Creating strategy data
+            strategy_data = (
+                # self._strategy.experimental_distribute_dataset(train_set)
+                train_set
             )
+            # Shuffling and batching here
+            with self._strategy.scope():
+                generator = self._make_generator_model(self._num_data)
+                critic = self._make_critic_model(self._num_data)
+                gan = self._make_wgan(generator, critic)
+        else:
+            print("-----------------------------------------------")
+            print("-----------------------------------------------")
+            print("Running without a distribution strategy")
+            print("-----------------------------------------------")
+            print("-----------------------------------------------")
+            train_set = (
+                self._tf_train_dataset.shuffle(buffer_size).batch(batch_size)
+            )
+            strategy_data = train_set
             generator = self._make_generator_model(self._num_data)
             critic = self._make_critic_model(self._num_data)
             gan = self._make_wgan(generator, critic)
         disc_real, disc_fake, gan_loss = self._train(
-            strategy_data, distributed_truth, distributed_false,
+            strategy_data,
             generator, critic, gan
         )
         plt.figure()
@@ -678,7 +691,7 @@ def main():
     """
     VEGAN = vegan()
     VEGAN.load_data('../data/storage/benchmark_v1')
-    VEGAN.start_training(1001)
+    VEGAN.start_training(1001, strategy=False)
 
 if __name__ == "__main__":
     main()
