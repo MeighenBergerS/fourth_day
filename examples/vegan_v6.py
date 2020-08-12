@@ -1,7 +1,7 @@
 """
-vegan_v4.py
+vegan_v6.py
 Authors: Stephan Meighen-Berger
-Testing ground for the GAN neural network
+Testing ground for the GAN neural network. Implementation of the WGAN
 Starting points for the script:
     -https://blog.paperspace.com/implementing-gans-in-tensorflow/
     -https://www.tensorflow.org/tutorials/generative/dcgan

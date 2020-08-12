@@ -1,7 +1,7 @@
 """
-vegan_v4.py
+vegan_data_v1.py
 Authors: Stephan Meighen-Berger
-Testing ground for the GAN neural network
+Testing ground for the GAN neural network on data. Implementation of the WGAN
 Starting points for the script:
     -https://blog.paperspace.com/implementing-gans-in-tensorflow/
     -https://www.tensorflow.org/tutorials/generative/dcgan
@@ -13,10 +13,12 @@ import tensorflow as tf
 import time
 from tensorflow.keras import layers
 import matplotlib.pyplot as plt
+from scipy.interpolate import UnivariateSpline
 import numpy as np
 import os
 from tqdm import tqdm
 import imageio
+import h5py
 
 
 class vegan_generator(tf.keras.Model):
@@ -200,7 +202,7 @@ class vegan_discriminator(tf.keras.Model):
         x = self._output_layer(x)
         return x
 
-def save_images(image, epoch, data):
+def save_images(image, epoch, data, high_data):
     """ Function to save the output image from the GAN
 
     Parameters
@@ -211,6 +213,8 @@ def save_images(image, epoch, data):
         The current epoch
     data : np.array
         The data set to compare to
+    high_data : float
+        High point in the data set to remove normalization
 
     Returns
     -------
@@ -228,16 +232,16 @@ def save_images(image, epoch, data):
             1 + i)
         plt.plot(
             np.linspace(0., 1., num=len(image[i])),
-            (image[i] + 1.) / 2.,  # Removed [-1, 1] normalization
+            (image[i] + 1.) / 2. * high_data,  # Removed [-1, 1] normalization
             color='k', ls='-', lw=1.5
         )
         plt.plot(
             np.linspace(0., 1., num=len(image[i])),
-            (data + 1.) / 2.,  # Removed [-1, 1] normalization
+            (data + 1.) / 2. * high_data,  # Removed [-1, 1] normalization
             color='r', ls='-', lw=1.5, alpha=0.2,
         )
         plt.xlim(0., 1.)
-        plt.ylim(-0.1, 1.1)
+        plt.ylim(0.9, 1.1)
         plt.grid(True)
 
     tmp = '../pics/iterations/'
@@ -268,7 +272,7 @@ def save_loss(gen_losses, disc_losses):
     plt.close()
 
 def generate_and_save( 
-    model, epoch, test_input, data):
+    model, epoch, test_input, data, high_data):
     """ Generates an output image from the model and passes the result to
     save_image
 
@@ -282,27 +286,21 @@ def generate_and_save(
         A vector defining the input noise
     data : np.array
         The data to compare to
+    high_data : float
+        Highpoint in the data set to remove normalization
 
     Returns
     -------
     None
     """
     predictions = model(test_input, training=False)
-    save_images(predictions, epoch, data)
+    save_images(predictions, epoch, data, high_data)
 
-def load_training_data(data_loc, data_count=300, t_cut=1002, bin_count=20):
+def load_training_data():
     """ Loads and parses the training data for the network
 
     Parameters
     ----------
-    data_loc : str
-        The location of the training data
-    data_count : int
-        The number of data sets
-    t_cut : int
-        Time steps to ignore from the data set
-    bin_count : int
-        Bins the data to a more managable size
 
     Returns
     -------
@@ -311,40 +309,44 @@ def load_training_data(data_loc, data_count=300, t_cut=1002, bin_count=20):
     """
     # Loading data
     binned_data = []
-    # times = []
-    for i in range(data_count):
-        # Loading data
-        data = np.load(data_loc + '_%s.npy' % str(i))
-        # org_times = np.load(data_loc + '_time_%s.npy' % str(i))
-        # Processing
-        # Adding 0 at the beginning and end
-        if len(data) <= t_cut:
-            continue
-        tmp_data = np.insert(data[t_cut:], [0, -1], [0., 0.])
-        # step = np.diff(org_times)[0]
-        # tmp_times = np.insert(
-        #     org_times[t_cut:], [-2, -1],
-        #     [org_times[-1] + step, org_times[-1] + 2 * step])
-        # Binning
-        tmp_shaped = tmp_data.reshape(450, bin_count)
-        data_binned = np.sum(tmp_shaped, axis=1)
-        binned_data.append(data_binned)
-        # Splitting further
-        # data_split = np.array(np.array_split(tmp_data, split_count))
-        # time_split = np.array(np.array_split(tmp_times, split_count))
-        # Processed
-        # for i in range(len(data_split)):
-        #     binned_data.append(data_split[i])
-        #     times.append(time_split[i])
+    sdoms = [1] # [1, 2, 3, 4, 5]
+    years = [19] # [19, 20]
+    digits_3 = [9] # [1, 2, 3, 4, 5, 6, 9] # month
+    digits_2 = [0, 1, 2, 3] # day digit * 10
+    digits_1 = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9] # day digit 
+    hours = [10, 14, 18, 22]
+    max_time = 3600
+    for year in years:
+        for digit_3 in tqdm(digits_3):
+            for digit_2 in digits_2:
+                for digit_1 in digits_1:
+                    for hour in hours:
+                        for sdom in sdoms:
+                            load_string = (
+                                'D:/straw_bio/data/' + '20' + str(year) + '0' +
+                                 str(digit_3) + str(digit_2) + str(digit_1) +
+                                '_%d0000_UTC_SDOM%d.raw.hdf5' % (hour, sdom)
+                            )
+                            try:
+                                f = h5py.File(load_string, 'r')
+                            except:
+                                continue
+                            # channel 0
+                            rate = f['trb_rate_up_0']
+                            times = f['trb_time']
+                            differences = np.diff(times[:-1])
+                            time = np.insert(np.cumsum(differences), 0, 0)
+                            spl = UnivariateSpline(
+                                time, rate,
+                                k=1, s=0, ext=1)
+                            times = np.linspace(0., max_time, max_time * 30)
+                            split_data = np.split(spl(times), 300)
+                            for subset in split_data:
+                                binned_data.append(subset)
     # Converting
     binned_data = np.array(binned_data)
-    # times = np.array(times)
     # Data length
     data_length = len(binned_data[0])
-    # Time ranges
-    # high_time = np.amax(times)
-    # Normalizing to 0.1 and 0.9
-    # times = times / (high_time * 1.25) + 0.1
     # Result ranges
     high_data = np.amax(binned_data / 2.)
     # Normalizing to -1. and 1.
@@ -355,6 +357,7 @@ def load_training_data(data_loc, data_count=300, t_cut=1002, bin_count=20):
             for i in range(len(binned_data))
         ]).astype('float32')
     )
+
     # Converting to tensorflow dataset
     tf_train_dataset = tf.data.Dataset.from_tensor_slices(
         np_train_dataset
@@ -362,7 +365,7 @@ def load_training_data(data_loc, data_count=300, t_cut=1002, bin_count=20):
     train_dataset = (
         tf_train_dataset.shuffle(BUFFER_SIZE).batch(BATCH_SIZE)
     )
-    return train_dataset, data_length, binned_data[0]
+    return train_dataset, data_length, binned_data[0], high_data
 
 def make_loss():
     """ Helper function to define the losses for the networks
@@ -484,7 +487,7 @@ def train(
     data,
     generator, generator_loss, generator_optimizer,
     discriminator, discriminator_loss, discriminator_optimizer,
-    seed, data_comp, checkpoint, checkpoint_prefix,
+    seed, data_comp, checkpoint, checkpoint_prefix, high_data
     ):
     """ Trains the neural network
 
@@ -512,6 +515,8 @@ def train(
         Tensorflow checkpoint handler
     checkpoint_prefix : str
         The storage location for the checkpoints
+    high_data : float
+        High point in the data set to remove normalization for plotting
 
     Returns
     -------
@@ -533,7 +538,8 @@ def train(
             generator,
             epoch + 1,
             seed,
-            data_comp
+            data_comp,
+            high_data
         )
 
         # Save the model
@@ -553,7 +559,8 @@ def train(
         generator,
         EPOCHS,
         seed,
-        data_comp
+        data_comp,
+        high_data
     )
     # Plotting the losses
     save_loss(np.array(gen_losses), np.array(disc_losses))
@@ -594,11 +601,7 @@ def main():
         # tf.compat.v1.enable_eager_execution()
     # session = _SESSION
     # Loading data
-    train_dataset, data_length, data_comp = load_training_data(
-        '../data/storage/benchmark_v1',
-        data_count=DATA_COUNT,
-        bin_count=20,
-    )
+    train_dataset, data_length, data_comp = load_training_data()
     # Setting up the neural networks
     generator = vegan_generator(data_length)
     discriminator = vegan_discriminator(data_length)
@@ -622,7 +625,7 @@ def main():
     train(train_dataset,
         generator, generator_loss, generator_optimizer,
         discriminator, discriminator_loss, discriminator_optimizer,
-        seed, data_comp, checkpoint, checkpoint_prefix
+        seed, data_comp, checkpoint, checkpoint_prefix, high_data
     )
 
 
@@ -633,7 +636,7 @@ if __name__ == "__main__":
     EPOCHS = 400
     EXAMPLES_TO_GENERATE = 9
     BUFFER_SIZE = 10000
-    DATA_COUNT = 300  # Number of data sets
+    # DATA_COUNT = 300  # Number of data sets
     # Setting up the loss function
     LOSS = make_loss()
     main()
