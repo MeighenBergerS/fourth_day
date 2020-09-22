@@ -173,12 +173,15 @@ class FourthDayStateMachine(object):
         successful_burst_shear = np.logical_and(new_emitters_shear, burst_bool)
         # ---------------------------------------------------------------------
         # The photons
+        # TODO: Add gamma distribution and time dependence here
+        # encounter_photons - (Max_Emissions * Gamma(t))
         encounter_photons = (
             self._population.loc[successful_burst_enc,
                                  'max_emission'].values *
             self._population.loc[successful_burst_enc,
                                  'emission fraction'].values
         )
+        # TODO: Change to pulses
         # Spread evenly over the emission duration
         encounter_photons = (
             encounter_photons / config['organisms']['emission duration']
