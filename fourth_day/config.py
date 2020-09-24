@@ -58,6 +58,12 @@ _baseconfig = {
             "switch": False,
             "x_pos": 5.,
             "y_pos": 10.,
+        },
+        # Light detection
+        "detector" : {
+            "response": True,
+            "type": "Flat",
+            "mean detection prob": 0.3
         }
     },
     ###########################################################################

@@ -49,6 +49,7 @@ from .current import Current
 from .mc_sim import MC_sim
 from .vtu_npy_handlers import vtu_npy_converter
 from .lucifer import Lucifer
+from .providence import Providence
 
 # unless we put this class in __init__, __name__ will be contagion.contagion
 _log = logging.getLogger("fourth_day")
@@ -173,17 +174,23 @@ class Fourth_Day(object):
         self._statistics = self._mc_run.statistics
         _log.info('---------------------------------------------------')
         _log.info('---------------------------------------------------')
-        if config['scenario']["light prop"]:
+        if config['scenario']["light prop"]["switch"]:
             _log.info("Calculating photon yields at the detector")
             self._lucifer = Lucifer()
             self._light_yields = self._lucifer.light_bringer(
                 self._statistics,
                 self._life
             )
+            if config['scenario']["detector"]["response"]:
+                _log.info("Folding detection probability")
+                self._providence = Providence()
+                self._measured = self._providence.detection_efficiency(
+                    self._light_yields
+                )
         _log.info('---------------------------------------------------')
         _log.info('---------------------------------------------------')
         _log.info('Finished calculation')
-        _log.info('Get the results by typing self.results')
+        _log.info('Get the results by typing self.statistics')
         _log.info('Structure of dictionray:')
         _log.info(self._statistics[0].keys())
         _log.debug(
@@ -250,9 +257,34 @@ class Fourth_Day(object):
             ValueError
                 When the correct switches were't set in the config
         """
-        if config['scenario']["light prop"]:
+        if config['scenario']["light prop"]["switch"]:
             return self._light_yields
         else:
             raise ValueError(
                 "Light yields not calculated! Check the config file"
+            )
+
+    @property
+    def measured(self):
+        """ Getter function for the light yields. The switch needs to be true
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        light_yields : np.array
+            The light yield of the detector
+
+        Raises
+        ------
+            ValueError
+                When the correct switches were't set in the config
+        """
+        if config['scenario']["detector"]["response"]:
+            return self._measured
+        else:
+            raise ValueError(
+                "Detector not simulated! Check the config file"
             )

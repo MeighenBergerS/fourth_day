@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-Name: fd_genesis.py
+Name: lucifer.py
 Authors: Stephan Meighen-Berger, Li Ruohan
-Creats the light spectrum pdf.
-This is used to fit the data.
+Propagates the light to the detector position
 """
 import logging
 import pandas as pd
@@ -140,5 +139,3 @@ class Lucifer(object):
         end = time()
         _log.info("Propagation simulation took %f seconds" % (end - start))
         return emission
-
-

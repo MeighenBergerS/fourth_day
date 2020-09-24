@@ -231,10 +231,10 @@ class FourthDayStateMachine(object):
         self._population.loc[mask, 'energy'] = 1.
         # Photons
         self._population.loc[successful_burst_enc, 'encounter photons'] = (
-            encounter_photons
+            encounter_photons * config["organisms"]['photon yield']
         )
         self._population.loc[successful_burst_shear, 'shear photons'] = (
-            shear_photons
+            shear_photons * config["organisms"]['photon yield']
         )
         self._population.loc[new_observation_mask, 'photons'] = (
             self._population.loc[new_observation_mask, 'encounter photons'] +
