@@ -187,7 +187,7 @@ _baseconfig = {
         'regeneration': 1e-4,
         # TODO: Make this a distribution using data
         # Emission duration
-        'emission duration': 3.,
+        'emission duration': 120.,
         # Minimal shear stress
         'minimal shear stress': 0.1,
         # Proportionality factor for shear

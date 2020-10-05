@@ -15,6 +15,7 @@ import csv
 import logging
 from .config import config
 from .pdfs import construct_pdf
+import matplotlib.pyplot as plt
 
 
 _log = logging.getLogger(__name__)
@@ -325,6 +326,39 @@ class Genesis(object):
                     "sd": evolved[key][2][idspecies] / 2.
                 })
         return pdfs
+    
+    
+    
+    """
+    generate a random gamma function 
+    with range of a=[10,30],loc=10 => mean=[20,30],std=[3,15]
+    amplitude modified A=[0.3,3.0]
+    """
+    def random_gamma_emission(self, remain_time: np.array) -> np.array:
+        
+        mean = np.random.uniform(20, 30)
+        std = np.random.uniform(3,15)
+        amp = np.random.uniform(0.3,3.0)
+        samp_bins = int(config["organisms"]['emission duration'])
+        
+        gamma_function = construct_pdf({
+                "class": 'Gamma',
+                "mean": mean,
+                "sd": std
+            })
+        #sampling it
+#        data, bins, patches = plt.hist(gamma_function.rvs(100),bins=samp_bins)
+#        gamma_sample_array = amp*data/100.
+        multi_array = gamma_function.pdf(remain_time)
+        
+#         multi_array = np.zeros(np.shape(remain_time))
+#         for index, time in np.ndenumerate(remain_time):
+#             time_index = int(time)
+#             if 1 <= time_index <= 120:
+#                 multi_array[index]= gamma_sample_array[time_index-1]
+#             else:
+#                 multi_array[index]= gamma_sample_array[0]
+        return multi_array
 
     def _temere_congressus(self) -> dict:
         """ Constructs the movement pdfs
