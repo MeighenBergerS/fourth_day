@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 Name: fd_genesis.py
-Authors: Stephan Meighen-Berger
+Authors: Stephan Meighen-Berger, Li Ruohan
 Creats the light spectrum pdf.
 This is used to fit the data.
 """
@@ -13,9 +13,9 @@ from scipy.signal import peak_widths
 from scipy.optimize import root
 import csv
 import logging
+import pandas as pd
 from .config import config
 from .pdfs import construct_pdf
-import matplotlib.pyplot as plt
 
 
 _log = logging.getLogger(__name__)
@@ -49,6 +49,8 @@ class Genesis(object):
         ValueError
             Unknown pdf distribution
         """
+        # Random state
+        self._rstate = config["runtime"]['random state']
         # Constructs the organisms
         self._life = self._immaculate_conception()
         # Filters the organisms
@@ -60,7 +62,7 @@ class Genesis(object):
 
     @property
     def Life(self) -> dict:
-        """ Getter function for the light pdfs
+        """ Getter function for the organisms
 
         Parameters
         ----------
@@ -75,7 +77,7 @@ class Genesis(object):
 
     @property
     def Evolved(self) -> dict:
-        """ Getter function for the light pdfs
+        """ Getter function for the filtered organisms
 
         Parameters
         ----------
@@ -118,6 +120,37 @@ class Genesis(object):
         """
         return self._movement
 
+    def pulse_emission(self, organisms: pd.DataFrame) -> np.array:
+        """ Emission magnitude depending on how long the organisms have been
+        emitting
+
+        Parameters
+        ----------
+        organisms : pd.DataFrame
+            The organisms of interest
+
+        Returns
+        -------
+        multi_array : np.array
+            The emission fractions for each element in remain_time
+        """
+        means = organisms.loc[:, "pulse mean"].values
+        sd = organisms.loc[:, "pulse sd"].values
+        remain_times = abs(organisms.loc[:, "emission_duration"].values -
+                           config["organisms"]['emission duration'])
+        gamma_functions = np.array([
+            construct_pdf({
+                "class": config['organisms']['pdf pulse']['pdf'],
+                "mean": means[i],
+                "sd": sd[i]
+            }) for i in range(0, len(means))
+        ])
+        multi_array = np.array([
+            gamma_functions[i].pdf(remain_times[i])
+            for i in range(0, len(remain_times))
+        ])
+        return multi_array
+
     def _immaculate_conception(self) -> dict:
         """ Data for the emission spectra of different creatures.
 
@@ -146,12 +179,20 @@ class Genesis(object):
                     # Converting to numpy array
                     tmp = np.asarray(tmp)
                     # Relevant values
+                    # [0] is the name
+                    # [1] is the mean emission line in nm
+                    # [2] is the sd of the gamma emission profile (wavelength)
+                    # [5] is the depth at which it appears
+                    # [6] is the mean emission duration
+                    # [7] is the sd of the emission duration
                     life[phyla] = np.array(
                         [
                             tmp[:, 0].astype(str),
                             tmp[:, 1].astype(np.float32),
                             tmp[:, 2].astype(np.float32),
-                            tmp[:, 5].astype(np.float32)
+                            tmp[:, 5].astype(np.float32),
+                            tmp[:, 6].astype(np.float32),
+                            tmp[:, 7].astype(np.float32)
                         ],
                         dtype=object
                     )
@@ -175,7 +216,9 @@ class Genesis(object):
                                 tmp[:, 0].astype(str),
                                 tmp[:, 1].astype(np.float32),
                                 tmp[:, 2].astype(np.float32),
-                                tmp[:, 5].astype(np.float32)
+                                tmp[:, 5].astype(np.float32),
+                                tmp[:, 6].astype(np.float32),
+                                tmp[:, 7].astype(np.float32)
                             ],
                             dtype=object
                         )
@@ -240,6 +283,8 @@ class Genesis(object):
             else:
                 avg_mean = []
                 avg_widt = []
+                avg_pulse_mean = []
+                avg_pulse_sd = []
                 total_count = 0
                 for class_name in config['organisms']['phyla light'][phyla]:
                     avg_mean.append(np.mean(
@@ -248,11 +293,19 @@ class Genesis(object):
                     avg_widt.append(np.mean(
                         life[phyla + '_' + class_name][2]
                     ))
+                    avg_pulse_mean.append(np.mean(
+                        life[phyla + '_' + class_name][4]
+                    ))
+                    avg_pulse_sd.append(np.mean(
+                        life[phyla + '_' + class_name][5]
+                    ))
                     total_count += len(life[phyla + '_' + class_name][1]) 
                 evolved[phyla] = np.array([
                     [phyla],
                     [np.mean(avg_mean)],
-                    [np.mean(avg_widt)]
+                    [np.mean(avg_widt)],
+                    [np.mean(avg_pulse_mean)],
+                    [np.mean(avg_pulse_sd)]
                 ], dtype=object)
                 _log.debug('1 out of %d %s survived the flood'
                                  %(total_count, phyla))
@@ -273,26 +326,30 @@ class Genesis(object):
         """
         evolved = dict()
         for key in life.keys():
-            evolved[key] = [[], [], [], []]
+            evolved[key] = [[], [], [], [], []]
             for idspecies, _ in enumerate(life[key][0]):
                 cut_off = config['organisms']['depth filter']
                 if life[key][3][idspecies] >= cut_off:
-                     #  The name
-                     evolved[key][0].append(
-                         life[key][0][idspecies]
-                     )
-                     # The mean emission
-                     evolved[key][1].append(
-                         life[key][1][idspecies]
-                     )
-                     # The FWHM
-                     evolved[key][2].append(
-                         life[key][2][idspecies]
-                     )
-                     # The depth
-                     evolved[key][2].append(
-                         life[key][2][idspecies]
-                     )
+                    #  The name
+                    evolved[key][0].append(
+                        life[key][0][idspecies]
+                    )
+                    # The mean emission
+                    evolved[key][1].append(
+                        life[key][1][idspecies]
+                    )
+                    # The FWHM
+                    evolved[key][2].append(
+                        life[key][2][idspecies]
+                    )
+                    # The pulse mean
+                    evolved[key][3].append(
+                        life[key][4][idspecies]
+                    )
+                    # The pulse sd
+                    evolved[key][4].append(
+                        life[key][5][idspecies]
+                    )
             total_survive = len(evolved[key][0])
             total_pre_flood = len(life[key][0])
             _log.debug('%d out of %d %s survived the flood'
@@ -321,44 +378,11 @@ class Genesis(object):
             for idspecies, _ in enumerate(evolved[key][0]):
                 # TODO: sd != fwhm / 2
                 pdfs[evolved[key][0][idspecies]] = construct_pdf({
-                    "class": config["organisms"]['pdf move'],
+                    "class": config["organisms"]['pdf light'],
                     "mean": evolved[key][1][idspecies],
-                    "sd": evolved[key][2][idspecies] / 2.
+                    "sd": evolved[key][2][idspecies]
                 })
         return pdfs
-    
-    
-    
-    """
-    generate a random gamma function 
-    with range of a=[10,30],loc=10 => mean=[20,30],std=[3,15]
-    amplitude modified A=[0.3,3.0]
-    """
-    def random_gamma_emission(self, remain_time: np.array) -> np.array:
-        
-        mean = np.random.uniform(20, 30)
-        std = np.random.uniform(3,15)
-        amp = np.random.uniform(0.3,3.0)
-        samp_bins = int(config["organisms"]['emission duration'])
-        
-        gamma_function = construct_pdf({
-                "class": 'Gamma',
-                "mean": mean,
-                "sd": std
-            })
-        #sampling it
-#        data, bins, patches = plt.hist(gamma_function.rvs(100),bins=samp_bins)
-#        gamma_sample_array = amp*data/100.
-        multi_array = gamma_function.pdf(remain_time)
-        
-#         multi_array = np.zeros(np.shape(remain_time))
-#         for index, time in np.ndenumerate(remain_time):
-#             time_index = int(time)
-#             if 1 <= time_index <= 120:
-#                 multi_array[index]= gamma_sample_array[time_index-1]
-#             else:
-#                 multi_array[index]= gamma_sample_array[0]
-        return multi_array
 
     def _temere_congressus(self) -> dict:
         """ Constructs the movement pdfs

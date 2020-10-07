@@ -157,7 +157,7 @@ _baseconfig = {
         #       Removes all life above the specified depth
         'filter': 'depth',
         # Used for the depth filter. Otherwise redundant
-        'depth filter': 500.,  # in m
+        'depth filter': 2000.,  # in m
         # The probability distribution to use for the light pdf
         # Currently supported:
         #   - 'Gamma':
@@ -172,6 +172,20 @@ _baseconfig = {
         #   - 'Normal':
         #       A gaussian distribution
         'pdf max light': 'Gamma',
+        # TODO: Make this a distribution using data
+        # Emission duration
+        'emission duration': 120.,
+        # The probability distributions used for the pulse shapes
+        # Currently supported:
+        #   - 'Gamma':
+        #       Gamma probability pdf
+        #   - 'Normal':
+        #       A gaussian distribution
+        'pdf pulse': {
+            'pdf': 'Gamma',
+            'mean': [5., 10.],
+            'sd': [3., 5.]
+        },
         # The probability distribution to use for the movement pdf
         # Currently supported:
         #   - 'Gamma':
@@ -185,9 +199,6 @@ _baseconfig = {
         'emission fraction': 0.1,
         # Fraction of max energy regenerated per second
         'regeneration': 1e-4,
-        # TODO: Make this a distribution using data
-        # Emission duration
-        'emission duration': 120.,
         # Minimal shear stress
         'minimal shear stress': 0.1,
         # Proportionality factor for shear

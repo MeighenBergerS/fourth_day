@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 Name: state_machine.py
-Authors: Stephan Meighen-Berger
+Authors: Stephan Meighen-Berger, Li Ruohan
 Constructs the state machine
 """
 
@@ -30,6 +30,10 @@ class FourthDayStateMachine(object):
         The constructed world
     possible_species : np.array
         List of all species
+    possible_means : np.array
+        List of all possible means for pulses
+    possible_sds : np.array
+        List of all possible sd for pulses
     """
     def __init__(
         self,
@@ -37,7 +41,9 @@ class FourthDayStateMachine(object):
         life: Genesis,
         world: Adamah,
         current: Current,
-        possible_species: np.array
+        possible_species: np.array,
+        possible_means: np.array,
+        possible_sds: np.array
     ):
         self._rstate = config["runtime"]['random state']
         self._population = initial
@@ -45,6 +51,8 @@ class FourthDayStateMachine(object):
         self._world = world
         self._current = current
         self._possible_species = possible_species
+        self._possible_means = possible_means
+        self._possible_sds = possible_sds
         self._pop_size = config['scenario']['population size']
         # TODO: Make this position dependent
         # Organism shear property
@@ -202,22 +210,6 @@ class FourthDayStateMachine(object):
             self._population.loc[successful_burst_shear,
                                  'emission fraction'].values
         )
-        # TODO: Change to pulses
-        # Spread evenly over the emission duration
-#         encounter_photons = (
-#             encounter_photons / config['organisms']['emission duration']
-#         )
-
-#         shear_photons = (
-#             self._population.loc[successful_burst_shear,
-#                                  'max_emission'].values *
-#             self._population.loc[successful_burst_shear,
-#                                  'emission fraction'].values
-#         )
-        # Spread evenly over the emission duration
-#         shear_photons = (
-#             shear_photons / config['organisms']['emission duration']
-#         )
         # ---------------------------------------------------------------------
         # New energy
         successful_burst = np.logical_or(successful_burst_enc,
@@ -267,8 +259,13 @@ class FourthDayStateMachine(object):
         self._population.loc[successful_burst, "emission_duration"] = (
             config['organisms']['emission duration']
         )
-        self._population.loc[new_observation_mask, 'photons'] *= self._life.random_gamma_emission(abs(self._population.loc[new_observation_mask, "emission_duration"]-config["organisms"]['emission duration']))
-        
+        # ---------------------------------------------------------------------
+        # Pulse shape
+        pulse_shape = self._life.pulse_emission(
+            self._population.loc[new_observation_mask]
+        )
+        self._population.loc[new_observation_mask, 'photons'] *= pulse_shape
+        # ---------------------------------------------------------------------
         # Counting down
         self._population.loc[new_observation_mask, 'emission_duration'] -= 1.
         # Checking who stopped emitting (== 0)
@@ -429,8 +426,11 @@ class FourthDayStateMachine(object):
         i : int
             The position of the new organism
         """
+        pop_index_sample = self._rstate.randint(
+            0, len(self._possible_species)-1, 1
+        )
         self._population.loc[self._pop_size + i] = [
-            self._rstate.choice(self._possible_species, 1)[0],  # Species
+            self._possible_species[pop_index_sample][0],  # Species
             0.,  # position x
             self._rstate.uniform(
                 low=config["scenario"]["injection"]['y range'][0],
@@ -444,6 +444,8 @@ class FourthDayStateMachine(object):
             self._life.Movement['max photons'].rvs(1)[0],  # max emission
             config["organisms"]["emission fraction"],  # emission fraction
             config["organisms"]["regeneration"],  # regeneration
+            self._possible_means[pop_index_sample][0],  # Mean pulse
+            self._possible_sds[pop_index_sample][0],  # Sd pulse
             False,  # is_emitting
             0,  # emission_duration
             0,  # encounter photons

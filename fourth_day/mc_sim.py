@@ -85,6 +85,8 @@ class MC_sim(object):
                 "regeneration": (
                     config["organisms"]["regeneration"]
                 ),
+                "pulse mean": 0.,
+                "pulse sd": 0.,
                 "is_emitting": False,
                 "emission_duration": 0,
                 "encounter photons": 0,
@@ -96,14 +98,29 @@ class MC_sim(object):
         # TODO: Optimize
         # Distributing species
         possible_species = []
+        possible_pulse_means = []
+        possible_pulse_sd = []
         for key in life.Evolved:
-            for subtype in life.Evolved[key][0]:
-                possible_species.append(subtype)
-        possible_species =np.array(possible_species)
+            subtype = life.Evolved[key]
+            for subtype_index in range(0, len(subtype[0])):
+                possible_species.append(subtype[0][subtype_index])
+                possible_pulse_means.append(subtype[3][subtype_index])
+                possible_pulse_sd.append(subtype[4][subtype_index])
+        possible_species = np.array(possible_species)
+        possible_pulse_means = np.array(possible_pulse_means)
+        possible_pulse_sd = np.array(possible_pulse_sd)
+        pop_index_sample = config["runtime"]['random state'].randint(
+            0, len(possible_species)-1, self._pop_size
+        )
         self._population.loc[:, 'species'] = (
-            config["runtime"]['random state'].choice(
-                possible_species, self._pop_size
-            )
+            possible_species[pop_index_sample]
+        )
+        # Pulse shapes
+        self._population.loc[:, 'pulse mean'] = (
+            possible_pulse_means[pop_index_sample]
+        )
+        self._population.loc[:, 'pulse sd'] = (
+            possible_pulse_sd[pop_index_sample]
         )
         # Distributing positions
         # TODO: Optimize this
@@ -147,7 +164,9 @@ class MC_sim(object):
             life,
             world,
             current,
-            possible_species
+            possible_species,
+            possible_pulse_means,
+            possible_pulse_sd
         )
         _log.debug("Finished the state machine")
         # Running the simulation

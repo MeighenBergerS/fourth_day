@@ -1,23 +1,23 @@
-Aegina citrea Eschscholtz, 469, 92, B, Deep, 934
-Aeginura grimaldii Maas, 464, 88, B, Deep, 742
-Aequorea forskalea PeÂron and Lesueur, 503, 60, S, Shallow, 12
-Bythotiara depressa Naumov, 488, 80, P, Deep, 408
-Clytia (=Phialidium) hemisphaericum (L.), 504, 37, M, Shallow, 20
-Cunina globosa Eschscholtz, 462, 76, P, Deep, 400
-Euphysora valdiviae Vanhoeffen, 464, 93, P, Deep, 2167
-Halicreas minimum Fewkes, 469, 88, B, Deep, 1093
-Halicreidae unidentified speciese, 445, 79, B, Deep, 851
-Haliscera conica Vanhoeffen, 451, 85, M, Deep, 448
-Halitrephes maasi Bigelow, 458, 125, B, Deep, 711
-Halitrephes valdiviae H.B. Bigelow, 443, 80, B, Deep, 767
-Halopsis ocellata Agassiz, 458, 99, G, Shallow, 20
-Mitrocoma cellularia (Agassiz), 505, 55, S, Shallow, 5
-Mitrocomella sp., 500, 62, S, Shallow, 8
-Obelia sp., 502, 60, S, Shallow, 3
-Octophialucium funerarium (Quoy and Gaimard), 487, 72, M, Deep, 391
-Pandea conica (Quoy and Gaimard), 470, 98, P, Deep, 450
-Pegantha laevis H.B. Bigelow, 460, 75, P, Deep, 300
-Solmissus albescens (Gegenbaur), 478, 76, M, Deep, 485
-Solmissus incisa (Fewkes), 465, 76, B, Deep, 742
-Solmissus marshalli Agassiz and Mayer, 477, 75, P, Deep, 250
-Solmundella bitentaculata (Quoy and Gaimard), 477, 83, B, Deep, 492
+Aegina citrea Eschscholtz, 469, 92, B, Deep, 934, 5, 4
+Aeginura grimaldii Maas, 464, 88, B, Deep, 742, 5, 4
+Aequorea forskalea PeÂron and Lesueur, 503, 60, S, Shallow, 12, 5, 4
+Bythotiara depressa Naumov, 488, 80, P, Deep, 408, 5, 4
+Clytia (=Phialidium) hemisphaericum (L.), 504, 37, M, Shallow, 20, 5, 4
+Cunina globosa Eschscholtz, 462, 76, P, Deep, 400, 5, 4
+Euphysora valdiviae Vanhoeffen, 464, 93, P, Deep, 2167, 20, 15
+Halicreas minimum Fewkes, 469, 88, B, Deep, 1093, 5, 4
+Halicreidae unidentified speciese, 445, 79, B, Deep, 851, 5, 4
+Haliscera conica Vanhoeffen, 451, 85, M, Deep, 448, 5, 4
+Halitrephes maasi Bigelow, 458, 125, B, Deep, 711, 5, 4
+Halitrephes valdiviae H.B. Bigelow, 443, 80, B, Deep, 767, 5, 4
+Halopsis ocellata Agassiz, 458, 99, G, Shallow, 20, 5, 4
+Mitrocoma cellularia (Agassiz), 505, 55, S, Shallow, 5, 5, 4
+Mitrocomella sp., 500, 62, S, Shallow, 8, 5, 4
+Obelia sp., 502, 60, S, Shallow, 3, 5, 4
+Octophialucium funerarium (Quoy and Gaimard), 487, 72, M, Deep, 391, 5, 4
+Pandea conica (Quoy and Gaimard), 470, 98, P, Deep, 450, 5, 4
+Pegantha laevis H.B. Bigelow, 460, 75, P, Deep, 300, 5, 4
+Solmissus albescens (Gegenbaur), 478, 76, M, Deep, 485, 5, 4
+Solmissus incisa (Fewkes), 465, 76, B, Deep, 742, 5, 4
+Solmissus marshalli Agassiz and Mayer, 477, 75, P, Deep, 250, 5, 4
+Solmundella bitentaculata (Quoy and Gaimard), 477, 83, B, Deep, 492, 5, 4
