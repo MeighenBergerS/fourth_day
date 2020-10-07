@@ -8,6 +8,7 @@ Constructs the state machine
 import numpy as np  # type: ignore
 import pandas as pd  # type: ignore
 import logging
+from scipy.stats import gamma
 
 from .config import config
 from .genesis import Genesis
@@ -174,28 +175,49 @@ class FourthDayStateMachine(object):
         # ---------------------------------------------------------------------
         # The photons
         # TODO: Add gamma distribution and time dependence here
-        # encounter_photons - (Max_Emissions * Gamma(t))
-        encounter_photons = (
+        # encounter_photons = (Max_Emissions * Gamma(t))
+        if self._step == 0:
+            encounter_photons = (
+            self._population.loc[successful_burst_enc,
+                                 'max_emission'].values * 
+            self._population.loc[successful_burst_enc,
+                                 'emission fraction'].values
+        )
+            shear_photons = (
+            self._population.loc[successful_burst_shear,
+                                 'max_emission'].values *
+            self._population.loc[successful_burst_shear,
+                                 'emission fraction'].values
+        )
+        else:
+            encounter_photons = (
             self._population.loc[successful_burst_enc,
                                  'max_emission'].values *
             self._population.loc[successful_burst_enc,
+                                 'emission fraction'].values
+        )
+            shear_photons = (
+            self._population.loc[successful_burst_shear,
+                                 'max_emission'].values *
+            self._population.loc[successful_burst_shear,
                                  'emission fraction'].values
         )
         # TODO: Change to pulses
         # Spread evenly over the emission duration
-        encounter_photons = (
-            encounter_photons / config['organisms']['emission duration']
-        )
-        shear_photons = (
-            self._population.loc[successful_burst_shear,
-                                 'max_emission'].values *
-            self._population.loc[successful_burst_shear,
-                                 'emission fraction'].values
-        )
+#         encounter_photons = (
+#             encounter_photons / config['organisms']['emission duration']
+#         )
+
+#         shear_photons = (
+#             self._population.loc[successful_burst_shear,
+#                                  'max_emission'].values *
+#             self._population.loc[successful_burst_shear,
+#                                  'emission fraction'].values
+#         )
         # Spread evenly over the emission duration
-        shear_photons = (
-            shear_photons / config['organisms']['emission duration']
-        )
+#         shear_photons = (
+#             shear_photons / config['organisms']['emission duration']
+#         )
         # ---------------------------------------------------------------------
         # New energy
         successful_burst = np.logical_or(successful_burst_enc,
@@ -245,6 +267,8 @@ class FourthDayStateMachine(object):
         self._population.loc[successful_burst, "emission_duration"] = (
             config['organisms']['emission duration']
         )
+        self._population.loc[new_observation_mask, 'photons'] *= self._life.random_gamma_emission(abs(self._population.loc[new_observation_mask, "emission_duration"]-config["organisms"]['emission duration']))
+        
         # Counting down
         self._population.loc[new_observation_mask, 'emission_duration'] -= 1.
         # Checking who stopped emitting (== 0)
