@@ -91,15 +91,22 @@ class Lucifer(object):
             (pos_x - self._det_pos[0])**2 +
             (pos_y - self._det_pos[1])**2
         )
-        attenuation_factor = self._att_func(wavelengths)
+        attenuation_factor = self._att_func(wavelengths)[0]
         #  Beer-Lambdert law
         # TODO: Update this, so that curvature is accounted for
-        factors = np.exp(-paths * attenuation_factor) / (paths)**2
-        # More than half can never reach the detector
-        factors[factors > 1./2.] = 1./2.
-        return (
-            photon_counts * factors
-        )
+        # No emission
+        if len(paths) < 1:
+            return np.zeros((1, len(wavelengths)))
+        else:
+            factors = np.array([
+                np.exp(-paths * atten) / (paths)**2
+                for atten in attenuation_factor
+            ])
+            # More than half can never reach the detector
+            factors[factors > 1./2.] = 1./2.
+            return (
+                photon_counts * factors.T
+            )
 
     def light_bringer(self, statistics: pd.DataFrame,
                       life: Genesis) -> np.array:
@@ -120,22 +127,49 @@ class Lucifer(object):
         _log.debug("Launching the attenuation calculation")
         start = time()
         tmp_emission = []
+        # The nm of interest
+        nm_range = config["advanced"]["nm range"]
+        # The grid used for integration of the nm
+        integration_grid = nm_range.reshape(
+            (int(len(nm_range) / config['advanced']["nm integration"]),
+            int(config['advanced']["nm integration"]))
+        )
+        # The grid to use after integration
+        new_grid = np.amin(integration_grid, axis=1)
         for pop in statistics:
             emission_mask = pop.loc[:, 'is_emitting'].values
             photons = pop.loc[emission_mask, 'photons'].values
             x_pos = pop.loc[emission_mask, 'pos_x'].values
             y_pos = pop.loc[emission_mask, 'pos_y'].values
             species = pop.loc[emission_mask, 'species'].values
-            # wavelength is extracted from the pdf mean
-            wavelengths = []
-            for species_key in species:
-                wavelengths.append(life.Light_pdfs[species_key]._mean)
-            wavelengths = np.array(wavelengths)
-            tmp_emission.append(
-                np.sum(self._propagation(photons, x_pos, y_pos, wavelengths))
+            emission_pdfs = np.array([
+                life.Light_pdfs[species_key].pdf(nm_range)
+                for species_key in species
+            ])
+            emission_photons = np.array([
+                emission_pdfs[i] * photons[i]
+                for i in range(0, len(species))
+            ])
+            # Multiple emitters
+            if len(emission_photons) > 1:
+                propagated = np.array([
+                    np.sum(self._propagation(emission_photons, x_pos, y_pos,
+                                            nm_range), axis=0)
+                ])
+            # Single or no emitter
+            else:
+                propagated = self._propagation(emission_photons, x_pos, y_pos,
+                                               nm_range)
+            # Integrating
+            flat_prop = propagated.flatten()
+            reshape_prop = flat_prop.reshape(
+                (int(len(flat_prop) / config['advanced']["nm integration"]),
+                 int(config['advanced']["nm integration"]))
             )
+            int_prop = np.trapz(reshape_prop, integration_grid, axis=1)
+            tmp_emission.append(int_prop)
         emission = np.array(tmp_emission)
         _log.debug("Finished the attenuation calculation")
         end = time()
         _log.info("Propagation simulation took %f seconds" % (end - start))
-        return emission
+        return emission, new_grid

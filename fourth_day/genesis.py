@@ -380,7 +380,7 @@ class Genesis(object):
                 pdfs[evolved[key][0][idspecies]] = construct_pdf({
                     "class": config["organisms"]['pdf light'],
                     "mean": evolved[key][1][idspecies],
-                    "sd": evolved[key][2][idspecies]
+                    "sd": evolved[key][2][idspecies] / 6.
                 })
         return pdfs
 

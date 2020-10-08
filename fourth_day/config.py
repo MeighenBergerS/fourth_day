@@ -212,6 +212,8 @@ _baseconfig = {
         'water grid size': 1e-1,
         'sphere sample': 50,
         'starting step': 0,
+        "nm range": np.linspace(450., 510., 60),
+        "nm integration": 10
     },
 }
 

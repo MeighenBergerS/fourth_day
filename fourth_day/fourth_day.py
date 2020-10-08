@@ -150,7 +150,6 @@ class Fourth_Day(object):
         _log.info('---------------------------------------------------')
         _log.info('---------------------------------------------------')
 
-    # TODO: Add incoming stream of organisms to the volume
     def sim(self):
         """ Calculates the light yields depending on input
 
@@ -177,7 +176,7 @@ class Fourth_Day(object):
         if config['scenario']["light prop"]["switch"]:
             _log.info("Calculating photon yields at the detector")
             self._lucifer = Lucifer()
-            self._light_yields = self._lucifer.light_bringer(
+            self._light_yields, self._nm_grid = self._lucifer.light_bringer(
                 self._statistics,
                 self._life
             )
@@ -266,7 +265,8 @@ class Fourth_Day(object):
 
     @property
     def measured(self):
-        """ Getter function for the light yields. The switch needs to be true
+        """ Getter function for the measured light yields.
+        The switch needs to be true
 
         Parameters
         ----------
@@ -288,3 +288,18 @@ class Fourth_Day(object):
             raise ValueError(
                 "Detector not simulated! Check the config file"
             )
+
+    @property
+    def wavelengths(self):
+        """ Getter functions for the wavelengths of the emitted light used
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        statistics : dic
+                Stores the results from the simulation
+        """
+        return self._nm_grid
