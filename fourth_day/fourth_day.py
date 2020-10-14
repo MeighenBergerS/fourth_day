@@ -40,6 +40,7 @@ import sys
 import numpy as np
 import yaml
 from time import time
+import pandas as pd
 # -----------------------------------------
 # Package modules
 from .config import config
@@ -173,18 +174,26 @@ class Fourth_Day(object):
         self._statistics = self._mc_run.statistics
         _log.info('---------------------------------------------------')
         _log.info('---------------------------------------------------')
-        if config['scenario']["light prop"]["switch"]:
+        if config['scenario']["detector"]["switch"]:
             _log.info("Calculating photon yields at the detector")
             self._lucifer = Lucifer()
-            self._light_yields, self._nm_grid = self._lucifer.light_bringer(
+            self._light_yields = self._lucifer.light_bringer(
                 self._statistics,
                 self._life
             )
             if config['scenario']["detector"]["response"]:
                 _log.info("Folding detection probability")
                 self._providence = Providence()
-                self._measured = self._providence.detection_efficiency(
+                tmp_measured = self._providence.detection_efficiency(
                     self._light_yields
+                )
+                # Converting to pandas dataframe
+                detector_names = [
+                    "Detector %d" %i
+                    for i in range(0, tmp_measured.shape[1])
+                ]
+                self._measured = pd.DataFrame(
+                    tmp_measured, columns=detector_names
                 )
         _log.info('---------------------------------------------------')
         _log.info('---------------------------------------------------')
@@ -302,4 +311,4 @@ class Fourth_Day(object):
         statistics : dic
                 Stores the results from the simulation
         """
-        return self._nm_grid
+        return config['advanced']['nm range']

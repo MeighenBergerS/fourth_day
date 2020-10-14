@@ -53,16 +53,12 @@ _baseconfig = {
         "encounters": False,
         # Switch for organisms movement
         "organism movement": True,
-        # Light propagation
-        "light prop": {
-            "switch": False,
-            "x_pos": 5.,
-            "y_pos": 10.,
-        },
-        # Light detection
+        # The detector
         "detector" : {
+            "switch": True,
+            "type": "point",
             "response": True,
-            "type": "Flat",
+            "acceptance": "Flat",
             "mean detection prob": 0.3
         }
     },
@@ -93,7 +89,39 @@ _baseconfig = {
             "radius": 0.3,
             "x_pos": 5.,
             "y_pos": 10.,
-        }
+        },
+        # Detector positions
+        "detector properties": {
+            # Point-like detector
+            "point": {
+                "x_pos": 5.,
+                "y_pos": 10.,
+                "det num": 1,
+                "x_offsets": [0.],
+                "y_offsets": [0.],
+                "opening angle": 60.,
+                "wavelength acceptance": [
+                    [0., 1000.]
+                ]
+            },
+            # The PMTSpec
+            "PMTSpec": {
+                "x_pos": 5.,
+                "y_pos": 10.,
+                "det num": 6,
+                "x_offsets": [-0.5, -0.3, -0.1, 0.1, 0.3, 0.5],
+                "y_offsets": [0., 0., 0., 0., 0., 0.],
+                "opening angle": 180.,
+                "wavelength acceptance": [
+                    [445., 455.],
+                    [455., 465.],
+                    [465., 475.],
+                    [475., 485.],
+                    [485., 495.],
+                    [495., 505.]
+                ]
+            }
+        },
     },
     ###########################################################################
     # Water inputs
@@ -212,8 +240,7 @@ _baseconfig = {
         'water grid size': 1e-1,
         'sphere sample': 50,
         'starting step': 0,
-        "nm range": np.linspace(450., 510., 60),
-        "nm integration": 10
+        "nm range": np.linspace(400., 600., 200),
     },
 }
 

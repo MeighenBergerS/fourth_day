@@ -61,10 +61,35 @@ class Lucifer(object):
             self._wave_length, self._attenuation, kind='quadratic'
         )
         # The detector position
-        self._det_pos = np.array([
-            config['scenario']["light prop"]['x_pos'],
-            config['scenario']["light prop"]['y_pos']
-        ])
+        try:
+            self._det_geom = (
+                config["geometry"]["detector properties"][
+                    config["scenario"]["detector"]["type"]
+                    ]
+            )
+        # Catching some errors
+        except:
+            raise KeyError(
+                "Unrecognized detector geometry! Check the config file"
+            )
+        if len(self._det_geom["x_offsets"]) != self._det_geom["det num"]:
+            raise ValueError(
+                "Not enough x offsets for the detector number!" +
+                " Check the config file!"
+            )
+        if len(self._det_geom["y_offsets"]) != self._det_geom["det num"]:
+            raise ValueError(
+                "Not enough y offsets for the detector number!" +
+                " Check the config file!"
+            )
+        if (
+            len(self._det_geom["wavelength acceptance"]) !=
+            self._det_geom["det num"]
+            ):
+            raise ValueError(
+                "Not every detector has a wavelength acceptance!" +
+                " Check the config file!"
+            )
 
     def _propagation(self, photon_counts: np.array,
                      pos_x: np.array, pos_y: np.array,
@@ -87,25 +112,54 @@ class Lucifer(object):
         np.array
             The attenuated photon counts
         """
-        paths = np.sqrt(
-            (pos_x - self._det_pos[0])**2 +
-            (pos_y - self._det_pos[1])**2
-        )
+        # The paths
+        paths = np.array([
+            (pos_x -
+             (self._det_geom["x_pos"] + self._det_geom["x_offsets"][i]))**2. +
+            (pos_y -
+             (self._det_geom["y_pos"] + self._det_geom["y_offsets"][i]))**2. 
+            for i in range(0, self._det_geom["det num"])
+        ])
+        # The angles
+        angles = np.array([
+            np.arctan2(
+                (pos_x -
+                 (self._det_geom["x_pos"] + self._det_geom["x_offsets"][i])),
+                (pos_y -
+                 (self._det_geom["y_pos"] + self._det_geom["y_offsets"][i])))
+            for i in range(0, self._det_geom["det num"])
+        ])
+        # To degrees
+        angles = np.degrees(angles)
+        # Shifting the 0 line of the angles
+        angles = angles + (90. - self._det_geom["opening angle"])
+        angles = np.mod(angles, 360.)
+        # Checking with opening angles
+        angles[angles > self._det_geom["opening angle"]] = 0.
+        # Converting to 1 and zeros
+        bool_arr = angles.astype(bool)
+        # Acceptance arr
+        accept_arr = bool_arr.astype(float)
+        # The attenuation factor
         attenuation_factor = self._att_func(wavelengths)[0]
         #  Beer-Lambdert law
-        # TODO: Update this, so that curvature is accounted for
         # No emission
-        if len(paths) < 1:
-            return np.zeros((1, len(wavelengths)))
+        if len(pos_x) < 1:
+            return np.zeros((1, self._det_geom["det num"], len(wavelengths)))
         else:
-            factors = np.array([
-                np.exp(-paths * atten) / (paths)**2
-                for atten in attenuation_factor
+            factors = np.array([[
+                    np.exp(-paths[i] * atten) / (4. * np.pi * paths[i]**2.)
+                    for atten in attenuation_factor
+                    ]
+                for i in range(0, self._det_geom["det num"])
             ])
             # More than half can never reach the detector
             factors[factors > 1./2.] = 1./2.
             return (
-                photon_counts * factors.T
+                np.array([
+                    photon_counts * (factors[i] * accept_arr[i]).T
+                    for i in range(0, self._det_geom["det num"])
+                ])
             )
 
     def light_bringer(self, statistics: pd.DataFrame,
@@ -121,21 +175,14 @@ class Lucifer(object):
 
         Returns
         -------
-        emission : np.array
+        arriving : np.array
             The attenuated photon counts depending on time
         """
         _log.debug("Launching the attenuation calculation")
         start = time()
-        tmp_emission = []
+        tmp_arriving = []
         # The nm of interest
         nm_range = config["advanced"]["nm range"]
-        # The grid used for integration of the nm
-        integration_grid = nm_range.reshape(
-            (int(len(nm_range) / config['advanced']["nm integration"]),
-            int(config['advanced']["nm integration"]))
-        )
-        # The grid to use after integration
-        new_grid = np.amin(integration_grid, axis=1)
         for pop in statistics:
             emission_mask = pop.loc[:, 'is_emitting'].values
             photons = pop.loc[emission_mask, 'photons'].values
@@ -150,26 +197,22 @@ class Lucifer(object):
                 emission_pdfs[i] * photons[i]
                 for i in range(0, len(species))
             ])
-            # Multiple emitters
-            if len(emission_photons) > 1:
+            # Emitters
+            if len(emission_photons) >= 1:
                 propagated = np.array([
                     np.sum(self._propagation(emission_photons, x_pos, y_pos,
-                                            nm_range), axis=0)
+                                            nm_range), axis=1)
                 ])
-            # Single or no emitter
+            # No emitter
             else:
                 propagated = self._propagation(emission_photons, x_pos, y_pos,
                                                nm_range)
-            # Integrating
-            flat_prop = propagated.flatten()
-            reshape_prop = flat_prop.reshape(
-                (int(len(flat_prop) / config['advanced']["nm integration"]),
-                 int(config['advanced']["nm integration"]))
-            )
-            int_prop = np.trapz(reshape_prop, integration_grid, axis=1)
-            tmp_emission.append(int_prop)
-        emission = np.array(tmp_emission)
+            
+            # Integrating for each detector
+            flat_prop = propagated[0]
+            tmp_arriving.append(flat_prop)
+        arriving = np.array(tmp_arriving)
         _log.debug("Finished the attenuation calculation")
         end = time()
         _log.info("Propagation simulation took %f seconds" % (end - start))
-        return emission, new_grid
+        return arriving
