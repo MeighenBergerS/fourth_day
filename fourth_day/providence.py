@@ -71,7 +71,7 @@ class Providence(object):
                 np.trapz(light_yield[i][
                     acceptance_ids[i][0]:acceptance_ids[i][1]
                     ], self._nm[acceptance_ids[i][0]:acceptance_ids[i][1]]
-                )
+                )*self._det_geom["wavelength acceptance"][i][2] #times qe scalar
                 for i in range(0, self._det_geom["det num"])
             ]
             for light_yield in light_yields

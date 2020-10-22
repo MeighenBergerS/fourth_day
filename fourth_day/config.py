@@ -108,18 +108,24 @@ _baseconfig = {
             "PMTSpec": {
                 "x_pos": 5.,
                 "y_pos": 10.,
-                "det num": 6,
-                "x_offsets": [-0.5, -0.3, -0.1, 0.1, 0.3, 0.5],
-                "y_offsets": [0., 0., 0., 0., 0., 0.],
-                "opening angle": 180.,
-                "wavelength acceptance": [
-                    [445., 455.],
-                    [455., 465.],
-                    [465., 475.],
-                    [475., 485.],
-                    [485., 495.],
-                    [495., 505.]
-                ]
+                "det num": 12, #12 pmts numbered by position 
+                "x_offsets": [0.1,0.,-0.1,0., 0.12,-0.12,-0.12,0.12, 0.2,-0.04,-0.2,0.04], #test radius 0.3 meter, real radius 0.15 meter
+                "y_offsets": [0.,0.1,0.,-0.1,  0.12,0.12,-0.12,-0.12, 0.04,0.2,-0.04,-0.2],
+                "opening angle": 20., # from dark box rotation test result: +-25 degrees
+                "wavelength acceptance": [ #position number,center wavelength,quantum efficiency
+                    [395., 405.,0.26], #0,400
+                    [505., 515.,0.16], #1,510
+                    [420., 430.,0.28], #2,425
+                    [465., 475.,0.23], #3,470
+                    [300., 600.,1.], #4,no filter
+                    [487., 497.,0.1], #5,492
+                    [540., 560.,0.1], #6,550
+                    [515., 535.,0.13], #7,525
+                    [475., 485.,0.2], #8,480
+                    [445., 455.,0.2], #9,450
+                    [455., 465.,0.23], #10,460
+                    [325., 375.,0.3], #11,350                                     
+                ],
             }
         },
     },
@@ -185,7 +191,7 @@ _baseconfig = {
         #       Removes all life above the specified depth
         'filter': 'depth',
         # Used for the depth filter. Otherwise redundant
-        'depth filter': 2000.,  # in m
+        'depth filter': 10000.,  # in m
         # The probability distribution to use for the light pdf
         # Currently supported:
         #   - 'Gamma':
@@ -240,7 +246,7 @@ _baseconfig = {
         'water grid size': 1e-1,
         'sphere sample': 50,
         'starting step': 0,
-        "nm range": np.linspace(400., 600., 200),
+        "nm range": np.linspace(300., 600., 200),
     },
 }
 

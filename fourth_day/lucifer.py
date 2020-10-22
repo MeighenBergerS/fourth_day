@@ -32,8 +32,11 @@ class Lucifer(object):
         # https://pdfs.semanticscholar.org/1e88/
         # 9ce6ebf1ec84ab1e3f934377c89c0257080c.pdf
         # by https://apps.automeris.io/wpd/ Plot digitizer read points
-        self._wave_length = np.array(
+        
+        self._wave_length = np.array( #extend it to 300
             [
+                299.,
+                329.14438502673795, 344.11764705882354, 362.2994652406417,
                 399.44415494181, 412.07970421102266, 425.75250006203635,
                 442.53703565845314, 457.1974490682151, 471.8380108687561,
                 484.3544504826423, 495.7939402962853, 509.29799746891985,
@@ -45,7 +48,9 @@ class Lucifer(object):
         )
         self._attenuation = np.array([
             [
-                0.026410321551339357, 0.023168667048510762,
+                0.8,
+                0.6279453220864465,0.3145701363176568,
+                0.12591648888305143,0.026410321551339357, 0.023168667048510762,
                 0.020703255370450736, 0.019552708373076478,
                 0.019526153330089138, 0.020236306473695613,
                 0.02217620815962483, 0.025694647290888873,
@@ -73,6 +78,7 @@ class Lucifer(object):
                 "Unrecognized detector geometry! Check the config file"
             )
         if len(self._det_geom["x_offsets"]) != self._det_geom["det num"]:
+            print(len(self._det_geom["x_offsets"]),self._det_geom["det num"])
             raise ValueError(
                 "Not enough x offsets for the detector number!" +
                 " Check the config file!"
