@@ -106,12 +106,12 @@ _baseconfig = {
             },
             # The PMTSpec
             "PMTSpec": {
-                "x_pos": 5.,
-                "y_pos": 10.,
+                "x_pos": 2.,
+                "y_pos": 5.,
                 "det num": 12, #12 pmts numbered by position 
                 "x_offsets": [0.1,0.,-0.1,0., 0.12,-0.12,-0.12,0.12, 0.2,-0.04,-0.2,0.04], #test radius 0.3 meter, real radius 0.15 meter
                 "y_offsets": [0.,0.1,0.,-0.1,  0.12,0.12,-0.12,-0.12, 0.04,0.2,-0.04,-0.2],
-                "opening angle": 20., # from dark box rotation test result: +-25 degrees
+                "opening angle": 90.,# 20., # from dark box rotation test result: +-25 degrees
                 "wavelength acceptance": [ #position number,center wavelength,quantum efficiency
                     [395., 405.,0.26], #0,400
                     [505., 515.,0.16], #1,510
@@ -191,7 +191,7 @@ _baseconfig = {
         #       Removes all life above the specified depth
         'filter': 'depth',
         # Used for the depth filter. Otherwise redundant
-        'depth filter': 10000.,  # in m
+        'depth filter': 1000.,  # in m
         # The probability distribution to use for the light pdf
         # Currently supported:
         #   - 'Gamma':
