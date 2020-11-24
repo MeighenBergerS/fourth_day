@@ -102,11 +102,14 @@ class FourthDayStateMachine(object):
         )
         # ---------------------------------------------------------------------
         # The water current at this step
+        # TODO: Needs a more correct approach
+        # Finding the closest integer
+        current_step = int(self._time_step * self._step)
         self._vel_x, self._vel_y, _ = (
-            self._current.velocities(current_pos, self._step)
+            self._current.velocities(current_pos, current_step)
         )
         self._gradient = (
-            self._current.gradients(current_pos, self._step)
+            self._current.gradients(current_pos, current_step)
         ).flatten()
         # The time step
         self._vel_x = self._vel_x * self._time_step
