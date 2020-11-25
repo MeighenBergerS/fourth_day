@@ -78,7 +78,7 @@ class Providence(object):
         ])
         # Adding the detection probability
         measured = (measured * self._mean_detection_prob)
-        _log.debug("Finished the attenuation calculation")
+        _log.debug("Finished the detector calculation")
         end = time()
-        _log.info("Propagation simulation took %f seconds" % (end - start))
+        _log.info("Response simulation took %f seconds" % (end - start))
         return measured
