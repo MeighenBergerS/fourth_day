@@ -496,7 +496,7 @@ class FourthDayStateMachine(object):
         Raises
         ------
         ValueError
-            Probability is wring
+            Probability is wrong
         """
         # Generating vector with 1 for fired and 0 for not
         try:
@@ -516,7 +516,7 @@ class FourthDayStateMachine(object):
         Parameters
         ----------
         gradient : np.array
-            The gradient of the current in m/s
+            The gradient of the current in m/s/s
 
         Returns
         -------

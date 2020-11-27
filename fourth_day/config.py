@@ -202,7 +202,7 @@ _baseconfig = {
         #       Gamma probability pdf
         #   - 'Normal':
         #       A gaussian distribution
-        'pdf light': 'Gamma',
+        'pdf light': 'Normal',
         # The probability distribution used for the maximal light emission
         # Currently supported:
         #   - 'Gamma':
