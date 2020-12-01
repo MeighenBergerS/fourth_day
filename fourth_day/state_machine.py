@@ -429,9 +429,17 @@ class FourthDayStateMachine(object):
         i : int
             The position of the new organism
         """
-        pop_index_sample = self._rstate.randint(
-            0, len(self._possible_species)-1, 1
-        )
+        # TODO: Optimize injection for larger injection rates
+        # Checking if more than one species
+        if len(self._possible_species) > 1:
+            pop_index_sample = config["runtime"]['random state'].randint(
+                0, len(self._possible_species)-1, 1
+            )
+        elif len(self._possible_species) == 1:
+            pop_index_sample = np.zeros(1, dtype=np.int)
+        else:
+            ValueError("No species found! Something went horribly wrong!" + 
+                       "Perhaps the apocalypse? Check the config file!")
         self._population.loc[self._pop_size + i] = [
             self._possible_species[pop_index_sample][0],  # Species
             0.,  # position x

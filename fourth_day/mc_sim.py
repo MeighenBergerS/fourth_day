@@ -109,9 +109,16 @@ class MC_sim(object):
         possible_species = np.array(possible_species)
         possible_pulse_means = np.array(possible_pulse_means)
         possible_pulse_sd = np.array(possible_pulse_sd)
-        pop_index_sample = config["runtime"]['random state'].randint(
-            0, len(possible_species)-1, self._pop_size
-        )
+        # Checking if more than one species
+        if len(possible_species) > 1:
+            pop_index_sample = config["runtime"]['random state'].randint(
+                0, len(possible_species)-1, self._pop_size
+            )
+        elif len(possible_species) == 1:
+            pop_index_sample = np.zeros(self._pop_size, dtype=np.int)
+        else:
+            ValueError("No species found! Something went horribly wrong!" + 
+                       "Perhaps the apocalypse? Check the config file!")
         self._population.loc[:, 'species'] = (
             possible_species[pop_index_sample]
         )
