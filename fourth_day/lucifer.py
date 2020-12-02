@@ -72,6 +72,17 @@ class Lucifer(object):
                     config["scenario"]["detector"]["type"]
                     ]
             )
+            # The acceptance region
+            self._acceptance_angles = [
+                self._det_geom["angle offset"] -
+                self._det_geom["opening angle"] / 2.,
+                self._det_geom["angle offset"] +
+                self._det_geom["opening angle"] / 2.
+            ]
+            _log.debug(
+                "The acceptance angles are: %.1f and %.1f" %(
+                    self._acceptance_angles[0], self._acceptance_angles[1])
+            )
         # Catching some errors
         except:
             raise KeyError(
@@ -137,11 +148,9 @@ class Lucifer(object):
         ])
         # To degrees
         angles = np.degrees(angles)
-        # Shifting the 0 line of the angles
-        angles = angles + (90. - self._det_geom["opening angle"])
-        angles = np.mod(angles, 360.)
-        # Checking with opening angles
-        angles[angles > self._det_geom["opening angle"]] = 0.
+        # Checking if within opening angles
+        angles[angles < self._acceptance_angles[0]] = 0.
+        angles[angles > self._acceptance_angles[1]] = 0.
         # Converting to 1 and zeros
         bool_arr = angles.astype(bool)
         # Acceptance arr
@@ -221,4 +230,11 @@ class Lucifer(object):
         _log.debug("Finished the attenuation calculation")
         end = time()
         _log.info("Propagation simulation took %f seconds" % (end - start))
+        # Checking if any light reached the detector and warning the user if
+        # not
+        anything_reached = not np.any(arriving)
+        if anything_reached:
+            _log.warning("No light has reached the detector! " +
+                         "This is usually due to the opening angle of the "+
+                         "detector.")
         return arriving

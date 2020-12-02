@@ -184,6 +184,45 @@ class Normal(ScipyPDF):
             loc=self._mean, scale=self._sd
         )
 
+class LogNorm(ScipyPDF):
+    """ Class for the lognormal distribution
+
+    Parameters
+    ----------
+    mean : Union[float, np.array]
+        The mean value
+    sd : Union[float, np.array]
+        The std
+
+    Returns
+    -------
+    None
+    """
+
+    def __init__(
+            self,
+            mean: Union[float, np.ndarray],
+            sd: Union[float, np.ndarray],
+            max_val=np.infty) -> None:
+        """ Initializes the LogNormal class
+
+        Parameters
+        ----------
+        mean : Union[float, np.ndarray]
+        sd : Union[float, np.ndarray]
+
+        Returns
+        -------
+        None
+        """
+        super().__init__()
+        self._mean = mean
+        self._sd = sd
+
+        self._pdf = scipy.stats.lognorm(
+            self._mean, scale=self._sd
+        )
+
 class Gamma(ScipyPDF):
     """ Class for the scaled gamma distribution
 

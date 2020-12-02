@@ -91,6 +91,7 @@ _baseconfig = {
             "y_pos": 10.,
         },
         # Detector positions
+        # Note that 0. deg is defined as parallel to the x-axis
         "detector properties": {
             # Point-like detector
             "point": {
@@ -99,6 +100,7 @@ _baseconfig = {
                 "det num": 1,
                 "x_offsets": [0.],
                 "y_offsets": [0.],
+                "angle offset": 90.,  # In which direction the detector points
                 "opening angle": 60.,
                 "wavelength acceptance": [
                     [0., 1000.]
@@ -115,7 +117,8 @@ _baseconfig = {
                 "y_offsets": np.array(
                     [0.,0.1,0.,-0.1,  0.12,0.12,-0.12,-0.12, 0.04,0.2,-0.04,-0.2]
                 ) / 2.,
-                "opening angle": 25., # from dark box rotation test result: +-25 degrees
+                "angle offset": 90.,  # In which direction the detector points
+                "opening angle": 25.,  # 25., # from dark box rotation test result: +-25 degrees
                 "wavelength acceptance": [ #position number,center wavelength,quantum efficiency
                     [395., 405.,0.26], #0,400
                     [505., 515.,0.16], #1,510
@@ -212,7 +215,7 @@ _baseconfig = {
         'pdf max light': 'Gamma',
         # TODO: Make this a distribution using data
         # Emission duration
-        'emission duration': 120.,
+        'emission duration': 100.,
         # The probability distributions used for the pulse shapes
         # Currently supported:
         #   - 'Gamma':
@@ -220,7 +223,7 @@ _baseconfig = {
         #   - 'Normal':
         #       A gaussian distribution
         'pdf pulse': {
-            'pdf': 'Gamma',
+            'pdf': 'LogNorm',
             'mean': [5., 10.],
             'sd': [3., 5.]
         },
