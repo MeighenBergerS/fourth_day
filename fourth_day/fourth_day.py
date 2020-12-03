@@ -41,6 +41,7 @@ import numpy as np
 import yaml
 from time import time
 import pandas as pd
+import pickle
 # -----------------------------------------
 # Package modules
 from .config import config
@@ -164,14 +165,61 @@ class Fourth_Day(object):
         """
         _log.info('---------------------------------------------------')
         _log.info('---------------------------------------------------')
-        _log.info('Calculating photon bursts')
-        # The simulation
-        self._mc_run = MC_sim(
-            self._life,
-            self._world,
-            self._current
-        )
-        self._statistics = self._mc_run.statistics
+        # A new simulation
+        if config["scenario"]["class"] == "New":
+            _log.info("Starting MC simulation")
+            _log.info("This may take a long time")
+            _log.info('Calculating photon bursts')
+            # The simulation
+            self._mc_run = MC_sim(
+                self._life,
+                self._world,
+                self._current
+            )
+            self._statistics = self._mc_run.statistics
+            self._t = (
+                np.arange(self._mc_run.iterations) *
+                config['water']['model']['time step']
+            )
+            _log.info("Storing data for future use")
+            save_string = (
+                config["scenario"]["statistics storage"]["location"] +
+                config["scenario"]["statistics storage"]["name"]
+            )
+            _log.debug("Storing under " + save_string)
+            _log.debug("Storing statistics")
+            pickle.dump(self._statistics, open(save_string + ".pkl", "wb"))
+            _log.debug("Storing times")
+            pickle.dump(self._t, open(save_string + "_t.pkl", "wb"))
+            _log.debug("Finished storing")
+        # Re-use a previous simulation
+        elif config["scenario"]["class"] == "Stored":
+            _log.info("Loading statistics from previous run")
+            save_string = (
+                config["scenario"]["statistics storage"]["location"] +
+                config["scenario"]["statistics storage"]["name"]
+            )
+            _log.debug("Loading from " + save_string)
+            _log.debug("Loading statistics")
+            try:
+                self._statistics = pickle.load(
+                    open(save_string + ".pkl", "rb")
+                )
+            except:
+                ValueError("Statistics file not found! Check the file!")
+            _log.debug("Loading times")
+            try:
+                self._t = pickle.load(open(save_string + "_t.pkl", "rb"))
+            except:
+                ValueError("Time file not found! Check the file!")
+            _log.debug("Finished Loading")
+        else:
+            ValueError(
+                ("Unrecognized scenario class! The set class is %s" +
+                 "Only New or Stored are supported!") %(
+                     config["scenario"]["class"]
+                 )
+            )
         _log.info('---------------------------------------------------')
         _log.info('---------------------------------------------------')
         if config['scenario']["detector"]["switch"]:
@@ -243,8 +291,7 @@ class Fourth_Day(object):
             The time array
         """
         return (
-            np.arange(self._mc_run.iterations) *
-            config['water']['model']['time step']
+            self._t
         )
 
     @property

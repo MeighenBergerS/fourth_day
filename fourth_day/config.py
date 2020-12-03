@@ -31,7 +31,15 @@ _baseconfig = {
     ###########################################################################
     "scenario": {
         # Scenario class
-        "class": "StandardScenario",
+        # This can be either:
+        # - New: Run a new Monte Carlo simulation. Statistics are saved
+        # - Stored: Load a stored simulation
+        "class": "New",
+        # Save and load string
+        "statistics storage": {
+            "location": "../data/statistics/",
+            "name": "example_run_1"
+        },
         # Length of simulation in seconds
         "duration": 75,
         # The population
