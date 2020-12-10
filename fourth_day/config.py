@@ -40,6 +40,8 @@ _baseconfig = {
             "location": "../data/statistics/",
             "name": "example_run_1"
         },
+        # Break when no organisms in volume
+        "premature break": True,
         # Length of simulation in seconds
         "duration": 75,
         # The population
@@ -50,6 +52,8 @@ _baseconfig = {
         "inital distribution": "Uniform",
         # Injection rate
         # Number of organisms to inject per second
+        # The injection is treated as a binomial distro with p=0.5 for
+        # rate >= 1, else rate = p
         "injection": {
             "rate": 10,
             "y range": [5., 15.],

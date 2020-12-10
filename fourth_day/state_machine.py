@@ -57,11 +57,16 @@ class FourthDayStateMachine(object):
         # TODO: Make this position dependent
         # Organism shear property
         self._min_shear = config['organisms']['minimal shear stress']
-        self._injetion_counter = 0
         self._step = config['advanced']['starting step']
         self._time_step = config['water']['model']['time step']
         self._injection_rate = (
-            config['scenario']["injection"]["rate"] * self._time_step
+            config['scenario']["injection"]["rate"]
+        )
+        # Producing the injection sample
+        self._injection_sample()
+        _log.debug("Injecting at %d steps" %np.count_nonzero(self._to_inject))
+        _log.debug(
+            "Total number of organisms injected %d " %np.sum(self._to_inject)
         )
 
     def update(self):
@@ -129,7 +134,15 @@ class FourthDayStateMachine(object):
         ])
         observation_count = np.sum(new_observation_mask)
         if observation_count == 0:
+            # Injecting new organisms
+            if self._to_inject[self._step] > 0:
+                # TODO: Optimize this
+                for i in range(self._to_inject[self._step]):
+                    self._update_injection(i)
+                self._pop_size += self._to_inject[self._step]
             self._step += 1
+            if self._step % 100 == 0:
+                _log.debug("Finished step %d" %self._step)
             return [self._population, True]
         # ---------------------------------------------------------------------
         # TODO: Optimize this
@@ -291,14 +304,11 @@ class FourthDayStateMachine(object):
         self._population.loc[:, "observed"] = new_observation_mask
         # ---------------------------------------------------------------------
         # Injecting new organisms
-        # TODO: Optimize
-        if self._injetion_counter > 1:
-            for i in range(int(self._injetion_counter)):
+        if self._to_inject[self._step] > 0:
+            # TODO: Optimize this
+            for i in range(self._to_inject[self._step]):
                 self._update_injection(i)
-            self._pop_size += int(self._injetion_counter)
-            self._injetion_counter = 0.
-        else:
-            self._injetion_counter += self._injection_rate
+            self._pop_size += self._to_inject[self._step]
         self._step += 1
         if self._step % 100 == 0:
             _log.debug("Finished step %d" %self._step)
@@ -420,6 +430,36 @@ class FourthDayStateMachine(object):
             new_velocities = np.zeros(count)
             new_angles = np.zeros(count)
         return [new_velocities, new_angles]
+
+    def _injection_sample(self):
+        """ Samples the amount of organisms to inject. This is done before
+        the simulation starts
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        None
+        """
+        if self._injection_rate < 1:
+            self._to_inject = self._rstate.binomial(
+                1, self._injection_rate,
+                size=config['scenario']['duration']
+            )
+        else:
+            rate = self._injection_rate * 2.
+            self._to_inject = self._rstate.binomial(
+                int(rate), 0.5,
+                size=config['scenario']['duration']
+            )
+            remainder = rate - int(rate)
+            if remainder > 0.:
+                self._to_inject += self._rstate.binomial(
+                    1, remainder,
+                    size=config['scenario']['duration']
+                )
 
     def _update_injection(self, i: int):
         """ Injects new organisms into the system

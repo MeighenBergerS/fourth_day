@@ -184,10 +184,11 @@ class MC_sim(object):
         for _ in range(config['scenario']["duration"]):
             res = copy.deepcopy(self._sm.update())
             self._statistics.append(res[0])
-            if res[1]:
-                # No more observed organisms
-                _log.debug("No more observed organisms")
-                break
+            if config["scenario"]["premature break"]:
+                if res[1]:
+                    # No more observed organisms
+                    _log.debug("No more observed organisms")
+                    break
             self._iterations += 1
         end = time()
         _log.debug("Finished the simulation")
