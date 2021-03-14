@@ -274,7 +274,7 @@ class FourthDayStateMachine(object):
         )
         self._population.loc[successful_burst_shear, 'shear photons'] = (
             shear_photons *
-            self._population.loc[successful_burst_enc, "pulse size"]
+            self._population.loc[successful_burst_shear, "pulse size"]
         )
         self._population.loc[new_observation_mask, 'photons'] = (
             self._population.loc[new_observation_mask, 'encounter photons'] +
