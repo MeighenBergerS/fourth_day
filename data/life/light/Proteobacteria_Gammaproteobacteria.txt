@@ -1,4 +1,3 @@
 Photobacterium phosphoreum ANT-2200, 490, 80, Antares, Deep, 2200, 20, 10, 1e10
-short pulse, 490, 80, Antares, Deep, 12000, 0.5, 0.25, 1e8
-long pulse 1, 490, 80, Antares, Deep, 12000, 1, 0.5, 1e12
-long pulse 2, 490, 80, Antares, Deep, 12000, 1, 0.5, 1e12
+short pulse, 490, 80, Antares, Deep, 12000, 2., 0.3, 1e10
+long pulse 1, 490, 80, Antares, Deep, 12000, 2, 1.5, 1e10

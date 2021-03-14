@@ -290,6 +290,8 @@ class FourthDayStateMachine(object):
         pulse_shape = self._life.pulse_emission(
             self._population.loc[new_observation_mask]
         )
+        # TODO: Find the cause
+        # pulse_shape[pulse_shape > 100.] = 0.
         self._population.loc[new_observation_mask, 'photons'] *= pulse_shape
         # ---------------------------------------------------------------------
         # Counting down

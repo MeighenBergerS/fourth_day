@@ -227,6 +227,8 @@ class Lucifer(object):
             flat_prop = propagated[0]
             tmp_arriving.append(flat_prop)
         arriving = np.array(tmp_arriving)
+        # TODO: Find the cause
+        arriving[arriving < 0.] = 0.
         _log.debug("Finished the attenuation calculation")
         end = time()
         _log.info("Propagation simulation took %f seconds" % (end - start))
