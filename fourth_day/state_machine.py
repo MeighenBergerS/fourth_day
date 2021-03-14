@@ -34,6 +34,8 @@ class FourthDayStateMachine(object):
         List of all possible means for pulses
     possible_sds : np.array
         List of all possible sd for pulses
+    possible_pulse_size : np.array
+        List of all possible pulse sizes
     """
     def __init__(
         self,
@@ -43,7 +45,8 @@ class FourthDayStateMachine(object):
         current: Current,
         possible_species: np.array,
         possible_means: np.array,
-        possible_sds: np.array
+        possible_sds: np.array,
+        possible_pulse_size: np.array
     ):
         self._rstate = config["runtime"]['random state']
         self._population = initial
@@ -53,6 +56,7 @@ class FourthDayStateMachine(object):
         self._possible_species = possible_species
         self._possible_means = possible_means
         self._possible_sds = possible_sds
+        self._possible_size = possible_pulse_size
         self._pop_size = config['scenario']['population size']
         # TODO: Make this position dependent
         # Organism shear property
@@ -111,10 +115,14 @@ class FourthDayStateMachine(object):
         # Finding the closest integer
         current_step = int(self._time_step * self._step)
         self._vel_x, self._vel_y, _ = (
-            self._current.velocities(current_pos, current_step)
+            self._current.velocities(current_pos +
+                                     config["water"]["model"]["off set"],
+                                     current_step)
         )
         self._gradient = (
-            self._current.gradients(current_pos, current_step)
+            self._current.gradients(current_pos +
+                                    config["water"]["model"]["off set"],
+                                    current_step)
         ).flatten()
         # The time step
         self._vel_x = self._vel_x * self._time_step
@@ -261,10 +269,12 @@ class FourthDayStateMachine(object):
         self._population.loc[mask, 'energy'] = 1.
         # Photons
         self._population.loc[successful_burst_enc, 'encounter photons'] = (
-            encounter_photons * config["organisms"]['photon yield']
+            encounter_photons *
+            self._population.loc[successful_burst_enc, "pulse size"]
         )
         self._population.loc[successful_burst_shear, 'shear photons'] = (
-            shear_photons * config["organisms"]['photon yield']
+            shear_photons *
+            self._population.loc[successful_burst_enc, "pulse size"]
         )
         self._population.loc[new_observation_mask, 'photons'] = (
             self._population.loc[new_observation_mask, 'encounter photons'] +
@@ -473,7 +483,7 @@ class FourthDayStateMachine(object):
         # Checking if more than one species
         if len(self._possible_species) > 1:
             pop_index_sample = config["runtime"]['random state'].randint(
-                0, len(self._possible_species)-1, 1
+                0, len(self._possible_species), 1
             )
         elif len(self._possible_species) == 1:
             pop_index_sample = np.zeros(1, dtype=np.int)
@@ -497,6 +507,7 @@ class FourthDayStateMachine(object):
             config["organisms"]["regeneration"],  # regeneration
             self._possible_means[pop_index_sample][0],  # Mean pulse
             self._possible_sds[pop_index_sample][0],  # Sd pulse
+            self._possible_size[pop_index_sample][0],
             False,  # is_emitting
             0,  # emission_duration
             0,  # encounter photons

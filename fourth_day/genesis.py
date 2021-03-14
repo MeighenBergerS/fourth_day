@@ -138,6 +138,10 @@ class Genesis(object):
         sd = organisms.loc[:, "pulse sd"].values
         remain_times = abs(organisms.loc[:, "emission_duration"].values -
                            config["organisms"]['emission duration'])
+        # TODO: More elegante fix
+        # Fixing 0
+        remain_times[remain_times == 0.] = 1.
+        # These don't have to be gamma functions
         gamma_functions = np.array([
             construct_pdf({
                 "class": config['organisms']['pdf pulse']['pdf'],
@@ -149,6 +153,17 @@ class Genesis(object):
             gamma_functions[i].pdf(remain_times[i])
             for i in range(0, len(remain_times))
         ])
+        # if len(multi_array[multi_array > 10]) > 0:
+        #     print('Too large value!')
+        #     print(multi_array[multi_array > 10])
+        #     print(means)
+        #     print(sd)
+        #     print(remain_times)
+        # if len(multi_array[multi_array < 0]) > 0:
+        #     print('Negative value!')
+        #     print(means)
+        #     print(sd)
+        #     print(remain_times)
         return multi_array
 
     def _immaculate_conception(self) -> dict:
@@ -185,6 +200,7 @@ class Genesis(object):
                     # [5] is the depth at which it appears
                     # [6] is the mean emission duration
                     # [7] is the sd of the emission duration
+                    # [8] is the photon yield
                     life[phyla] = np.array(
                         [
                             tmp[:, 0].astype(str),
@@ -192,7 +208,8 @@ class Genesis(object):
                             tmp[:, 2].astype(np.float32),
                             tmp[:, 5].astype(np.float32),
                             tmp[:, 6].astype(np.float32),
-                            tmp[:, 7].astype(np.float32)
+                            tmp[:, 7].astype(np.float32),
+                            tmp[:, 8].astype(np.float32)
                         ],
                         dtype=object
                     )
@@ -218,7 +235,8 @@ class Genesis(object):
                                 tmp[:, 2].astype(np.float32),
                                 tmp[:, 5].astype(np.float32),
                                 tmp[:, 6].astype(np.float32),
-                                tmp[:, 7].astype(np.float32)
+                                tmp[:, 7].astype(np.float32),
+                                tmp[:, 8].astype(np.float32)
                             ],
                             dtype=object
                         )
@@ -285,6 +303,7 @@ class Genesis(object):
                 avg_widt = []
                 avg_pulse_mean = []
                 avg_pulse_sd = []
+                avg_pulse_size = []
                 total_count = 0
                 for class_name in config['organisms']['phyla light'][phyla]:
                     avg_mean.append(np.mean(
@@ -299,13 +318,17 @@ class Genesis(object):
                     avg_pulse_sd.append(np.mean(
                         life[phyla + '_' + class_name][5]
                     ))
+                    avg_pulse_size.append(np.mean(
+                        life[phyla + '_' + class_name][6]
+                    ))
                     total_count += len(life[phyla + '_' + class_name][1]) 
                 evolved[phyla] = np.array([
                     [phyla],
                     [np.mean(avg_mean)],
                     [np.mean(avg_widt)],
                     [np.mean(avg_pulse_mean)],
-                    [np.mean(avg_pulse_sd)]
+                    [np.mean(avg_pulse_sd)],
+                    [np.mean(avg_pulse_size)]
                 ], dtype=object)
                 _log.debug('1 out of %d %s survived the flood'
                                  %(total_count, phyla))
@@ -326,7 +349,7 @@ class Genesis(object):
         """
         evolved = dict()
         for key in life.keys():
-            evolved[key] = [[], [], [], [], []]
+            evolved[key] = [[], [], [], [], [], []]
             for idspecies, _ in enumerate(life[key][0]):
                 cut_off = config['organisms']['depth filter']
                 if life[key][3][idspecies] >= cut_off:
@@ -349,6 +372,10 @@ class Genesis(object):
                     # The pulse sd
                     evolved[key][4].append(
                         life[key][5][idspecies]
+                    )
+                    # The pulse size
+                    evolved[key][5].append(
+                        life[key][6][idspecies]
                     )
             total_survive = len(evolved[key][0])
             total_pre_flood = len(life[key][0])

@@ -173,6 +173,7 @@ _baseconfig = {
             "vtu number": 240,  # Which files to use, can be a list
             "vtu cores": 6,  # Number of cores used to generate the vtu files
             "time step": 1,  # Number of seconds between frames
+            "off set": np.array([0., 0.])
         },
     },
     ###########################################################################
@@ -217,14 +218,14 @@ _baseconfig = {
         #       Gamma probability pdf
         #   - 'Normal':
         #       A gaussian distribution
-        'pdf light': 'Normal',
+        'pdf light': 'Gamma',
         # The probability distribution used for the maximal light emission
         # Currently supported:
         #   - 'Gamma':
         #       Gamma probability pdf
         #   - 'Normal':
         #       A gaussian distribution
-        'pdf max light': 'Gamma',
+        'pdf max light': 'Normal',
         # TODO: Make this a distribution using data
         # Emission duration
         'emission duration': 100.,
@@ -235,7 +236,8 @@ _baseconfig = {
         #   - 'Normal':
         #       A gaussian distribution
         'pdf pulse': {
-            'pdf': 'LogNorm',
+            'pdf': 'Gamma',
+            # These aren't used currently
             'mean': [5., 10.],
             'sd': [3., 5.]
         },
@@ -246,8 +248,6 @@ _baseconfig = {
         #   - 'Normal':
         #       A gaussian distribution
         'pdf move': 'Normal',
-        # Average photon yield per pulse
-        'photon yield': 1.,
         # Emission fraction per pulse
         'emission fraction': 0.1,
         # Fraction of max energy regenerated per second
