@@ -258,6 +258,13 @@ class Fourth_Day(object):
         _log.debug("Finished dump")
         _log.info('---------------------------------------------------')
         _log.info('---------------------------------------------------')
+        _log.info("Have a great day and until next time!")
+        _log.info('          /"*._         _')
+        _log.info("      .-*'`    `*-.._.-'/")
+        _log.info('    < * ))     ,       ( ')
+        _log.info('     `*-._`._(__.--*"`.\ ')
+        _log.info('---------------------------------------------------')
+        _log.info('---------------------------------------------------')
         # Closing log
         logging.shutdown()
 

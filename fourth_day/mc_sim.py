@@ -88,11 +88,13 @@ class MC_sim(object):
                 "pulse mean": 0.,
                 "pulse sd": 0.,
                 "pulse size": 0.,
+                "pulse start": False,
                 "is_emitting": False,
                 "emission_duration": 0,
                 "encounter photons": 0,
                 "shear photons": 0.,
-                "photons": 0.
+                "photons": 0.,
+                "is_injected": True
             },
             index=np.arange(config['scenario']["population size"]),
         )
@@ -171,6 +173,8 @@ class MC_sim(object):
                     high=2. * np.pi,
                     size=self._pop_size)
         )
+        # The starting population is not injected
+        self._population.loc[:, "is_injected"] = False
         # The state machine
         _log.debug("Setting up the state machine")
         self._sm = FourthDayStateMachine(

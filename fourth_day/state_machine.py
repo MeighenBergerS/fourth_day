@@ -89,6 +89,9 @@ class FourthDayStateMachine(object):
                 If simulation is done
         """
         # ---------------------------------------------------------------------
+        # Removing pulse starts
+        self._population.loc[:, 'pulse start'] = False
+        # ---------------------------------------------------------------------
         # The currently observed
         observation_mask = self._population.loc[:, 'observed'].values
         # ---------------------------------------------------------------------
@@ -282,6 +285,7 @@ class FourthDayStateMachine(object):
         )
         # Starting counters
         self._population.loc[successful_burst, 'is_emitting'] = True
+        self._population.loc[successful_burst, 'pulse start'] = True
         self._population.loc[successful_burst, "emission_duration"] = (
             config['organisms']['emission duration']
         )
@@ -509,12 +513,14 @@ class FourthDayStateMachine(object):
             config["organisms"]["regeneration"],  # regeneration
             self._possible_means[pop_index_sample][0],  # Mean pulse
             self._possible_sds[pop_index_sample][0],  # Sd pulse
-            self._possible_size[pop_index_sample][0],
+            self._possible_size[pop_index_sample][0],  # Pulse size
+            False,  # Pulse start
             False,  # is_emitting
             0,  # emission_duration
             0,  # encounter photons
             0, # shear photons
-            0  # Photons
+            0,  # Photons
+            True  # Is injected
         ]
 
     def _encounter(self, positions: np.ndarray) -> np.ndarray:
