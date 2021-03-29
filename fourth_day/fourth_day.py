@@ -213,10 +213,21 @@ class Fourth_Day(object):
             except:
                 ValueError("Time file not found! Check the file!")
             _log.debug("Finished Loading")
+        # Calibration run
+        elif config['scenario']['class'] == 'Calibration':
+            _log.info("A calibration run")
+            _log.debug("Population simulation is not required here")
+            self._statistics = pd.DataFrame({'I am empty dummy' : []})
+            self._t = np.array(list(range(
+                len(config["calibration"]["light curve"][
+                    list(config["calibration"]["light curve"].keys())[0]
+                ])
+            )))
+
         else:
             ValueError(
                 ("Unrecognized scenario class! The set class is %s" +
-                 "Only New or Stored are supported!") %(
+                 "New, Stored or Calibration are supported!") %(
                      config["scenario"]["class"]
                  )
             )
@@ -246,9 +257,10 @@ class Fourth_Day(object):
         _log.info('---------------------------------------------------')
         _log.info('---------------------------------------------------')
         _log.info('Finished calculation')
-        _log.info('Get the results by typing self.statistics')
-        _log.info('Structure of dictionray:')
-        _log.info(self._statistics[0].keys())
+        if config["scenario"]["class"] != "Calibration":
+            _log.info(self._statistics[0].keys())
+            _log.info('Get the results by typing self.statistics')
+            _log.info('Structure of dictionray:')
         _log.debug(
             "Dumping run settings into %s",
             config["general"]["config location"],

@@ -33,7 +33,12 @@ class Providence(object):
                 config["scenario"]["detector"]["type"]
                 ]
         )
-        self._nm = config['advanced']['nm range']
+        if config["scenario"]["class"] == "Calibration":
+            self._nm = wavelengths_of_interest = np.array(list(
+                config["calibration"]["light curve"].keys()
+            ))
+        else:
+            self._nm = config['advanced']['nm range']
         if detection_type == "Flat":
             _log.debug("A flat response is used")
             self._mean_detection_prob =conf_dict["mean detection prob"]
@@ -62,10 +67,16 @@ class Providence(object):
             [np.argmax(self._nm > wave[0]),
              np.argmin(self._nm < wave[1])]
             if np.argmin(self._nm < wave[1]) > 0 else
-            [np.argmax(self._nm > wave[0]), -1]
+            [np.argmax(self._nm > wave[0]), len(self._nm)+1]
             for wave in self._det_geom["wavelength acceptance"]
         ])
         # Iterating over the steps
+        for light_yield in light_yields:
+            for i in range(0, self._det_geom["det num"]):
+                print(i)
+                print(light_yield[i][
+                            acceptance_ids[i][0]:acceptance_ids[i][1]
+                            ])
         measured = np.array([
             [
                 np.trapz(light_yield[i][
@@ -77,6 +88,7 @@ class Providence(object):
             for light_yield in light_yields
         ])
         # Adding the detection probability
+        print(measured)
         measured = (measured * self._mean_detection_prob)
         _log.debug("Finished the detector calculation")
         end = time()

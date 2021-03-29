@@ -27,40 +27,9 @@ class Lucifer(object):
     """
     def __init__(self):
         _log.debug("Constructing the attenuation splines")
-        # Data
-        # this wavelength_attentuation function is extract from 
-        # https://pdfs.semanticscholar.org/1e88/
-        # 9ce6ebf1ec84ab1e3f934377c89c0257080c.pdf
-        # by https://apps.automeris.io/wpd/ Plot digitizer read points
-        
-        self._wave_length = np.array( #extend it to 300
-            [
-                299.,
-                329.14438502673795, 344.11764705882354, 362.2994652406417,
-                399.44415494181, 412.07970421102266, 425.75250006203635,
-                442.53703565845314, 457.1974490682151, 471.8380108687561,
-                484.3544504826423, 495.7939402962853, 509.29799746891985,
-                519.6903148961513, 530.0627807141617, 541.5022705278046,
-                553.9690811186382, 567.4929899004939, 580.9771954639073,
-                587.1609717362714, 593.3348222040249, 599.4391920395047,
-                602.4715253480235
-            ]
-        )
-        self._attenuation = np.array([
-            [
-                0.8,
-                0.6279453220864465,0.3145701363176568,
-                0.12591648888305143,0.026410321551339357, 0.023168667048510762,
-                0.020703255370450736, 0.019552708373076478,
-                0.019526153330089138, 0.020236306473695613,
-                0.02217620815962483, 0.025694647290888873,
-                0.031468126242251794, 0.03646434475343956,
-                0.04385011375530569, 0.05080729755501162,
-                0.061086337538657706, 0.07208875589035815, 0.09162216168767365,
-                0.11022281058708046, 0.1350811713674855, 0.18848851206491904,
-                0.23106528395398912
-            ]
-        ])
+           
+        self._wave_length = config["water"]["attenuation"]["wavelengths"]
+        self._attenuation = config["water"]["attenuation"]["factors"]
         # The attenuation function
         self._att_func = interp1d(
             self._wave_length, self._attenuation, kind='quadratic'
@@ -136,14 +105,14 @@ class Lucifer(object):
             (pos_y -
              (self._det_geom["y_pos"] + self._det_geom["y_offsets"][i]))**2. 
             for i in range(0, self._det_geom["det num"])
-        ])
+        ])**(1./2.)
         # The angles
         angles = np.array([
             np.arctan2(
-                (pos_x -
-                 (self._det_geom["x_pos"] + self._det_geom["x_offsets"][i])),
                 (pos_y -
-                 (self._det_geom["y_pos"] + self._det_geom["y_offsets"][i])))
+                 (self._det_geom["y_pos"] + self._det_geom["y_offsets"][i])),
+                (pos_x -
+                 (self._det_geom["x_pos"] + self._det_geom["x_offsets"][i])))
             for i in range(0, self._det_geom["det num"])
         ])
         # To degrees
@@ -156,7 +125,11 @@ class Lucifer(object):
         # Acceptance arr
         accept_arr = bool_arr.astype(float)
         # The attenuation factor
-        attenuation_factor = self._att_func(wavelengths)[0]
+        tmp_atten = self._att_func(wavelengths)
+        if config["scenario"]["class"] == "Calibration":
+            attenuation_factor = tmp_atten
+        else:
+            attenuation_factor = tmp_atten[0]
         #  Beer-Lambdert law
         # No emission
         if len(pos_x) < 1:
@@ -193,50 +166,98 @@ class Lucifer(object):
         arriving : np.array
             The attenuated photon counts depending on time
         """
-        _log.debug("Launching the attenuation calculation")
-        start = time()
-        tmp_arriving = []
-        # The nm of interest
-        nm_range = config["advanced"]["nm range"]
-        for pop in statistics:
-            emission_mask = pop.loc[:, 'is_emitting'].values
-            photons = pop.loc[emission_mask, 'photons'].values
-            x_pos = pop.loc[emission_mask, 'pos_x'].values
-            y_pos = pop.loc[emission_mask, 'pos_y'].values
-            species = pop.loc[emission_mask, 'species'].values
-            emission_pdfs = np.array([
-                life.Light_pdfs[species_key].pdf(nm_range)
-                for species_key in species
-            ])
-            emission_photons = np.array([
-                emission_pdfs[i] * photons[i]
-                for i in range(0, len(species))
-            ])
-            # Emitters
-            if len(emission_photons) >= 1:
-                propagated = np.array([
-                    np.sum(self._propagation(emission_photons, x_pos, y_pos,
-                                            nm_range), axis=1)
+        if config["scenario"]["class"] != "Calibration":
+            _log.debug("Launching the attenuation calculation")
+            start = time()
+            tmp_arriving = []
+            # The nm of interest
+            nm_range = config["advanced"]["nm range"]
+            for pop in statistics:
+                emission_mask = pop.loc[:, 'is_emitting'].values
+                photons = pop.loc[emission_mask, 'photons'].values
+                x_pos = pop.loc[emission_mask, 'pos_x'].values
+                y_pos = pop.loc[emission_mask, 'pos_y'].values
+                species = pop.loc[emission_mask, 'species'].values
+                emission_pdfs = np.array([
+                    life.Light_pdfs[species_key].pdf(nm_range)
+                    for species_key in species
                 ])
-            # No emitter
-            else:
-                propagated = self._propagation(emission_photons, x_pos, y_pos,
-                                               nm_range)
-            
-            # Integrating for each detector
-            flat_prop = propagated[0]
-            tmp_arriving.append(flat_prop)
-        arriving = np.array(tmp_arriving)
-        # TODO: Find the cause
-        arriving[arriving < 0.] = 0.
-        _log.debug("Finished the attenuation calculation")
-        end = time()
-        _log.info("Propagation simulation took %f seconds" % (end - start))
-        # Checking if any light reached the detector and warning the user if
-        # not
-        anything_reached = not np.any(arriving)
-        if anything_reached:
-            _log.warning("No light has reached the detector! " +
-                         "This is usually due to the opening angle of the "+
-                         "detector.")
-        return arriving
+                emission_photons = np.array([
+                    emission_pdfs[i] * photons[i]
+                    for i in range(0, len(species))
+                ])
+                # Emitters
+                if len(emission_photons) >= 1:
+                    propagated = np.array([
+                        np.sum(self._propagation(emission_photons, x_pos,
+                                                 y_pos,
+                                                 nm_range), axis=1)
+                    ])
+                # No emitter
+                else:
+                    propagated = self._propagation(emission_photons, x_pos,
+                                                   y_pos,
+                                                   nm_range)
+                
+                # Integrating for each detector
+                flat_prop = propagated[0]
+                tmp_arriving.append(flat_prop)
+            arriving = np.array(tmp_arriving)
+            # TODO: Find the cause
+            arriving[arriving < 0.] = 0.
+            _log.debug("Finished the attenuation calculation")
+            end = time()
+            _log.info("Propagation simulation took %f seconds" % (end - start))
+            # Checking if any light reached the detector and warning the user
+            # if not
+            anything_reached = not np.any(arriving)
+            if anything_reached:
+                _log.warning("No light has reached the detector! " +
+                            "This is usually due to the opening angle of the "+
+                            "detector.")
+            return arriving
+        elif config['scenario']['class'] == 'Calibration':
+            _log.debug("Launching the attenuation calculation")
+            start = time()
+            self._wave_length = (
+                config["calibration"]["attenuation curve"][0]
+            )
+            self._attenuation = (
+                config["calibration"]["attenuation curve"][1]
+            )
+            # The attenuation function
+            self._att_func = interp1d(
+                self._wave_length, self._attenuation, kind='quadratic'
+            )
+            tmp_arriving = []
+            wavelengths_of_interest = np.array(list(
+                config["calibration"]["light curve"].keys()
+            ))
+            photon_counts = np.array([
+                config["calibration"]["light curve"][
+                    wavelengths_of_interest[i]
+                ] for i in range(0, len(wavelengths_of_interest))
+            ])
+            photon_counts = photon_counts.T
+            for counts in photon_counts:
+                pop = config["calibration"]["pos_arr"]
+                propagated = np.array([
+                        np.sum(self._propagation(counts, np.array([pop[0]]),
+                            np.array([pop[1]]), wavelengths_of_interest),
+                            axis=1)])
+                # Integrating for each detector
+                flat_prop = propagated[0]
+                tmp_arriving.append(flat_prop)
+            arriving = np.array(tmp_arriving)
+            _log.debug("Finished the attenuation calculation")
+            end = time()
+            _log.info("Propagation simulation took %f seconds" % (end - start))
+            return arriving
+
+        else:
+            ValueError(
+                ("Unrecognized scenario class! The set class is %s" +
+                 "Only New, Stored or Calibration are supported!") %(
+                     config["scenario"]["class"]
+                 )
+            )

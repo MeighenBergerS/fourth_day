@@ -34,6 +34,7 @@ _baseconfig = {
         # This can be either:
         # - New: Run a new Monte Carlo simulation. Statistics are saved
         # - Stored: Load a stored simulation
+        # - Calibration: Used to calibrate the simulation code to lab data
         "class": "New",
         # Save and load string
         "statistics storage": {
@@ -175,6 +176,41 @@ _baseconfig = {
             "time step": 1,  # Number of seconds between frames
             "off set": np.array([0., 0.])
         },
+        # Data
+        # this wavelength_attentuation function is extract from 
+        # https://pdfs.semanticscholar.org/1e88/
+        # 9ce6ebf1ec84ab1e3f934377c89c0257080c.pdf
+        # by https://apps.automeris.io/wpd/ Plot digitizer read points
+        "attenuation": {
+            "wavelengths": np.array(
+                [
+                    299.,
+                    329.14438502673795, 344.11764705882354, 362.2994652406417,
+                    399.44415494181, 412.07970421102266, 425.75250006203635,
+                    442.53703565845314, 457.1974490682151, 471.8380108687561,
+                    484.3544504826423, 495.7939402962853, 509.29799746891985,
+                    519.6903148961513, 530.0627807141617, 541.5022705278046,
+                    553.9690811186382, 567.4929899004939, 580.9771954639073,
+                    587.1609717362714, 593.3348222040249, 599.4391920395047,
+                    602.4715253480235
+                ]
+            ),
+            "factors": np.array([
+            [
+                0.8,
+                0.6279453220864465,0.3145701363176568,
+                0.12591648888305143,0.026410321551339357, 0.023168667048510762,
+                0.020703255370450736, 0.019552708373076478,
+                0.019526153330089138, 0.020236306473695613,
+                0.02217620815962483, 0.025694647290888873,
+                0.031468126242251794, 0.03646434475343956,
+                0.04385011375530569, 0.05080729755501162,
+                0.061086337538657706, 0.07208875589035815, 0.09162216168767365,
+                0.11022281058708046, 0.1350811713674855, 0.18848851206491904,
+                0.23106528395398912
+            ]
+        ])
+        }
     },
     ###########################################################################
     # Organisms inputs
@@ -258,6 +294,23 @@ _baseconfig = {
         'alpha': 1.,
     },
     ###################################################
+    # Calibration
+    ###################################################
+    # These are settings specific for a calibration run
+    "calibration" : {
+        "pos_arr": [2., 30.],  # The positions of the flasher
+        # A dictionary of time series of the flasher for different wavelengths
+        # This requires the wavelengths and the values of the time series
+        "light curve": {
+            400.: np.ones(10)*1e10,
+            420.: np.ones(10)*1e10
+        },
+        "attenuation curve": np.array([
+            np.linspace(300., 600., 301),
+            np.ones(301)
+        ])
+    },
+    ###################################################
     # Advanced
     ###################################################
     "advanced" : {
@@ -265,7 +318,7 @@ _baseconfig = {
         'water grid size': 1e-1,
         'sphere sample': 50,
         'starting step': 0,
-        "nm range": np.linspace(300., 600., 200),
+        "nm range": np.linspace(300., 600., 300),
     },
 }
 
