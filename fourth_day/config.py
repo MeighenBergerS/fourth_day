@@ -72,7 +72,7 @@ _baseconfig = {
             "type": "point",
             "response": True,
             "acceptance": "Flat",
-            "mean detection prob": 0.3
+            "mean detection prob": 1.
         }
     },
     ###########################################################################
@@ -105,6 +105,7 @@ _baseconfig = {
         },
         # Detector positions
         # Note that 0. deg is defined as parallel to the x-axis
+        # Here a few examples with minimal and maximal customization
         "detector properties": {
             # Point-like detector
             "point": {
@@ -115,9 +116,10 @@ _baseconfig = {
                 "y_offsets": [0.],
                 "angle offset": 90.,  # In which direction the detector points
                 "opening angle": 60.,
-                "wavelength acceptance": [
-                    [0., 1000.]
-                ]
+                "quantum efficiency": "Flat",  # whether flat or function
+                "wavelength acceptance": np.array([  #position number,center wavelength,quantum efficiency
+                    [0., 1000., 1.]
+                ])
             },
             # The PMTSpec
             "PMTSpec": {
@@ -131,8 +133,9 @@ _baseconfig = {
                     [0.,0.1,0.,-0.1,  0.12,0.12,-0.12,-0.12, 0.04,0.2,-0.04,-0.2]
                 ) / 2.,
                 "angle offset": 90.,  # In which direction the detector points
-                "opening angle": 25.,  # 25., # from dark box rotation test result: +-25 degrees
-                "wavelength acceptance": [ #position number,center wavelength,quantum efficiency
+                "opening angle": 180.,  # 25., # from dark box rotation test result: +-25 degrees
+                "quantum efficiency": "Flat",  # whether flat or function
+                "wavelength acceptance": np.array([ #position number,center wavelength,quantum efficiency (if flat)
                     [395., 405.,0.26], #0,400
                     [505., 515.,0.16], #1,510
                     [420., 430.,0.28], #2,425
@@ -145,7 +148,53 @@ _baseconfig = {
                     [445., 455.,0.2], #9,450
                     [455., 465.,0.23], #10,460
                     [325., 375.,0.3], #11,350                                     
-                ],
+                ]),
+            },
+            "PMTSpec_Func": {
+                "x_pos": 2.,
+                "y_pos": 5.,
+                "det num": 12, #12 pmts numbered by position 
+                "x_offsets": np.array(
+                    [0.1,0.,-0.1,0., 0.12,-0.12,-0.12,0.12, 0.2,-0.04,-0.2,0.04]
+                ) / 2., #test radius 0.3 meter, real radius 0.15 meter
+                "y_offsets": np.array(
+                    [0.,0.1,0.,-0.1,  0.12,0.12,-0.12,-0.12, 0.04,0.2,-0.04,-0.2]
+                ) / 2.,
+                "angle offset": np.array([
+                    90., 90., 90., 90., 90., 90.,
+                    90., 90., 90., 90., 90., 90.]),  # In which direction the detector(s) points
+                "opening angle": np.array([
+                    25., 25., 25., 25., 25., 25.,
+                    25., 25., 25., 25., 25., 25.]),  # 25., # from dark box rotation test result: +-25 degrees
+                "quantum efficiency": "Func",  # whether flat or function
+                "wavelength acceptance": np.array([ #position number,center wavelength,quantum efficiency (if flat)
+                    [395., 405.],
+                    [505., 515.],
+                    [420., 430.],
+                    [465., 475.],
+                    [300., 600.],
+                    [487., 497.],
+                    [540., 560.],
+                    [515., 535.],
+                    [475., 485.],
+                    [445., 455.],
+                    [455., 465.],
+                    [325., 375.],                                     
+                ]),
+                "quantum func": np.array([
+                    [[395., 400., 405.], [0.26, 0.26, 0.26]],
+                    [[505., 510., 515.], [0.16, 0.16, 0.16]],
+                    [[420., 425., 430.], [0.28, 0.28, 0.28]],
+                    [[465., 470., 475.], [0.23, 0.23, 0.23]],
+                    [[300., 500., 600.], [1., 1., 1.]],
+                    [[487., 490., 497.], [0.1, 0.1, 0.1]],
+                    [[540., 550., 560.], [0.1, 0.1, 0.1]],
+                    [[515., 525., 535.], [0.13, 0.13, 0.13]],
+                    [[475., 480., 485.], [0.2, 0.2, 0.2]],
+                    [[445., 450., 455.], [0.2, 0.2, 0.2]],
+                    [[455., 460., 465.], [0.23, 0.23, 0.23]],
+                    [[325., 350., 375.], [0.3, 0.3, 0.3]],
+                ])
             }
         },
     },
@@ -302,12 +351,34 @@ _baseconfig = {
         # A dictionary of time series of the flasher for different wavelengths
         # This requires the wavelengths and the values of the time series
         "light curve": {
-            400.: np.ones(10)*1e10,
-            420.: np.ones(10)*1e10
+            396.: np.ones(100),
+            400.: np.ones(100)
         },
         "attenuation curve": np.array([
-            np.linspace(300., 600., 301),
-            np.ones(301)
+            [
+                299.,
+                329.14438502673795, 344.11764705882354, 362.2994652406417,
+                399.44415494181, 412.07970421102266, 425.75250006203635,
+                442.53703565845314, 457.1974490682151, 471.8380108687561,
+                484.3544504826423, 495.7939402962853, 509.29799746891985,
+                519.6903148961513, 530.0627807141617, 541.5022705278046,
+                553.9690811186382, 567.4929899004939, 580.9771954639073,
+                587.1609717362714, 593.3348222040249, 599.4391920395047,
+                602.4715253480235
+            ],
+            [
+                0.8,
+                0.6279453220864465,0.3145701363176568,
+                0.12591648888305143,0.026410321551339357, 0.023168667048510762,
+                0.020703255370450736, 0.019552708373076478,
+                0.019526153330089138, 0.020236306473695613,
+                0.02217620815962483, 0.025694647290888873,
+                0.031468126242251794, 0.03646434475343956,
+                0.04385011375530569, 0.05080729755501162,
+                0.061086337538657706, 0.07208875589035815, 0.09162216168767365,
+                0.11022281058708046, 0.1350811713674855, 0.18848851206491904,
+                0.23106528395398912
+            ]
         ])
     },
     ###################################################

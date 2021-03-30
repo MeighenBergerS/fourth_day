@@ -7,7 +7,7 @@ Propagates the light to the detector position
 import logging
 import pandas as pd
 import numpy as np
-from scipy.interpolate import interp1d
+from scipy.interpolate import UnivariateSpline
 from time import time
 from .config import config
 from .genesis import Genesis
@@ -31,8 +31,8 @@ class Lucifer(object):
         self._wave_length = config["water"]["attenuation"]["wavelengths"]
         self._attenuation = config["water"]["attenuation"]["factors"]
         # The attenuation function
-        self._att_func = interp1d(
-            self._wave_length, self._attenuation, kind='quadratic'
+        self._att_func = UnivariateSpline(
+            self._wave_length, self._attenuation, k=1, s=0
         )
         # The detector position
         try:
@@ -42,23 +42,24 @@ class Lucifer(object):
                     ]
             )
             # The acceptance region
-            self._acceptance_angles = [
+            self._acceptance_angles = np.array([
                 self._det_geom["angle offset"] -
                 self._det_geom["opening angle"] / 2.,
                 self._det_geom["angle offset"] +
                 self._det_geom["opening angle"] / 2.
-            ]
-            _log.debug(
-                "The acceptance angles are: %.1f and %.1f" %(
-                    self._acceptance_angles[0], self._acceptance_angles[1])
-            )
+            ])
+            _log.debug("The acceptance angles are:")
+            _log.debug("Minus")
+            _log.debug(self._acceptance_angles[0])
+            _log.debug("Plus")
+            _log.debug(self._acceptance_angles[1])
         # Catching some errors
         except:
             raise KeyError(
-                "Unrecognized detector geometry! Check the config file"
+                "Unrecognized detector geometry or error in its setup!" +
+                " Check the config file"
             )
         if len(self._det_geom["x_offsets"]) != self._det_geom["det num"]:
-            print(len(self._det_geom["x_offsets"]),self._det_geom["det num"])
             raise ValueError(
                 "Not enough x offsets for the detector number!" +
                 " Check the config file!"
@@ -118,8 +119,13 @@ class Lucifer(object):
         # To degrees
         angles = np.degrees(angles)
         # Checking if within opening angles
-        angles[angles < self._acceptance_angles[0]] = 0.
-        angles[angles > self._acceptance_angles[1]] = 0.
+        if self._acceptance_angles.ndim > 1:
+            outside_minus = np.less(angles[:, 0], self._acceptance_angles[0])
+            outside_plus = np.greater(angles[:, 0], self._acceptance_angles[1])
+            angles = np.logical_and(~outside_minus, ~outside_plus)
+        else:
+            angles[angles < self._acceptance_angles[0]] = 0.
+            angles[angles > self._acceptance_angles[1]] = 0.
         # Converting to 1 and zeros
         bool_arr = angles.astype(bool)
         # Acceptance arr
@@ -141,8 +147,6 @@ class Lucifer(object):
                     ]
                 for i in range(0, self._det_geom["det num"])
             ])
-            # More than half can never reach the detector
-            factors[factors > 1./2.] = 1./2.
             return (
                 np.array([
                     photon_counts * (factors[i] * accept_arr[i]).T
@@ -198,7 +202,6 @@ class Lucifer(object):
                     propagated = self._propagation(emission_photons, x_pos,
                                                    y_pos,
                                                    nm_range)
-                
                 # Integrating for each detector
                 flat_prop = propagated[0]
                 tmp_arriving.append(flat_prop)
@@ -226,8 +229,8 @@ class Lucifer(object):
                 config["calibration"]["attenuation curve"][1]
             )
             # The attenuation function
-            self._att_func = interp1d(
-                self._wave_length, self._attenuation, kind='quadratic'
+            self._att_func = UnivariateSpline(
+                self._wave_length, self._attenuation, k=1, s=0
             )
             tmp_arriving = []
             wavelengths_of_interest = np.array(list(
@@ -241,19 +244,17 @@ class Lucifer(object):
             photon_counts = photon_counts.T
             for counts in photon_counts:
                 pop = config["calibration"]["pos_arr"]
-                propagated = np.array([
-                        np.sum(self._propagation(counts, np.array([pop[0]]),
-                            np.array([pop[1]]), wavelengths_of_interest),
-                            axis=1)])
+                propagated = np.sum(self._propagation(
+                    counts, np.array([pop[0]]),
+                    np.array([pop[1]]), wavelengths_of_interest), axis=1)
                 # Integrating for each detector
-                flat_prop = propagated[0]
+                flat_prop = propagated
                 tmp_arriving.append(flat_prop)
             arriving = np.array(tmp_arriving)
             _log.debug("Finished the attenuation calculation")
             end = time()
             _log.info("Propagation simulation took %f seconds" % (end - start))
             return arriving
-
         else:
             ValueError(
                 ("Unrecognized scenario class! The set class is %s" +
