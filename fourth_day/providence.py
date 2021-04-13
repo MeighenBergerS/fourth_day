@@ -38,9 +38,10 @@ class Providence(object):
                 ]
         )
         if config["scenario"]["class"] == "Calibration":
-            self._nm = wavelengths_of_interest = np.array(list(
+            self._nm = np.array(list(
                 config["calibration"]["light curve"].keys()
             ))
+            self._nm = np.sort(self._nm)
         else:
             self._nm = config['advanced']['nm range']
         if detection_type == "Flat":
