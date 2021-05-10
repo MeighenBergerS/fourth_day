@@ -135,12 +135,14 @@ class Lucifer(object):
         if config["scenario"]["class"] == "Calibration":
             attenuation_factor = tmp_atten
         else:
-            attenuation_factor = tmp_atten[0]
+            attenuation_factor = tmp_atten
         #  Beer-Lambdert law
         # No emission
         if len(pos_x) < 1:
             return np.zeros((1, self._det_geom["det num"], len(wavelengths)))
         else:
+            print(attenuation_factor)
+            print(self._det_geom["det num"])
             factors = np.array([[
                     np.exp(-paths[i] * atten) / (4. * np.pi * paths[i]**2.)
                     for atten in attenuation_factor
