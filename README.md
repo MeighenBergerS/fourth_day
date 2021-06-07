@@ -14,6 +14,11 @@ It calculates the light emissions and progates it to a detector.
 The detector response and properties can be (rudementarily) modelled
 using this code as well.
 
+## Documentation
+
+The package provides automatically generated documentation under
+[Documentation](https://meighenbergers.github.io/fourth_day/).
+
 ## Emission PDFs
 
 The emission pdfs are constructed from data taken from
