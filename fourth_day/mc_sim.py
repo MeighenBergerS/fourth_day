@@ -1,12 +1,9 @@
 # -*- coding: utf-8 -*-
-"""
-Name: mc_sim.py
-Authors: Stephan Meighen-Berger
-Runs a monte-carlo (random walk) simulation
-for the organism interactions.
-"""
+# Name: mc_sim.py
+# Authors: Stephan Meighen-Berger
+# Runs a monte-carlo (random walk) simulation
+# for the organism interactions.
 
-"Imports"
 import pandas as pd
 import numpy as np
 from time import time

@@ -1,9 +1,7 @@
-"""
-Name: vtu_npy_handlers.py
-Authors: Golo Wimmer
-Converts the firedrake vtu output into usable npy format for
-the current calculations.
-"""
+# Name: vtu_npy_handlers.py
+# Authors: Golo Wimmer
+# Converts the firedrake vtu output into usable npy format for
+# the current calculations.
 
 from os import path, mkdir
 import numpy as np

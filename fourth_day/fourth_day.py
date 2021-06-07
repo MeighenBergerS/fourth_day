@@ -1,39 +1,11 @@
 # -*- coding: utf-8 -*-
-"""
-Name: fourth_day.py
-Authors: Stephan Meighen-Berger
-Main interface to the fourth_day module.
-This package calculates the light yields and emission specta
-of organisms in the deep sea using a combination of modelling
-and data obtained by deep sea Cherenkov telescopes. Multiple
-calculation routines are provided.
-Notes:
-    - Multiple distinct types (Phyla pl., Phylum sg.)
-        - Domain: Bacteria
-            -Phylum:
-                Dinoflagellata
-        - Chordate:
-            During some period of their life cycle, chordates
-            possess a notochord, a dorsal nerve cord, pharyngeal slits,
-            an endostyle, and a post-anal tail:
-                Subphyla:
-                    -Vertebrate:
-                        E.g. fish
-                    -Tunicata:
-                        E.g. sea squirts (invertibrate filter feeders)
-                    -Cephalochordata
-                        E.g. lancelets (fish like filter feeders)
-        - Arthropod:
-            Subphyla:
-                -Crustacea:
-                    E.g. Crabs, Copepods, Krill, Decapods
-        - Cnidaria:
-            Subphyla:
-                -Medusozoa:
-                    E.g. Jellyfish
-"""
+# Name: fourth_day.py
+# Authors: Stephan Meighen-Berger
+# Main interface to the fourth_day module. This package calculates the light yields and emission specta
+# of organisms in the deep sea using a combination of modelling and data obtained by deep sea Cherenkov telescopes. Multiple
+# calculation routines are provided.
 
-"Imports"
+# Imports
 # Native modules
 import logging
 import sys
@@ -62,22 +34,28 @@ class Fourth_Day(object):
     Interace to the FD package. This class
     stores all methods required to run the simulation
     of the bioluminescence
-    Parameters:
-        -dic config:
-            Configuration dictionary for the simulation
-    Returns:
-        -None
+    Parameters
+    ----------
+    config : dic
+        Configuration dictionary for the simulation
+    
+    Returns
+    -------
+    None
     """
     def __init__(self, userconfig=None):
         """
         function: __init__
         Initializes the class FD.
         Here all run parameters are set.
-        Parameters:
-            -dic config:
-                Configuration dictionary for the simulation
-        Returns:
-            -None
+        Parameters
+        ----------
+        config : dic
+            Configuration dictionary for the simulation
+        
+        Returns
+        -------
+        None
         """
         # Inputs
         if userconfig is not None:
@@ -292,7 +270,7 @@ class Fourth_Day(object):
         Returns
         -------
         statistics : dic
-                Stores the results from the simulation
+            Stores the results from the simulation
         """
         return self._statistics
 
@@ -310,7 +288,7 @@ class Fourth_Day(object):
             The time array
         """
         return (
-            self._t
+            self._t / config['water']['model']['time step']
         )
 
     @property

@@ -1,12 +1,9 @@
 # -*- coding: utf-8 -*-
-"""
-Name: fd_genesis.py
-Authors: Stephan Meighen-Berger, Li Ruohan
-Creats the light spectrum pdf.
-This is used to fit the data.
-"""
+# Name: fd_genesis.py
+# Authors: Stephan Meighen-Berger, Li Ruohan
+# Creats the light spectrum pdf.
+# This is used to fit the data.
 
-"Imports"
 import numpy as np
 from scipy.stats import gamma
 from scipy.signal import peak_widths

@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
-"""
-Name: functions.py
-Authors: Stephan Meighen-Berger
-Contains some helper functions
-"""
+# Name: functions.py
+# Authors: Stephan Meighen-Berger
+# Contains some helper functions
 
 import numpy as np
 import scipy.interpolate as si

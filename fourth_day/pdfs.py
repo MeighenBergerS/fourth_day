@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
-"""
-This module provided interfaces to PDFs and RNG
-"""
+# This module provided interfaces to PDFs and RNG
 
 import abc
 import logging
@@ -93,8 +91,8 @@ class PDF(object, metaclass=abc.ABCMeta):
 class ScipyPDF(PDF, metaclass=abc.ABCMeta):
     """ Interface class for the scipy pdfs
 
-    Parameter
-    ---------
+    Parameters
+    ----------
     None
 
     Returns

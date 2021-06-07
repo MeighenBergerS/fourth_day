@@ -1,11 +1,8 @@
 # -*- coding: utf-8 -*-
-"""
-Name: fd_adamah.py
-Authors: Stephan Meighen-Berger
-Constructs the geometry of the system
-"""
+# Name: fd_adamah.py
+# Authors: Stephan Meighen-Berger
+# Constructs the geometry of the system
 
-"Imports"
 from sys import exit
 import numpy as np
 from scipy import spatial
@@ -126,12 +123,15 @@ class Adamah(object):
         """
         function: _even_circle
         Evenly distributes points on a circle
-        Parameters:
-            -int samples:
-                Number of points
-        Returns:
-            -np.array points:
-                The point cloud
+        Parameters
+        ----------
+        samples : int
+            Number of points
+        
+        Returns
+        -------
+        points: np.array
+            The point cloud
         """
         t = np.linspace(0., np.pi*2., samples)
         pos_x = config['geometry']['exclusion']['x_pos']
@@ -154,6 +154,7 @@ class Adamah(object):
         None
 
         Returns
+        -------
         volume : float
             The volume of the world
         """
@@ -168,6 +169,7 @@ class Adamah(object):
         None
 
         Returns
+        -------
         hull : spatial.object
             The hull of the world
         """
@@ -182,6 +184,7 @@ class Adamah(object):
         None
 
         Returns
+        -------
         exclusion : spatial.object
             The hull of the exclusion zone
         """
@@ -196,6 +199,7 @@ class Adamah(object):
         None
 
         Returns
+        -------
         x : float
             Max x
         """
@@ -210,6 +214,7 @@ class Adamah(object):
         None
 
         Returns
+        -------
         y : float
             Max y
         """
@@ -224,6 +229,7 @@ class Adamah(object):
             Point to check
 
         Returns
+        -------
         bool
             Truth or not if inside
         """
@@ -241,6 +247,7 @@ class Adamah(object):
             Point to check
 
         Returns
+        -------
         bool
             Truth or not if inside
         """
@@ -258,6 +265,7 @@ class Adamah(object):
             Point to check
 
         Returns
+        -------
         bool
             Truth or not if inside
         """

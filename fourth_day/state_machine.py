@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
-"""
-Name: state_machine.py
-Authors: Stephan Meighen-Berger, Li Ruohan
-Constructs the state machine
-"""
+# Name: state_machine.py
+# Authors: Stephan Meighen-Berger, Li Ruohan
+# Constructs the state machine
 
 import numpy as np  # type: ignore
 import pandas as pd  # type: ignore
@@ -21,7 +19,8 @@ _log = logging.getLogger(__name__)
 class FourthDayStateMachine(object):
     """ The state of the system and the methods to update it
 
-    Parameters:
+    Parameters
+    ----------
     initial : pd.DataFrame
         The initial state
     life : Genesis object
@@ -64,7 +63,7 @@ class FourthDayStateMachine(object):
         self._step = config['advanced']['starting step']
         self._time_step = config['water']['model']['time step']
         self._injection_rate = (
-            config['scenario']["injection"]["rate"]
+            config['scenario']["injection"]["rate"] * self._time_step
         )
         # Producing the injection sample
         self._injection_sample()
@@ -116,7 +115,7 @@ class FourthDayStateMachine(object):
         # The water current at this step
         # TODO: Needs a more correct approach
         # Finding the closest integer
-        current_step = int(self._time_step * self._step)
+        current_step = int(self._step / self._time_step)
         self._vel_x, self._vel_y, _ = (
             self._current.velocities(current_pos +
                                      config["water"]["model"]["off set"],
@@ -128,9 +127,9 @@ class FourthDayStateMachine(object):
                                     current_step)
         ).flatten()
         # The time step
-        self._vel_x = self._vel_x * self._time_step
-        self._vel_y = self._vel_y * self._time_step
-        self._gradient = self._gradient * self._time_step
+        self._vel_x = self._vel_x
+        self._vel_y = self._vel_y
+        self._gradient = self._gradient
         # ---------------------------------------------------------------------
         # New positions
         new_position = self._update_position(current_pos)
@@ -593,4 +592,5 @@ class FourthDayStateMachine(object):
         # TODO: Normalize this
         res = config['organisms']['alpha'] * np.abs(gradient)
         res[res > 0.99] = 0.99
+        res[res < self._min_shear] = 0.
         return res

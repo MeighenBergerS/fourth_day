@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
-"""
-Name: providence.py
-Authors: Stephan Meighen-Berger
-Folds in the detection probability for the photons
-"""
+# Name: providence.py
+# Authors: Stephan Meighen-Berger
+# Folds in the detection probability for the photons
 
 import logging
 import numpy as np
@@ -32,6 +30,7 @@ class Providence(object):
         )
         detection_type = conf_dict.pop("acceptance")
         # The geometry
+        # Maybe redundant and the same as before
         self._det_geom = (
             config["geometry"]["detector properties"][
                 config["scenario"]["detector"]["type"]

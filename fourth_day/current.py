@@ -41,7 +41,7 @@ class Current(object):
                 len(os.listdir(self._save_string_vel)) - 2
             )
             if self._number_of_current_steps < (
-                config['scenario']['duration'] *
+                config['scenario']['duration'] /
                 config['water']['model']['time step']):
                 _log.debug("Duration longer than current simulations!" +
                            " Using them in a cyclic fashion")

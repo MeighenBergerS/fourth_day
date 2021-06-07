@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
-"""
-Name: lucifer.py
-Authors: Stephan Meighen-Berger, Li Ruohan
-Propagates the light to the detector position
-"""
+# Name: lucifer.py
+# Authors: Stephan Meighen-Berger, Li Ruohan
+# Propagates the light to the detector position
+
 import logging
 import pandas as pd
 import numpy as np
@@ -141,8 +140,6 @@ class Lucifer(object):
         if len(pos_x) < 1:
             return np.zeros((1, self._det_geom["det num"], len(wavelengths)))
         else:
-            print(attenuation_factor)
-            print(self._det_geom["det num"])
             factors = np.array([[
                     np.exp(-paths[i] * atten) / (4. * np.pi * paths[i]**2.)
                     for atten in attenuation_factor

@@ -1,10 +1,8 @@
-"""
-Name: fd_config.py
-Authors: Stephan Meighen-Berger
-Config file for the fourth_day package.
-"""
+# -*- coding: utf-8 -*-
+# Name: fd_config.py
+# Authors: Stephan Meighen-Berger
+# Config file for the fourth_day package.
 
-"Imports"
 import logging
 import numpy as np
 from typing import Dict, Any
@@ -59,13 +57,14 @@ _baseconfig = {
             "rate": 10,
             "y range": [5., 15.],
         },
+        # If an exclusion zone should be used
         "exclusion": True,
         # Bounce back
         "bounce back": 0.001,
         # Encounters on / off
         "encounters": False,
         # Switch for organisms movement
-        "organism movement": True,
+        "organism movement": False,
         # The detector
         "detector" : {
             "switch": True,
@@ -338,7 +337,7 @@ _baseconfig = {
         # Fraction of max energy regenerated per second
         'regeneration': 1e-4,
         # Minimal shear stress
-        'minimal shear stress': 0.1,
+        'minimal shear stress': 0.05,
         # Proportionality factor for shear
         'alpha': 1.,
     },
@@ -396,7 +395,8 @@ _baseconfig = {
 
 class ConfigClass(dict):
     """ The configuration class. This is used
-    by the package for all parameter settings
+    by the package for all parameter settings. If something goes wrong
+    its usually here.
 
     Parameters
     ----------
