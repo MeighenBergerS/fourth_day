@@ -2,10 +2,9 @@
 
 Authors:
 
-1. Martina Karl
-2. Stephan Meighen-Berger
-3. Li Ruohan
-4. Golo Wimmer
+1. Stephan Meighen-Berger
+2. Li Ruohan
+3. Golo Wimmer
 
 ## Introduction
 
@@ -14,10 +13,23 @@ It calculates the light emissions and progates it to a detector.
 The detector response and properties can be (rudementarily) modelled
 using this code as well.
 
+## Citation
+
+Please cite our work [arXiv:2103.03816](https://arxiv.org/abs/2103.03816).
+
 ## Documentation
 
 The package provides automatically generated documentation under
 [Documentation](https://meighenbergers.github.io/fourth_day/).
+
+## Installation
+
+To install please clone the repository or download the latest release. Then
+follow the instructions given in INSTALL.txt.
+Note this should install all necessary components except for the beta
+developments and the Navier_Stokes_code.
+Additionally, basic water current simulations can be downloaded under
+[https://doi.org/10.7910/DVN/CNMW2S].
 
 ## Emission PDFs
 
@@ -41,27 +53,61 @@ fd = Fourth_Day()
 fd.sim()
 # The time array
 t = fd.time
-# The total emission
+# The produced light
 data = np.array([np.sum(fd.statistics[i].loc[:, 'photons'].values)
                  for i in range(len(fd.t))])
+# Measured light
+measured_detector = np.array([fd.measured["Detector 1"].values])
 ```
 
-This generates results of the form
+The last line produces results of the form
 
 ![Example results](images/MC_Example.png)
 
+Depending on the detector specifications.
+In general, organism properties and emissions are stored in fd.statistics,
+while the expected measured time-series by the detectors is stored in
+fd.measured.
 For a more in-depth example, use the python notebook example_basics.ipynb in
-the examples folder. There you can find additional examples covering most
-use cases for the package.
+the examples folder. There you can find additional examples covering most use
+cases for the package.
+
+## Calibration mode
+
+Besides the typical bioluminescence simulation, the code also offers a
+calibration mode. In this mode, standardized flashers (as defined by the user)
+are modeled and placed. The resulting measurements (time series) can then be
+extracted, allowing for quick and dirty calibration measurements in water.
+By defining possible errors in the different aspects of the measurement
+realistic data sets for calibration analysis can be generated. An example
+of such a simulation run is shown here
+
+![Calibration Measurement](images/Calibration_Pop.png)
 
 ## Code structure
 
 The code is structed as
 ![Sketch of the model](images/Structure.png)
 
-## Code profile
+## BETA
 
-The most expensive part is the encounter simulation.
-For high depths this can be turned off. Generated using
-<https://github.com/pwaller/pyprof2calltree/>
-![Sketch of the model](images/CodeProfile.png)
+All projects listed here are currently in devolpment. We provide in the hopes
+they may help future development or advanced users. The installation
+requirements are not designed to accomodate these new modules and the user
+needs to install them themselves.
+
+### Probabilistic Modeling
+
+Here examples are given how to construct emission pdfs (depending on location).
+These can in turn be used to construct simplified models for bioluminescence
+and when analyzing data.
+
+### VEGAN
+
+A rudimentary GAN network, testing the waters if data generation can be
+replaced by using neural networks. One thing that needs improvement is the
+measure. We suggest introducing a Wasserstein Loss function. Here we give
+an example of the output of the NN after a few generations (black), compared
+to an example set from the MC sim (red).
+
+![Vegan Example](images/vegan_example.png)

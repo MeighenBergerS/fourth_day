@@ -1,6 +1,6 @@
 # Note that this install the requirements for the fourth day module, not the navier stokes code!
 # For the navier stokes code, firedrake is required: https://firedrakeproject.org/
-# optional: it is recommended to install contagion into a virtual python environment
+# optional: it is recommended to install fourth day into a virtual python environment
 virtualenv -p python3 venv3
 source venv3/bin/activate
 
