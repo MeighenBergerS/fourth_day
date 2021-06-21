@@ -54,8 +54,8 @@ _baseconfig = {
         # The injection is treated as a binomial distro with p=0.5 for
         # rate >= 1, else rate = p
         "injection": {
-            "rate": 10,
-            "y range": [5., 15.],
+            "rate": 1e-1,
+            "y range": [0., 15.],
         },
         # If an exclusion zone should be used
         "exclusion": True,
@@ -132,7 +132,7 @@ _baseconfig = {
                     [0.,0.1,0.,-0.1,  0.12,0.12,-0.12,-0.12, 0.04,0.2,-0.04,-0.2]
                 ) / 2.,
                 "angle offset": 90.,  # In which direction the detector points
-                "opening angle": 180.,  # 25., # from dark box rotation test result: +-25 degrees
+                "opening angle": 25.,  # 25., # from dark box rotation test result: +-25 degrees
                 "quantum efficiency": "Flat",  # whether flat or function
                 "wavelength acceptance": np.array([ #position number,center wavelength,quantum efficiency (if flat)
                     [395., 405.,0.26], #0,400

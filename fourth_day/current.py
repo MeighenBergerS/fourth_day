@@ -2,7 +2,9 @@
 """
 Name: state_machine.py
 Authors: Stephan Meighen-Berger, Golo Wimmer
-Handles current construction or loading
+Handles current construction or loading.
+Custom water current handler using numpy arrays was written
+by Golo Wimmer
 """
 import logging
 import os
@@ -32,7 +34,7 @@ class Current(object):
         if model_name == 'custom':
             _log.debug('Loading custom model: ' + model_name)
             self._save_string_vel = (
-                conf_dict['directory'] + 'npy_values_vel/'
+                conf_dict['directory'] + 'npy_values_wind/'
             )
             self._save_string_grad = (
                 conf_dict['directory'] + 'npy_values_grad/'

@@ -63,13 +63,21 @@ class FourthDayStateMachine(object):
         self._step = config['advanced']['starting step']
         self._time_step = config['water']['model']['time step']
         self._injection_rate = (
-            config['scenario']["injection"]["rate"] * self._time_step
+            config['scenario']["injection"]["rate"]
         )
         # Producing the injection sample
         self._injection_sample()
         _log.debug("Injecting at %d steps" %np.count_nonzero(self._to_inject))
         _log.debug(
             "Total number of organisms injected %d " %np.sum(self._to_inject)
+        )
+        _log.debug(
+            "The density of organisms (in the injection area)" + 
+            " will be approximately: %.1e organisms / m^3." % (
+                self._injection_rate / (
+                    config["scenario"]["injection"]['y range'][1] - 
+                    config["scenario"]["injection"]['y range'][0]) 
+            )
         )
 
     def update(self):
@@ -436,7 +444,7 @@ class FourthDayStateMachine(object):
         if config['scenario']['organism movement']:
             new_velocities = ((
                 self._life.Movement["vel"].rvs(count) / 1e3  # Given in mm/s
-            ) * self._time_step)
+            ))
             # New angles
             new_angles = (
                 np.pi * self._rstate.uniform(0., 2., size=count)
@@ -458,23 +466,19 @@ class FourthDayStateMachine(object):
         -------
         None
         """
-        if self._injection_rate < 1:
-            self._to_inject = self._rstate.binomial(
-                1, self._injection_rate,
-                size=config['scenario']['duration']
-            )
-        else:
-            rate = self._injection_rate * 2.
-            self._to_inject = self._rstate.binomial(
-                int(rate), 0.5,
-                size=config['scenario']['duration']
-            )
-            remainder = rate - int(rate)
-            if remainder > 0.:
-                self._to_inject += self._rstate.binomial(
-                    1, remainder,
-                    size=config['scenario']['duration']
-                )
+        # The numbe of organisms injected
+        tmp_to_inject = int(
+            self._injection_rate *
+            config["scenario"]["duration"])
+        # At which time steps they should be injected
+        tmp_injection_points = self._rstate.randint(
+            0, config["scenario"]["duration"],
+            tmp_to_inject
+        )
+        # Constructing the injection array
+        self._to_inject = np.zeros(config["scenario"]["duration"], dtype=int)
+        for id_inj in tmp_injection_points:
+            self._to_inject[id_inj] += 1
 
     def _update_injection(self, i: int):
         """ Injects new organisms into the system
