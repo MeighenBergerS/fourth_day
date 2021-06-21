@@ -29,7 +29,11 @@ follow the instructions given in INSTALL.txt.
 Note this should install all necessary components except for the beta
 developments and the Navier_Stokes_code.
 Additionally, basic water current simulations can be downloaded under
-[https://doi.org/10.7910/DVN/CNMW2S].
+[https://doi.org/10.7910/DVN/CNMW2S]. The location of these files needs to be
+specified by setting
+```python
+config['water']['model']['directory'] = "../PATH/TO/FOLDER/"
+```
 
 ## Emission PDFs
 
