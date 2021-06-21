@@ -6,23 +6,47 @@ Authors:
 2. Li Ruohan
 3. Golo Wimmer
 
-## Introduction
+## Table of contents
+
+1. [Introduction](#introduction)
+
+2. [Citation](#citation)
+
+3. [Documentation](#documentation)
+
+4. [Installation](#installation)
+
+5. [Emission PDFs](#pdfs)
+
+6. [Code Example](#example)
+
+7. [Calibration mode](#calibration)
+
+8. [Code structure](#structure)
+
+9. [BETA](#beta)
+
+    1. [Probabilistic Modeling](#probability)
+
+    2. [VEGAN](#vegan)
+
+## Introduction <a name="introduction"></a>
 
 A python package to simulate the bioluminescence in the deep sea.
 It calculates the light emissions and progates it to a detector.
 The detector response and properties can be (rudementarily) modelled
 using this code as well.
 
-## Citation
+## Citation <a name="citation"></a>
 
 Please cite our work [arXiv:2103.03816](https://arxiv.org/abs/2103.03816).
 
-## Documentation
+## Documentation <a name="documentation"></a>
 
 The package provides automatically generated documentation under
 [Documentation](https://meighenbergers.github.io/fourth_day/).
 
-## Installation
+## Installation <a name="installation"></a>
 
 To install please clone the repository or download the latest release. Then
 follow the instructions given in INSTALL.txt.
@@ -35,7 +59,7 @@ specified by setting
 config['water']['model']['directory'] = "../PATH/TO/FOLDER/"
 ```
 
-## Emission PDFs
+## Emission PDFs <a name="pdfs"></a>
 
 The emission pdfs are constructed from data taken from
 *Latz, M.I., Frank, T.M. & Case, J.F.
@@ -44,7 +68,7 @@ Marine Biology 98, 441-446 (1988) <https://doi.org/10.1007/BF00391120.>*
 
 ![Unweighted PDFs](images/Spectrum_Example.png)
 
-## Code Example
+## Code Example <a name="example"></a>
 
 A basic running example to interface with the package
 
@@ -76,7 +100,7 @@ For a more in-depth example, use the python notebook example_basics.ipynb in
 the examples folder. There you can find additional examples covering most use
 cases for the package.
 
-## Calibration mode
+## Calibration mode <a name="calibration"></a>
 
 Besides the typical bioluminescence simulation, the code also offers a
 calibration mode. In this mode, standardized flashers (as defined by the user)
@@ -88,25 +112,25 @@ of such a simulation run is shown here
 
 ![Calibration Measurement](images/Calibration_Pop.png)
 
-## Code structure
+## Code structure <a name="structure"></a>
 
 The code is structed as
 ![Sketch of the model](images/Structure.png)
 
-## BETA
+## BETA <a name="beta"></a>
 
 All projects listed here are currently in devolpment. We provide in the hopes
 they may help future development or advanced users. The installation
 requirements are not designed to accomodate these new modules and the user
 needs to install them themselves.
 
-### Probabilistic Modeling
+### Probabilistic Modeling <a name="probability"></a>
 
 Here examples are given how to construct emission pdfs (depending on location).
 These can in turn be used to construct simplified models for bioluminescence
 and when analyzing data.
 
-### VEGAN
+### VEGAN <a name="vegan"></a>
 
 A rudimentary GAN network, testing the waters if data generation can be
 replaced by using neural networks. One thing that needs improvement is the
