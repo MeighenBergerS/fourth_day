@@ -2,9 +2,9 @@
 
 Authors:
 
-1. Stephan Meighen-Berger
-2. Li Ruohan
-3. Golo Wimmer
+1. Stephan Meighen-Berger, developed the Fourth Day Code
+2. Li Ruohan, implemented the detector simulation
+3. Golo Wimmer, developed the Navier-Stokes code
 
 ## Table of contents
 
