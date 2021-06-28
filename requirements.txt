@@ -1,6 +1,5 @@
 jupyter
 pandas
-yaml
 pyyaml
 nbstripout
 matplotlib

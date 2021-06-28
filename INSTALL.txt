@@ -1,18 +1,27 @@
+# -----------------------------------------------------------------------------------------------------
+# Requirements
+# -----------------------------------------------------------------------------------------------------
+# Basic installation
 # Note that this install the requirements for the fourth day module, not the navier stokes code!
 # For the navier stokes code, firedrake is required: https://firedrakeproject.org/
 # optional: it is recommended to install fourth day into a virtual python environment
-virtualenv -p python3 venv3
-source venv3/bin/activate
+# optional: for ease of use we suggest using conda
+conda create -name fd
+conda activate fd
 
 # install requirements
-pip install -r requirements.txt
+conda install --file requirements.txt
 
-# optional for devs: setup nbstripout for nice interaction of jupyter and git
-# removes ever changing notebook output for git diff and commit
-# keeps cell output if cell metadata contains '"keep_output": true'
-# configurable via: View -> Cell Toolbar -> Edit Metadata
-nbstripout --install
-git config --local filter.nbstripout.extrakeys 'metadata.celltoolbar metadata.language_info.version'
+# Note that if using pip, please make sure the jupyter kernel is set correctly.
+# Otherwise the steps should be similar
 
-# start jupyter notebook
-jupyter-notebook --port 8888
+# -----------------------------------------------------------------------------------------------------
+# Water current models
+# For pre-simulated water current files please download from https://doi.org/10.7910/DVN/CNMW2S.
+# The location of these files needs to be config['water']['model']['directory'] = "../PATH/TO/FOLDER/"
+# Otherwise one needs to run the navier-stokes code using firedrake.
+
+# -----------------------------------------------------------------------------------------------------
+# Optional
+# -----------------------------------------------------------------------------------------------------
+# The beta aspects require some additional packages
