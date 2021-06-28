@@ -1,6 +1,7 @@
 jupyter
 pandas
 yaml
+pyyaml
 nbstripout
 matplotlib
 numpy

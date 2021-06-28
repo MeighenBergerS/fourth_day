@@ -6,3 +6,5 @@ fd.log
 .ipynb_checkpoints
 
 venv3
+
+*.json
