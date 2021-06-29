@@ -18,6 +18,8 @@ conda install --file requirements.txt
 # -----------------------------------------------------------------------------------------------------
 # Water current models
 # For pre-simulated water current files please download from https://doi.org/10.7910/DVN/CNMW2S.
+# Check example_dataverse_downloader on how to download these datasets using python and pyDataverse
+# Note pyDataverse needs to be installed using pip install pyDataverse
 # The location of these files needs to be config['water']['model']['directory'] = "../PATH/TO/FOLDER/"
 # Otherwise one needs to run the navier-stokes code using firedrake.
 

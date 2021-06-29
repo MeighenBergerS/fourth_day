@@ -58,6 +58,8 @@ specified by setting
 ```python
 config['water']['model']['directory'] = "../PATH/TO/FOLDER/"
 ```
+example_dataverse_downloader.ipynb shows an example how to download the dataset using the
+[pyDataverse](https://github.com/gdcc/pyDataverse) package.
 
 ## Emission PDFs <a name="pdfs"></a>
 
