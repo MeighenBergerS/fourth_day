@@ -216,8 +216,6 @@ class FourthDayStateMachine(object):
         successful_burst_shear = np.logical_and(new_emitters_shear, burst_bool)
         # ---------------------------------------------------------------------
         # The photons
-        # TODO: Add gamma distribution and time dependence here
-        # encounter_photons = (Max_Emissions * Gamma(t))
         if self._step == 0:
             encounter_photons = (
             self._population.loc[successful_burst_enc,
@@ -244,6 +242,8 @@ class FourthDayStateMachine(object):
             self._population.loc[successful_burst_shear,
                                  'emission fraction'].values
         )
+        # Removing zeros
+        shear_photons[shear_photons < 0.] = 0.
         # ---------------------------------------------------------------------
         # New energy
         successful_burst = np.logical_or(successful_burst_enc,
