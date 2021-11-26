@@ -1,0 +1,12 @@
+Agalma okeni Eschscholtz, 447, 90, H, Deep, 550, 5, 4, 1e10
+Apolemia sp. 1, 445, 82, H, Deep, 1500, 5, 4, 1e10
+Apolemia sp. 2, 442, 111, H, Deep, 1500, 5, 4, 1e10
+Bargmannia sp., 443, 92, B, Deep, 512, 5, 4, 1e10
+Bargmannia sp. nov.a, 480, 100, P, Deep, 1350, 5, 4, 1e10
+Erenna sp. nov., 455, 109, P, Deep, 1150, 5, 4, 1e10
+Frillagalma vityazi Daniel, 455, 91, B, Deep, 363, 5, 4, 1e10
+Halistemma amphytridis (Lesueur and Petit), 451, 88, B, Deep, 894, 5, 4, 1e10
+Halistemma sp., 446, 81, H, Deep, 1500, 5, 4, 1e10
+Halistemma sp. nov.a, 460, 83, B, Deep, 787, 5, 4, 1e10
+Nanomia bijuga (delle Chiaje), 457, 87, S, Deep, 9, 5, 4, 1e10
+Nanomia cara Agassiz, 454, 92, G, Deep, 9, 5, 4, 1e10

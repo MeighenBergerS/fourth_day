@@ -47,6 +47,8 @@ class FourthDayStateMachine(object):
         possible_sds: np.array,
         possible_pulse_size: np.array
     ):
+        if not config["general"]["enable logging"]:
+            _log.disabled = True
         self._rstate = config["runtime"]['random state']
         self._population = initial
         self._life = life

@@ -5,12 +5,10 @@
 # This is used to fit the data.
 
 import numpy as np
-from scipy.stats import gamma
-from scipy.signal import peak_widths
-from scipy.optimize import root
 import csv
 import logging
 import pandas as pd
+import pkgutil
 from .config import config
 from .pdfs import construct_pdf
 
@@ -46,6 +44,8 @@ class Genesis(object):
         ValueError
             Unknown pdf distribution
         """
+        if not config["general"]["enable logging"]:
+            _log.disabled = True
         # Random state
         self._rstate = config["runtime"]['random state']
         # Constructs the organisms
@@ -139,6 +139,7 @@ class Genesis(object):
         # Fixing 0
         remain_times[remain_times == 0.] = 1.
         # These don't have to be gamma functions
+        # TODO: Change name here, since it doesn't have to be a gamma function
         gamma_functions = np.array([
             construct_pdf({
                 "class": config['organisms']['pdf pulse']['pdf'],
@@ -184,21 +185,58 @@ class Genesis(object):
             if len(config['organisms']['phyla light'][phyla]) == 0:
                 _log.debug('No classes defined')
                 _log.debug('Loading and parsing %s.txt' %phyla)
-                with open('../data/life/light/%s.txt' %phyla, 'r') as txtfile:
+                tmp_raw = pkgutil.get_data(
+                        __name__, '/data/life/light/%s.txt' %phyla
+                )
+                if tmp_raw is None:
+                    raise ValueError("Phylia data file not found!")
+                tmp = list(
+                    csv.reader(tmp_raw.decode('utf-8').splitlines(),
+                               delimiter=',')
+                )
+                # Converting to numpy array
+                tmp = np.asarray(tmp)
+                # Relevant values
+                # [0] is the name
+                # [1] is the mean emission line in nm
+                # [2] is the sd of the gamma emission profile (wavelength)
+                # [5] is the depth at which it appears
+                # [6] is the mean emission duration
+                # [7] is the sd of the emission duration
+                # [8] is the photon yield
+                life[phyla] = np.array(
+                    [
+                        tmp[:, 0].astype(str),
+                        tmp[:, 1].astype(np.float32),
+                        tmp[:, 2].astype(np.float32),
+                        tmp[:, 5].astype(np.float32),
+                        tmp[:, 6].astype(np.float32),
+                        tmp[:, 7].astype(np.float32),
+                        tmp[:, 8].astype(np.float32)
+                    ],
+                    dtype=object
+                )
+            else:
+                _log.debug('Classes defined')
+                for class_name in config['organisms']['phyla light'][phyla]:
+                    _log.info(
+                        'Loading and parsing %s.txt'
+                        %(phyla + '_' + class_name)
+                    )
+                    tmp_raw = pkgutil.get_data(
+                        __name__, '/data/life/light/%s.txt' %
+                        (phyla + '_' + class_name)
+                    )
+                    if tmp_raw is None:
+                        raise ValueError("Phylia data file not found!")
                     tmp = list(
-                        csv.reader(txtfile, delimiter=',')
+                        csv.reader(tmp_raw.decode('utf-8').splitlines(),
+                                   delimiter=',')
                     )
                     # Converting to numpy array
                     tmp = np.asarray(tmp)
                     # Relevant values
-                    # [0] is the name
-                    # [1] is the mean emission line in nm
-                    # [2] is the sd of the gamma emission profile (wavelength)
-                    # [5] is the depth at which it appears
-                    # [6] is the mean emission duration
-                    # [7] is the sd of the emission duration
-                    # [8] is the photon yield
-                    life[phyla] = np.array(
+                    life[phyla + '_' + class_name] = np.array(
                         [
                             tmp[:, 0].astype(str),
                             tmp[:, 1].astype(np.float32),
@@ -210,33 +248,6 @@ class Genesis(object):
                         ],
                         dtype=object
                     )
-            else:
-                _log.debug('Classes defined')
-                for class_name in config['organisms']['phyla light'][phyla]:
-                    _log.info(
-                        'Loading and parsing %s.txt'
-                        %(phyla + '_' + class_name)
-                    )
-                    with open('../data/life/light/%s.txt'
-                                %(phyla + '_' + class_name), 'r') as txtfile:
-                        tmp = list(
-                            csv.reader(txtfile, delimiter=',')
-                        )
-                        # Converting to numpy array
-                        tmp = np.asarray(tmp)
-                        # Relevant values
-                        life[phyla + '_' + class_name] = np.array(
-                            [
-                                tmp[:, 0].astype(str),
-                                tmp[:, 1].astype(np.float32),
-                                tmp[:, 2].astype(np.float32),
-                                tmp[:, 5].astype(np.float32),
-                                tmp[:, 6].astype(np.float32),
-                                tmp[:, 7].astype(np.float32),
-                                tmp[:, 8].astype(np.float32)
-                            ],
-                            dtype=object
-                        )
         return life
 
     def _flood(self, life: dict) -> dict:
@@ -427,11 +438,15 @@ class Genesis(object):
         for phyla in config['organisms']['phyla move']:
             _log.debug('Loading phyla: %s' %phyla)
             _log.debug('Loading and parsing %s.txt' %phyla)
-            with open('../data/life/movement/%s.txt' %phyla, 'r') as txtfile:
-                tmp = list(
-                    csv.reader(txtfile, delimiter=',')
-                )
-                # Converting to numpy array
+            tmp_raw = pkgutil.get_data(
+                __name__, '/data/life/movement/%s.txt' %phyla
+            )
+            if tmp_raw is None:
+                raise ValueError("Phylia data file not found!")
+            tmp = list(
+                csv.reader(tmp_raw.decode('utf-8').splitlines(), delimiter=',')
+            )
+            # Converting to numpy array
             tmp = np.asarray(tmp)
             move[phyla] = np.array(
                     [

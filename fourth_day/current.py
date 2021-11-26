@@ -8,9 +8,12 @@ by Golo Wimmer
 """
 import logging
 import os
+import io
 import numpy as np
 from scipy.interpolate import LinearNDInterpolator as LinNDInterp
 from scipy.spatial import Delaunay
+import pkgutil
+from pathlib import Path
 from .config import config
 
 _log = logging.getLogger(__name__)
@@ -29,19 +32,31 @@ class Current(object):
         Unsupported water current model
     """
     def __init__(self):
+        if not config["general"]["enable logging"]:
+            _log.disabled = True
+        module_directory = os.path.abspath(os.path.dirname(__file__))
         conf_dict = dict(config['water']['model'])
         model_name = conf_dict.pop("name")
         if model_name == 'custom':
             _log.debug('Loading custom model: ' + model_name)
-            self._save_string_vel = (
+            self._save_string_vel = Path(
+                module_directory + '/data/current/' +
                 conf_dict['directory'] + 'npy_values_wind/'
             )
-            self._save_string_grad = (
+            self._save_string_grad = Path(
+                module_directory + '/data/current/' +
                 conf_dict['directory'] + 'npy_values_grad/'
             )
-            self._number_of_current_steps = (
-                len(os.listdir(self._save_string_vel)) - 2
-            )
+            try:
+                self._number_of_current_steps = (
+                    len(os.listdir(self._save_string_vel)) - 2
+                )
+            except FileNotFoundError:
+                print(
+                    "Water current data not found! Please download the data" +
+                    "using fourth_day.download() or store the data in the " +
+                    "/data/current/ + config location.")
+                raise FileNotFoundError("Water current data not found!")
             if self._number_of_current_steps < (
                 config['scenario']['duration'] /
                 config['water']['model']['time step']):
@@ -408,7 +423,15 @@ class Current_Loader(object):
         by internal directory name.
         """
         # Load coordinate array
-        self._xy_coords = np.load('{0}xy_coords.npy'.format(self._save_string))
+        tmp_raw = pkgutil.get_data(
+                __name__, '{0}/xy_coords.npy'.format(self._save_string)
+        )
+        if tmp_raw is None:
+            print("Water current data not found! Please download the data" +
+                  "using fourth_day.download() or store the data in the " +
+                  "config location.")
+            raise ValueError("Current data file not found!")
+        self._xy_coords = np.load(io.BytesIO(tmp_raw))
         # Build interpolator based on a triangulation given the coordinates
         self._tri = Delaunay(self._xy_coords.transpose())
 
@@ -430,9 +453,17 @@ class Current_Loader(object):
             )
         else:
             i_step = out_nr + config['advanced']['starting step']
+        tmp_raw = pkgutil.get_data(
+                __name__, '{0}/data_{1}.npy'.format(self._save_string,
+                                                    i_step)
+        )
+        if tmp_raw is None:
+            print("Water current data not found! Please download the data" +
+                  "using fourth_day.download() or store the data in the " +
+                  "config location.")
+            raise ValueError("Current data file not found!")
         if isinstance(out_nr, int):
-            data = np.load('{0}/data_{1}.npy'.format(self._save_string,
-                                                     i_step))
+            data = np.load(io.BytesIO(tmp_raw))
         else:
             raise AttributeError('When loading data from numpy array, '\
                                  'out_nr must be an integer')

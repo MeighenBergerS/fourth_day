@@ -1,0 +1,6 @@
+Pleuromamma gracilis, 13.4, 0.9, 31.5
+Pleuromamma abdominalis, 2.3, 0.7, 28.1
+Pleuromamma xiphias, 14.7, 1.92, 42.9
+Lucicutia spp., 2.9, 1.02, 6.2
+Chonchoecia spp., 5.1, 0.7, 15.9
+All spp./stages, 5.1, 2.16, 9.4

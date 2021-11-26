@@ -14,6 +14,10 @@ import yaml
 from time import time
 import pandas as pd
 import pickle
+import os
+from tqdm import tqdm
+from pyDataverse.api import NativeApi, DataAccessApi
+from pathlib import Path
 # -----------------------------------------
 # Package modules
 from .config import config
@@ -76,29 +80,32 @@ class Fourth_Day(object):
 
         # Logger
         # creating file handler with debug messages
-        fh = logging.FileHandler(
-            config["general"]["log file handler"], mode="w"
-        )
-        fh.setLevel(logging.DEBUG)
-        # console logger with a higher log level
-        ch = logging.StreamHandler(sys.stdout)
-        ch.setLevel(config["general"]["debug level"])
+        if config["general"]["enable logging"]:
+            fh = logging.FileHandler(
+                config["general"]["log file handler"], mode="w"
+            )
+            fh.setLevel(logging.DEBUG)
+            # console logger with a higher log level
+            ch = logging.StreamHandler(sys.stdout)
+            ch.setLevel(config["general"]["debug level"])
 
-        # Logging formatter
-        fmt = "%(levelname)s: %(message)s"
-        fmt_with_name = "[%(name)s] " + fmt
-        formatter_with_name = logging.Formatter(fmt=fmt_with_name)
-        fh.setFormatter(formatter_with_name)
-        # add class name to ch only when debugging
-        if config["general"]["debug level"] == logging.DEBUG:
-            ch.setFormatter(formatter_with_name)
-        else:
-            formatter = logging.Formatter(fmt=fmt)
-            ch.setFormatter(formatter)
+            # Logging formatter
+            fmt = "%(levelname)s: %(message)s"
+            fmt_with_name = "[%(name)s] " + fmt
+            formatter_with_name = logging.Formatter(fmt=fmt_with_name)
+            fh.setFormatter(formatter_with_name)
+            # add class name to ch only when debugging
+            if config["general"]["debug level"] == logging.DEBUG:
+                ch.setFormatter(formatter_with_name)
+            else:
+                formatter = logging.Formatter(fmt=fmt)
+                ch.setFormatter(formatter)
 
-        _log.addHandler(fh)
-        _log.addHandler(ch)
-        _log.setLevel(logging.DEBUG)
+            _log.addHandler(fh)
+            _log.addHandler(ch)
+            _log.setLevel(logging.DEBUG)
+        if not config["general"]["enable logging"]:
+            _log.disabled = True
         _log.info('---------------------------------------------------')
         _log.info('---------------------------------------------------')
         _log.info('Welcome to FD!')
@@ -120,7 +127,16 @@ class Fourth_Day(object):
         _log.info('---------------------------------------------------')
         _log.info('Constructing the current')
         #  The current
-        self._current = Current()
+        try:
+            self._current = Current()
+        except FileNotFoundError:
+            _log.error('Water current not constructed!')
+            _log.error('Need to download the missing files!')
+            _log.error("Please use self.load_data()")
+            print('Water current not constructed!')
+            print('Need to download the missing files!')
+            print("Please use " + self.__class__.__name__ + ".load_data()")
+            pass
         # This needs to be called explicitely vor conversion of vtu files
         self._current_construction = vtu_npy_converter()
         _log.info('Finished the current')
@@ -159,17 +175,18 @@ class Fourth_Day(object):
                 np.arange(self._mc_run.iterations) *
                 config['water']['model']['time step']
             )
-            _log.info("Storing data for future use")
-            save_string = (
-                config["scenario"]["statistics storage"]["location"] +
-                config["scenario"]["statistics storage"]["name"]
-            )
-            _log.debug("Storing under " + save_string)
-            _log.debug("Storing statistics")
-            pickle.dump(self._statistics, open(save_string + ".pkl", "wb"))
-            _log.debug("Storing times")
-            pickle.dump(self._t, open(save_string + "_t.pkl", "wb"))
-            _log.debug("Finished storing")
+            if config["scenario"]["statistics storage"]["store"]:
+                _log.info("Storing data for future use")
+                save_string = (
+                    config["scenario"]["statistics storage"]["location"] +
+                    config["scenario"]["statistics storage"]["name"]
+                )
+                _log.debug("Storing under " + save_string)
+                _log.debug("Storing statistics")
+                pickle.dump(self._statistics, open(save_string + ".pkl", "wb"))
+                _log.debug("Storing times")
+                pickle.dump(self._t, open(save_string + "_t.pkl", "wb"))
+                _log.debug("Finished storing")
         # Re-use a previous simulation
         elif config["scenario"]["class"] == "Stored":
             _log.info("Loading statistics from previous run")
@@ -243,8 +260,9 @@ class Fourth_Day(object):
             "Dumping run settings into %s",
             config["general"]["config location"],
         )
-        with open(config["general"]["config location"], "w") as f:
-            yaml.dump(config, f)
+        if config["general"]["enable config dump"]:
+            with open(config["general"]["config location"], "w") as f:
+                yaml.dump(config, f)
         _log.debug("Finished dump")
         _log.info('---------------------------------------------------')
         _log.info('---------------------------------------------------')
@@ -356,3 +374,72 @@ class Fourth_Day(object):
                 Stores the results from the simulation
         """
         return config['advanced']['nm range']
+
+    def load_data(self):
+        """ Loads water current data from the server. 
+        """
+        base_url = config["data loader"]["base_url"]
+        DOI = config["data loader"]["DOI"]
+        # Setting up some apis
+        api = NativeApi(base_url)
+        data_api = DataAccessApi(base_url)
+        # Downloading the data. The size is approximately 4.3 GB so please make sure you have room
+        dataset = api.get_dataset(DOI)
+        # The list of all files in the data set
+        files_list = dataset.json()['data']['latestVersion']['files']
+        # The storage location, this can be customized
+        module_directory = os.path.abspath(os.path.dirname(__file__))
+        storage_location = (
+            module_directory + config["data loader"]["storage location"]
+        )
+        # Function to make sure the required directory structure is created
+        def ensure_dir(file_path):
+            directory = os.path.dirname(file_path)
+            if not os.path.exists(directory):
+                os.makedirs(directory)
+        # Writing files
+        # Connection is required here.
+        print("Starting the download. Please note this will take a while")
+        for file in tqdm(files_list):
+            filename = file["dataFile"]["filename"]
+            file_id = file["dataFile"]["id"]
+            file_path = file["directoryLabel"]
+            storage_path = Path(storage_location + file_path + "/" + filename)
+            ensure_dir(storage_path)
+            if os.path.isfile(storage_path):
+                continue
+            else:
+                response = data_api.get_datafile(file_id)
+                with open(storage_path, "wb") as f:
+                    f.write(response.content)
+        # Unpacking
+        # print("Unpacking the files")
+        # zip_files = glob.glob(storage_location + file_path + '*.zip')
+        # for zip_filename in zip_files:
+        #     dir_name = os.path.splitext(zip_filename)[0]
+        #     os.mkdir(dir_name)
+        #     zip_handler = zipfile.ZipFile(zip_filename, "r")
+        #     zip_handler.extractall(dir_name)
+
+
+    @property
+    def hidden_function(self):
+        """ You found me!
+        """
+        print("                                                      ,     ")
+        print("   ,,                        ((           ,,                ")
+        print("         ,,,,        ((        ((    ,,,                    ")
+        print("                   (  ((   *(     (                         ")
+        print("                  (  (       (     (            ,,,,        ")
+        print("                 ((  ((      (      (   ,,,,                ")
+        print("               ,, (     (((    ((    (                      ")
+        print("                    (( (            (((                     ")
+        print("                       (     (        (           (         ")
+        print("                        /(        (   (        (((          ")
+        print("                ,,,,,,    (  (        (   ((((((            ")
+        print("        ,                 (      ((  ((   (                 ")
+        print("                          (    (     ( (((                  ")
+        print("                           (*       (/                      ")
+        print("                      ,,      *(((     ,,,,                 ")
+        print("                 ,,                             ,,,,        ")
+        print("              ,                                             ")

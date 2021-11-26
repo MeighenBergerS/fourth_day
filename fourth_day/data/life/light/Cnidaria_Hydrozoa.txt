@@ -1,0 +1,23 @@
+Aegina citrea Eschscholtz, 469, 92, B, Deep, 934, 5, 4, 1e10
+Aeginura grimaldii Maas, 464, 88, B, Deep, 742, 5, 4, 1e10
+Aequorea forskalea PeÂron and Lesueur, 503, 60, S, Shallow, 12, 5, 4, 1e10
+Bythotiara depressa Naumov, 488, 80, P, Deep, 408, 5, 4, 1e10
+Clytia (=Phialidium) hemisphaericum (L.), 504, 37, M, Shallow, 20, 5, 4, 1e10
+Cunina globosa Eschscholtz, 462, 76, P, Deep, 400, 5, 4, 1e10
+Euphysora valdiviae Vanhoeffen, 464, 93, P, Deep, 2167, 20, 15, 1e10
+Halicreas minimum Fewkes, 469, 88, B, Deep, 1093, 5, 4, 1e10
+Halicreidae unidentified speciese, 445, 79, B, Deep, 851, 5, 4, 1e10
+Haliscera conica Vanhoeffen, 451, 85, M, Deep, 448, 5, 4, 1e10
+Halitrephes maasi Bigelow, 458, 125, B, Deep, 711, 5, 4, 1e10
+Halitrephes valdiviae H.B. Bigelow, 443, 80, B, Deep, 767, 5, 4, 1e10
+Halopsis ocellata Agassiz, 458, 99, G, Shallow, 20, 5, 4, 1e10
+Mitrocoma cellularia (Agassiz), 505, 55, S, Shallow, 5, 5, 4, 1e10
+Mitrocomella sp., 500, 62, S, Shallow, 8, 5, 4, 1e10
+Obelia sp., 502, 60, S, Shallow, 3, 5, 4, 1e10
+Octophialucium funerarium (Quoy and Gaimard), 487, 72, M, Deep, 391, 5, 4, 1e10
+Pandea conica (Quoy and Gaimard), 470, 98, P, Deep, 450, 5, 4, 1e10
+Pegantha laevis H.B. Bigelow, 460, 75, P, Deep, 300, 5, 4, 1e10
+Solmissus albescens (Gegenbaur), 478, 76, M, Deep, 485, 5, 4, 1e10
+Solmissus incisa (Fewkes), 465, 76, B, Deep, 742, 5, 4, 1e10
+Solmissus marshalli Agassiz and Mayer, 477, 75, P, Deep, 250, 5, 4, 1e10
+Solmundella bitentaculata (Quoy and Gaimard), 477, 83, B, Deep, 492, 5, 4, 1e10

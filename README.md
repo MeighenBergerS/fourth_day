@@ -48,6 +48,23 @@ The package provides automatically generated documentation under
 
 ## Installation <a name="installation"></a>
 
+The easiest way to install the package is to use pip install:
+```python
+pip install fourth_day
+```
+Then simply run
+```python
+from fourth_day import Fourth_Day, config
+# Initialize the object
+fd = Fourth_Day()
+# Fetch water current data. This may take a while
+fd.load_data()
+```
+to get the necessary data sets (this requires an internet connection).
+Please note this requires pyDataverse, which you may not find using
+Anaconda (we suggest pip instead if it hasn't already been installed).
+
+Another method is:
 To install please clone the repository or download the latest release. Then
 follow the instructions given in INSTALL.txt.
 Note this should install all necessary components except for the beta
