@@ -23,6 +23,8 @@ class Providence(object):
     None
     """
     def __init__(self):
+        if not config["general"]["enable logging"]:
+            _log.disabled = True
         _log.debug("Constructing the detector response")
         conf_dict = dict(config['scenario']['detector'])
         conf_det = dict(

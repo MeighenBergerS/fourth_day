@@ -3,10 +3,8 @@
 # Authors: Stephan Meighen-Berger
 # Constructs the geometry of the system
 
-from sys import exit
 import numpy as np
 from scipy import spatial
-import pickle
 import logging
 from .config import config
 from .functions import normalize
@@ -49,6 +47,8 @@ class Adamah(object):
         ValueError
             Geometry not recognized
         """
+        if not config["general"]["enable logging"]:
+            _log.disabled = True
         # The simulation volume
         conf_dict = dict(config['geometry']['volume'])
         function_name = conf_dict.pop("function")

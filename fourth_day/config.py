@@ -17,6 +17,10 @@ _baseconfig = {
     "general": {
         # Random state seed
         "random state seed": 1337,
+        # Logger switch
+        "enable logging": False,
+        # If the config file for the run should be stored
+        "enable config dump": False,
         # Output level
         'debug level': logging.ERROR,
         # Location of logging file handler
@@ -36,6 +40,7 @@ _baseconfig = {
         "class": "New",
         # Save and load string
         "statistics storage": {
+            "store": False,
             "location": "../data/statistics/",
             "name": "example_run_1"
         },
@@ -44,7 +49,7 @@ _baseconfig = {
         # Length of simulation in seconds
         "duration": 75,
         # The population
-        "population size": 100,
+        "population size": 10,
         # Starting distribution
         # -Uniform:
         #   Organisms are randomly distributed at the beginning
@@ -215,9 +220,9 @@ _baseconfig = {
         #   custom:
         #       Requires the directory and the npy files to be constructed
         "model": {
-            "name": "none",
+            "name": "custom",
             "norm": 0.6,  # Not required with custom, none
-            "directory": "../data/current/benchmark/",
+            "directory": "Parabola_5mm/run_5cm_npy/",
             "vtu name": 'Navier_Stokes_flow',
             "vtu number": 240,  # Which files to use, can be a list
             "vtu cores": 6,  # Number of cores used to generate the vtu files
@@ -379,6 +384,15 @@ _baseconfig = {
                 0.23106528395398912
             ]
         ])
+    },
+    ###################################################
+    # Data Loader
+    ###################################################
+    "data loader" : {
+        # Water grid size in m
+        "base_url": 'https://dataverse.harvard.edu/',
+        "DOI": "doi:10.7910/DVN/CNMW2S",
+        "storage location": '/data/current/Parabola_5mm/'
     },
     ###################################################
     # Advanced

@@ -292,6 +292,5 @@ def construct_pdf(conf_dict: Dict[str, Any]) -> PDF:
         pdf_class = globals()[class_name]
         pdf = pdf_class(**conf_dict)
     except KeyError:
-        _log.error("Unknown pdf class: %s", class_name)
         raise KeyError("Unknown pdf class: %s", class_name)
     return pdf

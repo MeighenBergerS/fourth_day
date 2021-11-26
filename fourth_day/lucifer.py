@@ -25,6 +25,8 @@ class Lucifer(object):
     None
     """
     def __init__(self):
+        if not config["general"]["enable logging"]:
+            _log.disabled = True
         _log.debug("Constructing the attenuation splines")
            
         self._wave_length = config["water"]["attenuation"]["wavelengths"]

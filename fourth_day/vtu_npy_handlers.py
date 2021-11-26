@@ -25,7 +25,8 @@ class vtu_reader():
         self.dir = directory
         self.fname = file_name
         self.nr_runs = nr_parallel_runs
-
+        if not config["general"]["enable logging"]:
+            _log.disabled = True
         # Optionally print data for information on data arrays contained in
         # file
         if print_array_types:

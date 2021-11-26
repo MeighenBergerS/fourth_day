@@ -1,0 +1,42 @@
+Aulacoctena acuminata Mortensen, 458, 90, H, Deep, 1200, 5, 4, 1e10
+Bathocyroe fosteri Madin, 459, 102, B, Deep, 609, 5, 4, 1e10
+Bathocyroe fosteri Harbison, 492, 102, B, Deep, 609, 5, 4, 1e10
+Bathyctena chuni (Moser), 492, 91, P, Deep, 2167, 2, 1, 1e10
+Bathyctena sp. nov. Aa, 488, 88, B, Deep, 684, 5, 4, 1e10
+Bathyctena sp. nov. Ba, 490, 94, H, Deep, 1200, 5, 4, 1e10
+Bathyctenidae gen. nov. sp. nov.a, 501, 121, B, Deep, 834, 5, 4, 1e10
+Beroe abyssicola Mortensen, 491, 88, P, Deep, 489, 5, 4, 1e10
+Beroe cucumis Fabricius, 489, 88, G, Shallow, 37, 5, 4, 1e10
+Beroe forskalii Milne Edwards, 491, 89, M, Shallow, 14, 5, 4, 1e10
+Beroe gracilis KuÈnne, 495, 89, S, Shallow, 12, 5, 4, 1e10
+Beroe ovata Bosc, 493, 89, B, Shallow, 18, 5, 4, 1e10
+Bolinopsis infundibulum MuÈllerb, 488, 88, G, Shallow, 100, 5, 4, 1e10
+Bolinopsis vitrea (L. Agassiz), 490, 90, B, Shallow, 8, 5, 4, 1e10
+Cestum veneris Lesueur, 493, 89, B, Shallow, 12, 5, 4, 1e10
+Charistephane fugiens Chun, 468, 84, P, Deep, 300, 5, 4, 1e10
+Cydippida unidentified speciesa, 482, 79, B, Deep, 662, 5, 4, 1e10
+Deiopea kaloktenota Chun, 489, 95, S, Shallow, 19, 5, 4, 1e10
+Euplokamis sp., 483, 85, G, Deep, 243, 5, 4, 1e10
+Euplokamis stationis Chun, 467, 82, M, Deep, 314, 5, 4, 1e10
+Eurhamphaea vexilligera Gegenbaur, 496, 94, B, Shallow, 16, 5, 4, 1e10
+Haeckelia beehleri (Mayer), 500, 88, M, Shallow, 12, 5, 4, 1e10
+Haeckelia bimaculata CarreÂ and CarreÂ, 490, 98, S, Shallow, 17, 5, 4, 1e10
+Haeckelia rubra (KoÈlliker), 489, 98, S, Shallow, 17, 5, 4, 1e10
+Kiyohimea aurita Komai and Tokioka, 491, 103, B, Deep, 825, 5, 4, 1e10
+Lampea sp., 470, 94, P, Deep, 2000, 5, 4, 1e10
+Lampea lactea (Mayer), 469, 85, B, Shallow, 18, 5, 4, 1e10
+Lampea pancerina (Chun), 473, 81, M, Deep, 494, 5, 4, 1e10
+Leucothea multicornis (Quoy and Gaimard), 488, 93, M, Shallow, 14, 5, 4, 1e10
+Leucothea pulchra (Matsumoto), 488, 92, S, Shallow, 15, 5, 4, 1e10
+Lobata sp. nov. Aac, 492, 90, B, Deep, 830, 5, 4, 1e10
+Lobata sp. nov. Ba, 488, 88, B, Deep, 758, 5, 4, 1e10
+New family gen. nov. sp. nov. Aa, 490, 89, B, Deep, 520, 5, 4, 1e10
+New family gen. nov. sp. nov. Ba, 485, 88, B, Deep, 726, 5, 4, 1e10
+Mertensiidae gen. nov. A sp. nov. Aa, 497, 87, M, Shallow, 20, 5, 4, 1e10
+Mertensiidae gen. nov. A sp. nov. Ba, 489, 86, M, Deep, 634, 5, 4, 1e10
+Mertensiidae gen. nov. B sp. nov. Ca, 471, 85, B, Deep, 787, 5, 4, 1e10
+Mertensiidae gen. nov. B sp. nov. Dad, 472, 94, B, Deep, 880, 5, 4, 1e10
+Ocyropsis maculata immaculata Harbison and Miller, 489, 90, B, Shallow, 9, 5, 4, 1e10
+Thalassocalyce inconstans Madin and Harbison, 491, 92, B, Deep, 322, 5, 4, 1e10
+Thalassocalycidae gen. nov. sp. nov.a, 483, 89, B, Deep, 388, 5, 4, 1e10
+Velamen parallelum (Fol), 501, 90, S, Shallow, 7, 5, 4, 1e10

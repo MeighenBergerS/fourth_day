@@ -8,3 +8,6 @@ fd.log
 venv3
 
 *.json
+fourth_day.egg-info
+build
+dist

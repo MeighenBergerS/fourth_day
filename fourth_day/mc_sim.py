@@ -63,6 +63,8 @@ class MC_sim(object):
         ValueError
             Wrong starting distribution
         """
+        if not config["general"]["enable logging"]:
+            _log.disabled = True
         self._pop_size = config['scenario']["population size"]
         # Initalize the population
         self._population = pd.DataFrame(

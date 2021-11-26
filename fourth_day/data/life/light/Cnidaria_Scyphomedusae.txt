@@ -1,0 +1,11 @@
+Atolla parva Russell, 468, 89, B, Deep, 833, 5, 4, 1e10
+Atolla vanhoeffeni Russell, 469, 84, B,P Deep, 588, 5, 4, 1e10
+Atolla wyvillei Haeckel, 470, 98, B, Deep, 908, 5, 4, 1e10
+Coronatae unidentified speciese, 468, 89, B, Deep, 848, 5, 4, 1e10
+Nausithoe globifera Broch, 494, 85, P, Deep, 1333, 5, 4, 1e10
+Nausithoe atlantica Broch, 480, 88, P, Deep, 1350, 5, 4, 1e10
+Paraphyllina ransoni Russell, 465, 85, P, Deep, 1500, 5, 4, 1e10
+Periphylla periphylla PeÂron and Lesueur, 465, 83, B, Deep, 1082, 5, 4, 1e10
+Periphyllopsis braueri Vanhoeffen, 473, 85, B, Deep, 882, 5, 4, 1e10
+Phacellophora camtschatica Brandtb, 491, 107, G, Shallow, 182, 5, 4, 1e10
+Poralia sp., 468, 84, B, Deep, 832, 5, 4, 1e10
