@@ -399,7 +399,8 @@ class Fourth_Day(object):
                 os.makedirs(directory)
         # Writing files
         # Connection is required here.
-        print("Starting the download. Please note this will take a while")
+        print("Starting the download. Please note this will take a while!")
+        print("Depending on the current server usage this takes a few hours!")
         for file in tqdm(files_list):
             filename = file["dataFile"]["filename"]
             file_id = file["dataFile"]["id"]
