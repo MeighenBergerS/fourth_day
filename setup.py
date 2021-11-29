@@ -11,7 +11,7 @@ README = (HERE / "README.md").read_text()
 
 setup(
     name="fourth_day",
-    version="1.0.1",
+    version="1.0.9",
     description="Bioluminescence modeling for deep-sea experiments",
     long_description=README,
     long_description_content_type="text/markdown",
@@ -19,14 +19,14 @@ setup(
     author_email="stephan.meighenberger@gmail.com",
     url='https://github.com/MeighenBergerS/fourth_day',
     license="MIT",
-    python_requires='>=3.7',
+    # python_requires='>=3.7',
     install_requires=[
-        "PyYAML>=6.0",
-        "numpy>=1.21",
-        "scipy>=1.7",
-        "pandas>=1.3",
-        "pyDataverse>=0.3",
-        "tqdm>=4.62"
+        "pyyaml",
+        "numpy",
+        "scipy",
+        "pandas",
+        "pyDataverse>=0.3.0",
+        "tqdm>=4.0.0"
     ],
     extras_require={
         "interactive": ["nbstripout", "matplotlib", "jupyter"],
