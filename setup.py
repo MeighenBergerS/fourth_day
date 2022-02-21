@@ -11,7 +11,7 @@ README = (HERE / "README.md").read_text()
 
 setup(
     name="fourth_day",
-    version="1.0.9",
+    version="1.0.10",
     description="Bioluminescence modeling for deep-sea experiments",
     long_description=README,
     long_description_content_type="text/markdown",
