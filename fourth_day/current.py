@@ -57,6 +57,15 @@ class Current(object):
                     "using fourth_day.download() or store the data in the " +
                     "/data/current/ + config location.")
                 raise FileNotFoundError("Water current data not found!")
+            # Defining local paths
+            self._local_str_vel = (
+                '/data/current/' +
+                conf_dict['directory'] + 'npy_values_wind/'
+            )
+            self._local_str_grad = (
+                '/data/current/' +
+                conf_dict['directory'] + 'npy_values_grad/'
+            )
             if self._number_of_current_steps < (
                 config['scenario']['duration'] /
                 config['water']['model']['time step']):
@@ -64,11 +73,11 @@ class Current(object):
                            " Using them in a cyclic fashion")
             # Velocity loader
             self._velocities = Current_Loader(
-                self._save_string_vel, self._number_of_current_steps
+                self._local_str_vel, self._number_of_current_steps
             )
             # Gradient loader
             self._gradients = Current_Loader(
-                self._save_string_grad, self._number_of_current_steps
+                self._local_str_grad, self._number_of_current_steps
             )
         elif model_name == 'none':
             _log.debug("Run without water current")
