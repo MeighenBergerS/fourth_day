@@ -1,7 +1,6 @@
 jupyter
 pandas
 pyyaml
-nbstripout
 matplotlib
 numpy
 scipy
