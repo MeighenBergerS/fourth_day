@@ -162,7 +162,7 @@ class Normal(ScipyPDF):
             self,
             mean: Union[float, np.ndarray],
             sd: Union[float, np.ndarray],
-            max_val=np.infty) -> None:
+            max_val=np.inf) -> None:
         """ Initializes the TruncatedNormal class
 
         Parameters
@@ -201,7 +201,7 @@ class LogNorm(ScipyPDF):
             self,
             mean: Union[float, np.ndarray],
             sd: Union[float, np.ndarray],
-            max_val=np.infty) -> None:
+            max_val=np.inf) -> None:
         """ Initializes the LogNormal class
 
         Parameters
