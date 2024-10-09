@@ -79,7 +79,7 @@ class FourthDayStateMachine(object):
                 self._injection_rate / (
                     config["scenario"]["injection"]['y range'][1] - 
                     config["scenario"]["injection"]['y range'][0]) 
-            )
+            )#TODO: think about z default length/density
         )
 
     def update(self):
@@ -119,14 +119,15 @@ class FourthDayStateMachine(object):
         # Current positions
         current_pos = np.array(
             list(zip(self._population.loc[:, 'pos_x'].values,
-                     self._population.loc[:, 'pos_y'].values))
+                     self._population.loc[:, 'pos_y'].values,
+                     self._population.loc[:, 'pos_z'].values))
         )
         # ---------------------------------------------------------------------
         # The water current at this step
         # TODO: Needs a more correct approach
         # Finding the closest integer
         current_step = int(self._step / self._time_step)
-        self._vel_x, self._vel_y, _ = (
+        self._vel_x, self._vel_y,self._vel_z,_ = (
             self._current.velocities(current_pos +
                                      config["water"]["model"]["off set"],
                                      current_step)
@@ -139,6 +140,7 @@ class FourthDayStateMachine(object):
         # The time step
         self._vel_x = self._vel_x
         self._vel_y = self._vel_y
+        self._vel_z = self._vel_z
         self._gradient = self._gradient
         # ---------------------------------------------------------------------
         # New positions
@@ -258,11 +260,15 @@ class FourthDayStateMachine(object):
         )
         # ---------------------------------------------------------------------
         # Updating population
+        # TODO: seems no need to add z here
         # Position
         self._population.loc[observation_mask, 'pos_x'] = (
             new_position[observation_mask, 0]
         )
         self._population.loc[observation_mask, 'pos_y'] = (
+            new_position[observation_mask, 1]
+        )
+        self._population.loc[observation_mask, 'pos_z'] = (
             new_position[observation_mask, 1]
         )
         # Velocity
@@ -339,6 +345,7 @@ class FourthDayStateMachine(object):
             _log.debug("Finished step %d" %self._step)
         return [self._population, False]
 
+    # TODO: seems no need to add z here
     def _update_position(self, current_pos: np.array) -> np.array:
         """ Updates the organisms' positions
 
@@ -363,7 +370,7 @@ class FourthDayStateMachine(object):
         ) * (self._population.loc[:,
                                   'velocity'].values).reshape(
             (len(self._population.loc[:, 'velocity'].values), 1)
-        ) + list(zip(self._vel_x, self._vel_y))
+        ) + list(zip(self._vel_x, self._vel_y, self._vel_z))
         )
         return new_position
 
@@ -410,7 +417,9 @@ class FourthDayStateMachine(object):
                 new_points[:, 0] -
                 config["geometry"]["exclusion"]["x_pos"],
                 new_points[:, 1] -
-                config["geometry"]["exclusion"]["y_pos"]
+                config["geometry"]["exclusion"]["y_pos"],
+                new_points[:, 2] -
+                config["geometry"]["exclusion"]["z_pos"]
             )))
             # Normalizing
             norm = np.linalg.norm(center_vec, axis=1)
@@ -418,6 +427,7 @@ class FourthDayStateMachine(object):
                 center_vec[i] / norm[i]
                 for i in range(len(center_vec))
             ])
+            # TODO: seems no need to take care of z here
             # Bouncing back
             new_points = (
                 new_points + center_vec * config['scenario']['bounce back']

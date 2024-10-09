@@ -8,6 +8,7 @@ import numpy as np
 from time import time
 from scipy.interpolate import UnivariateSpline
 from .config import config
+from .functions import Rx,Ry,Rz
 
 _log = logging.getLogger(__name__)
 
@@ -52,6 +53,7 @@ class Providence(object):
         else:
             _log.error('Detector model not supported! Check the config file')
             raise ValueError('Unsupported detector model')
+        #TODO: add new P-OM quantum efficiency
         if (conf_det["quantum efficiency"] == "Flat"):
             _log.debug("A flat QE is used")
             self._qe_switch = 'Flat'
@@ -124,3 +126,32 @@ class Providence(object):
         end = time()
         _log.info("Response simulation took %f seconds" % (end - start))
         return measured
+    
+    def inside_pmt_fov_cone(point_to_test,tip_coord ,opening_angle=fov):
+        '''tip coord are vec1-8'''
+        #print(point_to_test,tip_coord)
+        tip_coord=np.squeeze(np.asarray(tip_coord))
+        cone_direction_vec=tip_coord/LA.norm(tip_coord)
+        #print(cone_direction_vec,print(type(cone_direction_vec)))
+        projection_on_cone_axis=np.dot(point_to_test-tip_coord, cone_direction_vec)
+        #print(projection_on_cone_axis)
+        orth_distance = LA.norm((point_to_test - tip_coord) - projection_on_cone_axis * cone_direction_vec)
+        #print(orth_distance)
+        true_angle = np.arcsin(orth_distance/LA.norm(point_to_test-tip_coord))
+        #print(true_angle,opening_angle)
+        if true_angle<opening_angle:
+            #print(True)
+            return True
+        else:
+            #print(False)
+            return False  
+        
+    def if_detected(self, coordinates, tip_coord):
+        '''return a bool mask'''
+        detect_mask=[]
+        for coord in coordinates:
+            if exclude_detector(coord):
+                detect_mask.append(False)
+            else: 
+                detect_mask.append(inside_pmt_fov_cone(coord,tip_coord))
+        return detect_mask

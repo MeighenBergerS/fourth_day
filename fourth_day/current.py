@@ -19,6 +19,7 @@ from .config import config
 _log = logging.getLogger(__name__)
 
 
+#TODO:need to take care of z for every function
 class Current(object):
     """ Constructs and loads the current
 
@@ -221,10 +222,11 @@ class Homogeneous_Current(object):
         """
         vel_x = np.ones(len(coords)) * self._norm
         vel_y = np.zeros(len(coords))
-        vel_abs = np.linalg.norm([vel_x, vel_y], axis=0)
+        vel_z = np.zeros(len(coords))
+        vel_abs = np.linalg.norm([vel_x, vel_y, vel_z], axis=0)
         if self._switch:
             return np.array(
-                [vel_x, vel_y, vel_abs]
+                [vel_x, vel_y,vel_z, vel_abs] #where this value is used? directly add vel_z cause bugs?
             )
         else:
             return np.zeros(len(coords))
@@ -267,10 +269,11 @@ class Parabolic_Current(object):
             self._norm * coords[:, 1] * (self._Ly - coords[:, 1]) / self._Ly**2
         )
         vel_y = np.zeros(len(coords))
-        vel_abs = np.linalg.norm([vel_x, vel_y], axis=0)
+        vel_z = np.zeros(len(coords))
+        vel_abs = np.linalg.norm([vel_x, vel_y, vel_z], axis=0)
         if self._switch:
             return np.array(
-                [vel_x, vel_y, vel_abs]
+                [vel_x, vel_y, vel_z, vel_abs]
             )
         else:
             # Only single component
@@ -407,7 +410,7 @@ class Potential_Cylinder_Current(object):
         else:
             return self._spl_grad(coords[:, 0], coords[:, 1])
 
-class Current_Loader(object):
+class Current_Loader(object): #this class seems not used in examples
     """ Loads the current
 
     Parameters

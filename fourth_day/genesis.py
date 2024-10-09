@@ -359,8 +359,9 @@ class Genesis(object):
         for key in life.keys():
             evolved[key] = [[], [], [], [], [], []]
             for idspecies, _ in enumerate(life[key][0]):
-                cut_off = config['organisms']['depth filter']
-                if life[key][3][idspecies] >= cut_off:
+                cut_off_upper = config['organisms']['depth filter upper'] #update to two side conditions
+                cut_off_lower = config['organisms']['depth filter lower'] #TODO: update to two side conditions
+                if (life[key][3][idspecies] <= cut_off_upper and life[key][3][idspecies]>=cut_off_lower):
                     #  The name
                     evolved[key][0].append(
                         life[key][0][idspecies]

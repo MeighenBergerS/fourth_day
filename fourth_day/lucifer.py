@@ -70,6 +70,11 @@ class Lucifer(object):
                 "Not enough y offsets for the detector number!" +
                 " Check the config file!"
             )
+        if len(self._det_geom["z_offsets"]) != self._det_geom["det num"]:
+            raise ValueError(
+                "Not enough y offsets for the detector number!" +
+                " Check the config file!"
+            )
         if (
             len(self._det_geom["wavelength acceptance"]) !=
             self._det_geom["det num"]
@@ -80,7 +85,7 @@ class Lucifer(object):
             )
 
     def _propagation(self, photon_counts: np.array,
-                     pos_x: np.array, pos_y: np.array,
+                     pos_x: np.array, pos_y: np.array, pos_z: np.array,
                      wavelengths: np.array) -> np.array:
         """ Attenuates the given photons depending on their emission position
 
@@ -92,6 +97,8 @@ class Lucifer(object):
             The x position of the emitters
         pos_y : np.array
             The y position of the emitters
+        pos_z : np.array
+            The z position of the emitters
         wavelengths : np.array
             The wavelengths of the emitters
 
@@ -105,21 +112,25 @@ class Lucifer(object):
             (pos_x -
              (self._det_geom["x_pos"] + self._det_geom["x_offsets"][i]))**2. +
             (pos_y -
-             (self._det_geom["y_pos"] + self._det_geom["y_offsets"][i]))**2. 
+             (self._det_geom["y_pos"] + self._det_geom["y_offsets"][i]))**2. +
+            (pos_z -
+             (self._det_geom["z_pos"] + self._det_geom["z_offsets"][i]))**2. 
             for i in range(0, self._det_geom["det num"])
         ])**(1./2.)
         # The angles
         angles = np.array([
             np.arctan2(
+                (pos_x -
+                 (self._det_geom["x_pos"] + self._det_geom["x_offsets"][i])),
                 (pos_y -
                  (self._det_geom["y_pos"] + self._det_geom["y_offsets"][i])),
-                (pos_x -
-                 (self._det_geom["x_pos"] + self._det_geom["x_offsets"][i])))
+                (pos_z -
+                 (self._det_geom["z_pos"] + self._det_geom["z_offsets"][i])))
             for i in range(0, self._det_geom["det num"])
         ])
         # To degrees
         angles = np.degrees(angles)
-        # Checking if within opening angles
+        # Checking if within opening angles #TODO:Why there is 2dim case?
         if self._acceptance_angles.ndim > 1:
             outside_minus = np.less(angles[:, 0], self._acceptance_angles[0])
             outside_plus = np.greater(angles[:, 0], self._acceptance_angles[1])
@@ -154,6 +165,7 @@ class Lucifer(object):
                     for i in range(0, self._det_geom["det num"])
                 ])
             )
+        
 
     def light_bringer(self, statistics: pd.DataFrame,
                       life: Genesis) -> np.array:
@@ -182,6 +194,7 @@ class Lucifer(object):
                 photons = pop.loc[emission_mask, 'photons'].values
                 x_pos = pop.loc[emission_mask, 'pos_x'].values
                 y_pos = pop.loc[emission_mask, 'pos_y'].values
+                z_pos = pop.loc[emission_mask, 'pos_z'].values
                 species = pop.loc[emission_mask, 'species'].values
                 emission_pdfs = np.array([
                     life.Light_pdfs[species_key].pdf(nm_range)
@@ -195,13 +208,13 @@ class Lucifer(object):
                 if len(emission_photons) >= 1:
                     propagated = np.array([
                         np.sum(self._propagation(emission_photons, x_pos,
-                                                 y_pos,
+                                                 y_pos, z_pos,
                                                  nm_range), axis=1)
                     ])
                 # No emitter
                 else:
                     propagated = self._propagation(emission_photons, x_pos,
-                                                   y_pos,
+                                                   y_pos, z_pos,
                                                    nm_range)
                 # Integrating for each detector
                 flat_prop = propagated[0]

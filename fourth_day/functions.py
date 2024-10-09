@@ -37,3 +37,25 @@ def interp2d_pairs(*args,**kwargs):
                 )[0]).reshape(x.shape)
     # Wrapping the scipy interp2 function to call out interpolant instead
     return lambda x,y: interpolant(x,y,si.interp2d(*args,**kwargs))
+
+def Rx(theta):
+    theta=np.deg2rad(theta)
+    return np.matrix([[ 1, 0           , 0           ],
+                   [ 0, m.cos(theta),-m.sin(theta)],
+                   [ 0, m.sin(theta), m.cos(theta)]])
+
+def Ry(theta):
+    theta=np.deg2rad(theta)
+    return np.matrix([[ m.cos(theta), 0, m.sin(theta)],
+                   [ 0           , 1, 0           ],
+                   [-m.sin(theta), 0, m.cos(theta)]])
+
+def Rz(theta):
+    theta=np.deg2rad(theta)
+    return np.matrix([[ m.cos(theta), -m.sin(theta), 0 ],
+                   [ m.sin(theta), m.cos(theta) , 0 ],
+                   [ 0           , 0            , 1 ]])
+
+def distance(p1,p2):
+    '''point =np.array([x,y,z])'''
+    return np.sqrt(np.sum((p1-p2)**2, axis=0))
