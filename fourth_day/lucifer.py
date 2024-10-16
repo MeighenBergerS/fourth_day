@@ -70,6 +70,11 @@ class Lucifer(object):
                 "Not enough y offsets for the detector number!" +
                 " Check the config file!"
             )
+        if len(self._det_geom["y_offsets"]) != self._det_geom["det num"]:
+            raise ValueError(
+                "Not enough y offsets for the detector number!" +
+                " Check the config file!"
+            )
         if (
             len(self._det_geom["wavelength acceptance"]) !=
             self._det_geom["det num"]
@@ -80,7 +85,7 @@ class Lucifer(object):
             )
 
     def _propagation(self, photon_counts: np.array,
-                     pos_x: np.array, pos_y: np.array,
+                     pos_x: np.array, pos_y: np.array, pos_z: np.array,
                      wavelengths: np.array) -> np.array:
         """ Attenuates the given photons depending on their emission position
 
@@ -105,10 +110,13 @@ class Lucifer(object):
             (pos_x -
              (self._det_geom["x_pos"] + self._det_geom["x_offsets"][i]))**2. +
             (pos_y -
-             (self._det_geom["y_pos"] + self._det_geom["y_offsets"][i]))**2. 
+             (self._det_geom["y_pos"] + self._det_geom["y_offsets"][i]))**2. +
+            (pos_z -
+             (self._det_geom["z_pos"] + self._det_geom["z_offsets"][i]))**2. 
             for i in range(0, self._det_geom["det num"])
         ])**(1./2.)
         # The angles
+        #TODO:critical change here
         angles = np.array([
             np.arctan2(
                 (pos_y -
@@ -182,6 +190,7 @@ class Lucifer(object):
                 photons = pop.loc[emission_mask, 'photons'].values
                 x_pos = pop.loc[emission_mask, 'pos_x'].values
                 y_pos = pop.loc[emission_mask, 'pos_y'].values
+                z_pos = pop.loc[emission_mask, 'pos_z'].values
                 species = pop.loc[emission_mask, 'species'].values
                 emission_pdfs = np.array([
                     life.Light_pdfs[species_key].pdf(nm_range)
@@ -195,13 +204,13 @@ class Lucifer(object):
                 if len(emission_photons) >= 1:
                     propagated = np.array([
                         np.sum(self._propagation(emission_photons, x_pos,
-                                                 y_pos,
+                                                 y_pos,z_pos,
                                                  nm_range), axis=1)
                     ])
                 # No emitter
                 else:
                     propagated = self._propagation(emission_photons, x_pos,
-                                                   y_pos,
+                                                   y_pos,z_pos,
                                                    nm_range)
                 # Integrating for each detector
                 flat_prop = propagated[0]
