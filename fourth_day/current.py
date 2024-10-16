@@ -221,10 +221,11 @@ class Homogeneous_Current(object):
         """
         vel_x = np.ones(len(coords)) * self._norm
         vel_y = np.zeros(len(coords))
-        vel_abs = np.linalg.norm([vel_x, vel_y], axis=0)
+        vel_z = np.zeros(len(coords))
+        vel_abs = np.linalg.norm([vel_x, vel_y, vel_z], axis=0)
         if self._switch:
             return np.array(
-                [vel_x, vel_y, vel_abs]
+                [vel_x, vel_y, vel_z, vel_abs]
             )
         else:
             return np.zeros(len(coords))
@@ -267,14 +268,15 @@ class Parabolic_Current(object):
             self._norm * coords[:, 1] * (self._Ly - coords[:, 1]) / self._Ly**2
         )
         vel_y = np.zeros(len(coords))
-        vel_abs = np.linalg.norm([vel_x, vel_y], axis=0)
+        vel_z = np.zeros(len(coords))
+        vel_abs = np.linalg.norm([vel_x, vel_y, vel_z], axis=0)
         if self._switch:
             return np.array(
-                [vel_x, vel_y, vel_abs]
+                [vel_x, vel_y, vel_z, vel_abs]
             )
         else:
             # Only single component
-            gradients = np.gradient(vel_x, coords[:, 1])
+            gradients = np.gradient(vel_x, coords[:, 1],coords[:, 2])
             return gradients
 
 # TODO: Still buggy
@@ -298,8 +300,9 @@ class Potential_Cylinder_Current(object):
                            " be set to 'sphere'")
                 raise ValueError("Exclusion zone needs to be a sphere")
             self._switch = vel_grad_switch
-            self._x_pos = config['geometry']['exclusion']['x_pos']
-            self._y_pos = config['geometry']['exclusion']['y_pos']
+            self._x_pos = config['geometry']['exclusion_3d']['x_pos']
+            self._y_pos = config['geometry']['exclusion_3d']['y_pos']
+            self._z_pos = config['geometry']['exclusion_3d']['z_pos']
             self._norm = config['water']['model']['norm']
             self._rad = config['geometry']['exclusion']['radius']
             # Constructing the triangulation grid
@@ -326,9 +329,14 @@ class Potential_Cylinder_Current(object):
             config['geometry']['volume']['y_length'],
             config['advanced']['water grid size']
         )
+        self._z_grid = np.arange(
+            0.,
+            config['geometry']['volume']['z_length'],
+            config['advanced']['water grid size']
+        )        
         self._data_points = np.array(np.meshgrid(
-            self._x_grid, self._y_grid
-        )).T.reshape(-1,2)
+            self._x_grid, self._y_grid, self._z_grid
+        )).T.reshape(-1,3)
         self._tri = Delaunay(self._data_points)
 
     def _construct_interpolators(self):
@@ -337,34 +345,42 @@ class Potential_Cylinder_Current(object):
         # Coordinate transform to set (0,0) in the center of the cylinder
         x = self._data_points[:, 0] - self._x_pos
         y = self._data_points[:, 1] - self._y_pos
-        # Convert to polar coordinates
-        r = np.sqrt(x**2 + y**2)
+        z = self._data_points[:, 2] - self._z_pos
+        # Convert to sphere coordinates
+        r = np.sqrt(x**2 + y**2 + z**2)
         # Ignoring error messages
         with np.errstate(divide='ignore', invalid='ignore'):
-            theta = np.arctan2(y, x)
+            theta = np.arctan2(y, x) #
+            phi = np.arccos(z,r) # phi in sphere coordinate
         # Ignoring error messages
         # The velocity functions
-        with np.errstate(divide='ignore', invalid='ignore'):
+        with np.errstate(divide='ignore', invalid='ignore'): #TODO: don't quite understand the physical meaning
             vel_r = (
                 self._norm * (1. - self._rad**2. / r**2.) * np.cos(theta)
             )
             vel_theta = (
-                -self._norm * (1. + self._rad**2. / r**2.) * np.sin(theta) / r
+                -self._norm * (1. + self._rad**2. / r**2.) * np.sin(theta)*np.sin(phi) / r
+            )
+            vel_phi = (
+                -self._norm * (1. + self._rad**2. / r**2.) * np.sin(theta)*np.cos(phi) / r
             )
             vel_r[ ~ np.isfinite(vel_r)] = 0.  # -inf inf NaN
             vel_theta[ ~ np.isfinite(vel_theta)] = 0.  # -inf inf NaN
         # Convert back to cartesian
-        vel_x = vel_r * np.cos(theta) - r * vel_theta * np.sin(theta)
-        vel_y = vel_r * np.sin(theta) + r * vel_theta * np.cos(theta)
+        vel_x = vel_r * np.cos(theta) - r * vel_theta * np.sin(theta) + r*vel_phi*np.cos(phi)
+        vel_y = vel_r * np.sin(theta) + r * vel_theta * np.cos(theta) + r*vel_phi*np.sin(phi)
+        vel_z = vel_r * np.sin(theta) + r * vel_theta * np.cos(theta) + r*vel_phi*np.sin(phi)
         # The absolute values
-        vel_abs = np.linalg.norm([vel_x, vel_y], axis=0)
+        vel_abs = np.linalg.norm([vel_x, vel_y, vel_z], axis=0)
         # Reshaping for gradients
-        vel_x_calc = np.reshape(vel_x, (len(self._x_grid), len(self._y_grid)))
-        vel_y_calc = np.reshape(vel_y, (len(self._x_grid), len(self._y_grid)))
+        vel_x_calc = np.reshape(vel_x, (len(self._x_grid), len(self._y_grid), len(self._z_grid)))
+        vel_y_calc = np.reshape(vel_y, (len(self._x_grid), len(self._y_grid), len(self._z_grid)))
+        vel_z_calc = np.reshape(vel_z, (len(self._x_grid), len(self._y_grid), len(self._z_grid)))
         # The gradients
-        grads_x = np.gradient(vel_x_calc, self._x_grid, self._y_grid)
-        grads_y = np.gradient(vel_y_calc, self._x_grid, self._y_grid)
-        gradients = np.linalg.norm(grads_x + grads_y, axis=0).reshape(
+        grads_x = np.gradient(vel_x_calc, self._x_grid, self._y_grid,self._z_grid)
+        grads_y = np.gradient(vel_y_calc, self._x_grid, self._y_grid,self._z_grid)
+        grads_y = np.gradient(vel_z_calc, self._x_grid, self._y_grid,self._z_grid)
+        gradients = np.linalg.norm(grads_x + grads_y + grads_z, axis=0).reshape(
             (len(self._data_points))
         )
         # The interpolators
@@ -373,6 +389,9 @@ class Potential_Cylinder_Current(object):
         )
         self._spl_vel_y = LinNDInterp(
             self._tri, vel_y, fill_value=0.
+        )
+        self._spl_vel_z = LinNDInterp(
+            self._tri, vel_z, fill_value=0.
         )
         self._spl_vel_abs = LinNDInterp(
             self._tri, vel_abs, fill_value=0.
@@ -398,14 +417,15 @@ class Potential_Cylinder_Current(object):
         """
         # Fetching results
         if self._switch:
-            vel_x = self._spl_vel_x(coords[:, 0], coords[:, 1])
-            vel_y = self._spl_vel_y(coords[:, 0], coords[:, 1])
-            vel_abs = (self._spl_vel_abs(coords[:, 0], coords[:, 1]))
+            vel_x = self._spl_vel_x(coords[:, 0], coords[:, 1],coords[:, 2])
+            vel_y = self._spl_vel_y(coords[:, 0], coords[:, 1],coords[:, 2])
+            vel_z = self._spl_vel_y(coords[:, 0], coords[:, 1],coords[:, 2])
+            vel_abs = (self._spl_vel_abs(coords[:, 0], coords[:, 1],coords[:, 2]))
             return np.array(
-                [vel_x, vel_y, vel_abs]
+                [vel_x, vel_y, vel_z, vel_abs]
             )
         else:
-            return self._spl_grad(coords[:, 0], coords[:, 1])
+            return self._spl_grad(coords[:, 0], coords[:, 1], coords[:, 2])
 
 class Current_Loader(object):
     """ Loads the current
@@ -440,9 +460,14 @@ class Current_Loader(object):
                   "using fourth_day.download() or store the data in the " +
                   "config location.")
             raise ValueError("Current data file not found!")
-        self._xy_coords = np.load(io.BytesIO(tmp_raw))
+        #TODO: critical change here
+        self._xyz_coords = np.load(io.BytesIO(tmp_raw))
+        #print("before append",np.shape(self._xyz_coords), self._xyz_coords)
+        trivial_z = np.linspace( 0., config['geometry']['volume']['z_length']+1., len(self._xyz_coords[0,:]), endpoint=False,dtype=int)
+        self._xyz_coords = np.vstack((self._xyz_coords, trivial_z)) 
+        #print("after append",np.shape(self._xyz_coords),self._xyz_coords)
         # Build interpolator based on a triangulation given the coordinates
-        self._tri = Delaunay(self._xy_coords.transpose())
+        self._tri = Delaunay(self._xyz_coords.transpose())
 
     def _load_from_npy_and_build_interpolator(self, out_nr: int):
         """ Load data from numpy arrays, given output number associated with
@@ -466,6 +491,8 @@ class Current_Loader(object):
                 __name__, '{0}/data_{1}.npy'.format(self._save_string,
                                                     i_step)
         )
+        print('{0}/data_{1}.npy'.format(self._save_string,
+                                                    i_step))
         if tmp_raw is None:
             print("Water current data not found! Please download the data" +
                   "using fourth_day.download() or store the data in the " +
@@ -473,20 +500,25 @@ class Current_Loader(object):
             raise ValueError("Current data file not found!")
         if isinstance(out_nr, int):
             data = np.load(io.BytesIO(tmp_raw))
+            print("1",np.shape(data))
+            data = np.column_stack((data, np.zeros(len(data[:,0]))))
+            print("2",np.shape(data))
         else:
             raise AttributeError('When loading data from numpy array, '\
                                  'out_nr must be an integer')
 
         self._data = data
+        print("3",np.shape(self._data))
 
         # Build data interpolator
-        if self._data.shape[1] > 1:
+        if self._data.shape[1] > 2:
             # For vector valued data split in components (ignoring 3rd one)
             self._data_interpolator_x = LinNDInterp(self._tri, self._data[:, 0])
             self._data_interpolator_y = LinNDInterp(self._tri, self._data[:, 1])
+            self._data_interpolator_z = LinNDInterp(self._tri, self._data[:, 2])
             self._vector_data = True
         else:
-            self._data_interpolator = LinNDInterp(self._tri, self._data)
+            self._data_interpolator = LinNDInterp(self._tri, self._data[:, 0])
             self._vector_data = False
         return None
 
@@ -515,18 +547,19 @@ class Current_Loader(object):
         attribute_error_flag = False
         if not isinstance(coords, np.ndarray):
             attribute_error_flag = True
-        elif coords.shape[1] != 2:
+        elif coords.shape[1] != 3: #or 2
             attribute_error_flag = True
         if attribute_error_flag:
             raise AttributeError('Input coordinates must be a numpy ndarray '\
-                                 'of shape (n, 2) for some n.')
+                                 'of shape (n, 3) for some n.')
 
         self._load_from_npy_and_build_interpolator(out_nr)
         # Retrieve values from data interpolator
         if self._vector_data:
             x_val = self._data_interpolator_x(coords)
             y_val = self._data_interpolator_y(coords)
-            return (x_val, y_val, np.array([np.sqrt(x_val[i]**2 + y_val[i]**2)
+            z_val = self._data_interpolator_z(coords)
+            return (x_val, y_val, np.array([np.sqrt(x_val[i]**2 + y_val[i]**2 + z_val[i]**2)
                                             for i in range(len(x_val))]))
 
         return (self._data_interpolator(coords))

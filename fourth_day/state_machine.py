@@ -119,14 +119,16 @@ class FourthDayStateMachine(object):
         # Current positions
         current_pos = np.array(
             list(zip(self._population.loc[:, 'pos_x'].values,
-                     self._population.loc[:, 'pos_y'].values))
+                     self._population.loc[:, 'pos_y'].values,
+                     self._population.loc[:, 'pos_z'].values))
         )
         # ---------------------------------------------------------------------
         # The water current at this step
         # TODO: Needs a more correct approach
         # Finding the closest integer
         current_step = int(self._step / self._time_step)
-        self._vel_x, self._vel_y, _ = (
+        #print("current_pos,off_set,currentstep",current_pos,config["water"]["model"]["off set"],current_step)
+        self._vel_x, self._vel_y, self._vel_z = (
             self._current.velocities(current_pos +
                                      config["water"]["model"]["off set"],
                                      current_step)
@@ -139,6 +141,7 @@ class FourthDayStateMachine(object):
         # The time step
         self._vel_x = self._vel_x
         self._vel_y = self._vel_y
+        self._vel_z = self._vel_z
         self._gradient = self._gradient
         # ---------------------------------------------------------------------
         # New positions
@@ -265,6 +268,9 @@ class FourthDayStateMachine(object):
         self._population.loc[observation_mask, 'pos_y'] = (
             new_position[observation_mask, 1]
         )
+        self._population.loc[observation_mask, 'pos_z'] = (
+            new_position[observation_mask, 2]
+        )
         # Velocity
         self._population.loc[new_observation_mask, 'velocity'] = new_velocities
         # Angles
@@ -354,16 +360,17 @@ class FourthDayStateMachine(object):
         """
         # The movement is defined by the organisms' own movement and
         # the current
+        #TODO:critical change in this steps
         new_position = (current_pos + np.array(
             list(zip(np.cos((self._population.loc[:,
                                                   'angle'].values)),
                      np.sin((self._population.loc[:,
-                                                  'angle'].values))
+                                                  'angle'].values)),np.zeros(len(self._population.loc[:,'angle'].values))
             ))
         ) * (self._population.loc[:,
                                   'velocity'].values).reshape(
             (len(self._population.loc[:, 'velocity'].values), 1)
-        ) + list(zip(self._vel_x, self._vel_y))
+        ) + list(zip(self._vel_x, self._vel_y, self._vel_z))
         )
         return new_position
 
@@ -410,7 +417,9 @@ class FourthDayStateMachine(object):
                 new_points[:, 0] -
                 config["geometry"]["exclusion"]["x_pos"],
                 new_points[:, 1] -
-                config["geometry"]["exclusion"]["y_pos"]
+                config["geometry"]["exclusion"]["y_pos"],                
+                new_points[:, 2] -
+                config["geometry"]["exclusion"]["z_pos"]
             )))
             # Normalizing
             norm = np.linalg.norm(center_vec, axis=1)
@@ -508,6 +517,10 @@ class FourthDayStateMachine(object):
                 low=config["scenario"]["injection"]['y range'][0],
                 high=config["scenario"]["injection"]['y range'][1],
                 size=1)[0],  # position y
+            self._rstate.uniform(
+                low=config["scenario"]["injection"]['z range'][0],
+                high=config["scenario"]["injection"]['z range'][1],
+                size=1)[0],  # position z, TODO: not sure
             0., # self._life.Movement["vel"].rvs(1) / 1e3,  # velocity
             0., # angle
             self._life.Movement['rad'].rvs(1)[0] / 1e3,  # radius

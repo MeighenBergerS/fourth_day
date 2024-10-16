@@ -72,6 +72,7 @@ class MC_sim(object):
                 "species": None,
                 "pos_x": 0.,
                 "pos_y": 0.,
+                "pos_z":0.,
                 "velocity": 0.,
                 "angle": 0.,
                 "radius": 0.,
@@ -152,11 +153,18 @@ class MC_sim(object):
                     high=world.y,
                     size=self._pop_size)
             )
+            z_coords = (
+                config["runtime"]['random state'].uniform(
+                    low=0.,
+                    high=world.z,
+                    size=self._pop_size)
+            )           
         else:
             _log.error("Unrecognized starting distribution. Check the config")
             raise ValueError("Starting distribution is set wrong!")
         self._population.loc[:, "pos_x"] = x_coords
         self._population.loc[:, "pos_y"] = y_coords
+        self._population.loc[:, "pos_z"] = z_coords
         # Distributing the radii
         self._population.loc[:, 'radius'] = (
             life.Movement['rad'].rvs(self._pop_size) / 1e3

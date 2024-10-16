@@ -61,6 +61,7 @@ _baseconfig = {
         "injection": {
             "rate": 1e-1,
             "y range": [0., 15.],
+            "z range": [0., 10.],
         },
         # If an exclusion zone should be used
         "exclusion": True,
@@ -90,6 +91,7 @@ _baseconfig = {
             "function": 'rectangle',  # the geometry type
             "x_length": 40.,  # in meters
             "y_length": 20.,  # in meters
+            "z_length": 10., # in meters
             "offset": None,  # The bounding volume requires no offset
         },
         # The observation area. It is recommended to keep this smaller than
@@ -98,9 +100,18 @@ _baseconfig = {
             "function": 'rectangle',
             "x_length": 40.,  # in meters
             "y_length": 5.,  # in meters
-            "offset": np.array([0., 7.5]),  # The offset of [0,0] (bottom left)
+            "z_length": 1.,  # in meters
+            "offset": np.array([0., 7.5, 4.5]),  # The offset of [0,0] (bottom left)
         },
-        # Exclusion e.g. detector
+        #Exclusion e.g. detector
+        "exclusion_3d": {
+            "function": "ellipsoid",
+            "major_axis": 0.30,
+            "minor_axis": 0.22,
+            "x_pos": 5.,
+            "y_pos": 10.,
+            "z_pos": 5.,
+        },
         "exclusion": {
             "function": "sphere",
             "radius": 0.3,
@@ -124,6 +135,40 @@ _baseconfig = {
                 "wavelength acceptance": np.array([  #position number,center wavelength,quantum efficiency
                     [0., 1000., 1.]
                 ])
+            },
+            # The P-OM module
+            "POM": {
+                "x_pos": 5., #ellipsoid shape, all following coordinates are assumed center of module is at (0,0) position. 
+                "y_pos": 10.,
+                "z_pos": 5.,
+                "det num": 16, #8 pmts on -y hemisphere with  footnote 1 , 8 pmts on y hemisphere with footnote 2
+"x_offsets":np.array([4.13720698,0.,-4.13720698,0.,0.71067886,-0.71067886,-0.71067886,0.71067886,4.13720698,0.,-4.13720698,0.,0.71067886,-0.71067886,-0.71067886,0.71067886]),
+"y_offsets":np.array([6.49411413,6.49411413,6.49411413,7.63412543,7.63412543,7.63412543,7.63412543,-6.49411413,-6.49411413,-6.49411413,-7.63412543,-7.63412543,-7.63412543,-7.63412543]),
+"z_offsets":np.array([0.,-4.13720698,0.,4.13720698,-0.71067886,-0.71067886,0.71067886,0.71067886,0.,-4.13720698,0.,4.13720698,-0.71067886,-0.71067886,0.71067886,0.71067886]),
+#                 "x_2_offset":np.array([4.13720698,0.,-4.13720698,0.,0.71067886,-0.71067886,-0.71067886,0.71067886]),
+#                 "y_2_offset":np.array([-6.49411413,-6.49411413,-6.49411413,-7.63412543,-7.63412543,-7.63412543,-7.63412543]),
+#                 "z_2_offset":np.array([0.,-4.13720698,0.,4.13720698,-0.71067886,-0.71067886,0.71067886,0.71067886]),        
+                "angle offset": 0,  # does 3D need angle offset?
+                "opening angle": 45.,  
+                "quantum efficiency": "Flat",  # It's actually a function, i'll update the function in providence.py
+                "wavelength acceptance": np.array([ #position number,center wavelength,quantum efficiency (if flat)
+                    [300., 720., 1.0],   #need to be updated 
+                    [300., 720., 1.0],
+                    [300., 720., 1.0],
+                    [300., 720., 1.0],
+                    [300., 720., 1.0],
+                    [300., 720., 1.0],
+                    [300., 720., 1.0],
+                    [300., 720., 1.0],
+                    [300., 720., 1.0],
+                    [300., 720., 1.0],
+                    [300., 720., 1.0],
+                    [300., 720., 1.0],
+                    [300., 720., 1.0],
+                    [300., 720., 1.0],
+                    [300., 720., 1.0],
+                    [300., 720., 1.0],
+                ]),
             },
             # The PMTSpec
             "PMTSpec": {
@@ -227,7 +272,7 @@ _baseconfig = {
             "vtu number": 240,  # Which files to use, can be a list
             "vtu cores": 6,  # Number of cores used to generate the vtu files
             "time step": 1,  # Number of seconds between frames
-            "off set": np.array([0., 0.])
+            "off set": np.array([0., 0., 0.])
         },
         # Data
         # this wavelength_attentuation function is extract from 
@@ -401,6 +446,7 @@ _baseconfig = {
         # Water grid size in m
         'water grid size': 1e-1,
         'sphere sample': 50,
+        'ellipsoid sample': 100,
         'starting step': 0,
         "nm range": np.linspace(300., 600., 300),
     },
