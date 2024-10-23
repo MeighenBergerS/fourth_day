@@ -53,10 +53,11 @@ class Adamah(object):
         conf_dict = dict(config['geometry']['volume'])
         function_name = conf_dict.pop("function")
         if function_name == 'rectangle':
-            self._hull = self.rectangle(**conf_dict)
+            self._hull = self.rectangle_3d(**conf_dict)
             # used for sampling later on
             self._x = conf_dict['x_length']
             self._y = conf_dict['y_length']
+            self._z = conf_dict['z_length']
             _log.debug('Hull constructed')
         else:
             _log.error('Volume not supported! Check the config file')
@@ -65,7 +66,7 @@ class Adamah(object):
         conf_dict = dict(config['geometry']['observation'])
         function_name = conf_dict.pop("function")
         if function_name == 'rectangle':
-            self._observed = self.rectangle(**conf_dict)
+            self._observed = self.rectangle_3d(**conf_dict)
             _log.debug('Observation volume constructed')
         else:
             _log.error('Volume not supported! Check the config file')
@@ -74,11 +75,11 @@ class Adamah(object):
         if config['scenario']['exclusion']:
             _log.debug("Construction exclusion zone")
             self._exclusion = spatial.ConvexHull(
-                self._even_circle(config['advanced']['sphere sample'])
+                self._ellipsoid(config['advanced']['ellipsoid sample'])
             )
             _log.debug("Finished exclusion zone")
-
-
+            
+            
     def rectangle(self, x_length: float, y_length: float, offset=None):
         """ Constructs the rectangle geometry
 
@@ -119,6 +120,63 @@ class Adamah(object):
         # The convex hull of the box
         return spatial.ConvexHull(points)
 
+    def rectangle_3d(self, x_length: float, y_length: float, z_length: float, offset=None):
+        """ Constructs the rectangle geometry
+
+        Parameters
+        ----------
+        x : float
+            The x length
+        y : float
+            The y length
+        z : float
+            The z length
+        offset : np.array
+            The offset of the volume
+
+        Returns
+        -------
+        None
+        """
+        _log.debug('Constructing the hull')
+        # The side length of the box
+        x = x_length
+        y = y_length
+        z = z_length
+        _log.debug('The side lengths are %.1f and %.1f and %.1f' %(x, y, z))
+        # The volume of the box
+        self._volume = (x * y * z)
+        # The corners of the box
+        if offset is None:
+            _log.debug("Offset not set. Corner in [0,0]")
+            points= np.array([
+                [0,0,0],
+                [x,0,0],
+                [x,y,0],
+                [0,y,0],
+                [0,0,z],
+                [x,0,z],
+                [x,y,z],
+                [0,y,z]
+            ])
+        else:
+            _log.debug("Offset set. Corner in offset")
+            points = (
+                np.array([
+                [0,0,0],
+                [x,0,0],
+                [x,y,0],
+                [0,y,0],
+                [0,0,z],
+                [x,0,z],
+                [x,y,z],
+                [0,y,z]
+            ]) +
+                offset
+            )
+        # The convex hull of the box
+        return spatial.ConvexHull(points)
+
     def _even_circle(self, samples):
         """
         function: _even_circle
@@ -133,6 +191,7 @@ class Adamah(object):
         points: np.array
             The point cloud
         """
+        print(samples)
         t = np.linspace(0., np.pi*2., samples)
         pos_x = config['geometry']['exclusion']['x_pos']
         pos_y = config['geometry']['exclusion']['y_pos']
@@ -141,6 +200,37 @@ class Adamah(object):
         y = rad * np.sin(t) + pos_y
         points = np.array([
             [x[i], y[i]]
+            for i in range(len(x))
+        ])
+        print(points)
+        return points
+    
+    def _ellipsoid(self, samples):
+        """
+        function: _even_circle
+        Evenly distributes points on a circle
+        Parameters
+        ----------
+        samples : int
+            Number of points
+        
+        Returns
+        -------
+        points: np.array
+            The point cloud
+        """
+        pos_x = config['geometry']['exclusion_3d']['x_pos']
+        pos_y = config['geometry']['exclusion_3d']['y_pos']
+        pos_z = config['geometry']['exclusion_3d']['z_pos']
+        major_axis = config['geometry']['exclusion_3d']['major_axis']
+        minor_axis = config['geometry']['exclusion_3d']['minor_axis']
+        u = np.linspace(0, 2 * np.pi, samples)
+        v = np.linspace(0, np.pi, samples)
+        x = minor_axis * (np.cos(u) * np.sin(v))
+        y = major_axis * (np.sin(u) * np.sin(v))
+        z = minor_axis * (np.sin(u) * np.cos(v))
+        points = np.array([
+            [x[i], y[i], z[i]]
             for i in range(len(x))
         ])
         return points
@@ -219,6 +309,21 @@ class Adamah(object):
             Max y
         """
         return self._y
+    
+    @property
+    def z(self):
+        """ Returns the max y
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        y : float
+            Max y
+        """
+        return self._z
 
     def point_in_wold(self, point: np.ndarray, tolerance=1e-12) -> bool:
         """ Checks if the point lies inside the world
@@ -233,6 +338,9 @@ class Adamah(object):
         bool
             Truth or not if inside
         """
+        print("point",point)
+        for eq in self._hull.equations:
+            print(eq)
         return all(
             (np.dot(eq[:-1], point) + eq[-1] <=tolerance)
             for eq in self._hull.equations
