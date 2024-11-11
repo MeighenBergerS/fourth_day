@@ -360,7 +360,7 @@ class Genesis(object):
             evolved[key] = [[], [], [], [], [], []]
             for idspecies, _ in enumerate(life[key][0]):
                 cut_off = config['organisms']['depth filter']
-                if life[key][3][idspecies] >= cut_off:
+                if (life[key][3][idspecies] <= cut_off): #-2000) and (life[key][3][idspecies] <= cut_off+1000):
                     #  The name
                     evolved[key][0].append(
                         life[key][0][idspecies]

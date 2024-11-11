@@ -61,7 +61,9 @@ class Providence(object):
             self._qe_switch = 'Func'
             qe_spl = []
             for xy in conf_det["quantum func"]:
+                #print(xy[0], xy[1])
                 qe_spl.append(UnivariateSpline(xy[0], xy[1], s=0, k=1, ext=1))
+                #print(len(qe_spl))
                 self._qe = np.array([qespl(self._nm) for qespl in qe_spl])
         else:
             _log.error('QE model not supported! Check the config file')
@@ -80,6 +82,7 @@ class Providence(object):
         measured : np.array
             The reduced photon counts due to efficiency
         """
+        print(np.shape(light_yields))
         _log.debug("Launching the detector calculation")
         start = time()
         # The cuts for the wavelengths acceptance

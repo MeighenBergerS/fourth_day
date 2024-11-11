@@ -10,6 +10,7 @@ from scipy.interpolate import UnivariateSpline
 from time import time
 from .config import config
 from .genesis import Genesis
+from numpy import array,float64
 
 _log = logging.getLogger(__name__)
 
@@ -28,7 +29,9 @@ class Lucifer(object):
         if not config["general"]["enable logging"]:
             _log.disabled = True
         _log.debug("Constructing the attenuation splines")
-           
+        
+            
+            
         self._wave_length = config["water"]["attenuation"]["wavelengths"]
         self._attenuation = config["water"]["attenuation"]["factors"]
         # The attenuation function
@@ -42,6 +45,13 @@ class Lucifer(object):
                     config["scenario"]["detector"]["type"]
                     ]
             )
+            
+            # geo properties for propa
+            self.tip_coords= np.stack((self._det_geom['x_offsets'], self._det_geom['y_offsets'],self._det_geom['z_offsets']),axis=-1)
+            self.opening_anlgle=self._det_geom['opening angle']
+            self.position=array((self._det_geom['x_pos'], self._det_geom['y_pos'],self._det_geom['z_pos']), dtype=float64)
+            self.inner_radius=config["geometry"]["exclusion_3d"]["minor_axis"]   
+           
             # The acceptance region
             self._acceptance_angles = np.array([
                 self._det_geom["angle offset"] -
@@ -84,6 +94,52 @@ class Lucifer(object):
                 " Check the config file!"
             )
 
+            
+    #help geo function
+    def distance(self, p1, p2):
+        '''point =np.array([x,y,z])'''
+        print(p1)
+        print(p2)
+        return np.sqrt(np.sum((p1-p2)**2, axis=0))
+    
+    def exclude_detector(self, point):
+        sphere_center=self.position
+        r=self.inner_radius
+        return self.distance(point,sphere_center)<r
+    
+    def inside_pmt_fov_cone(point_to_test,tip_coord):
+        '''tip coord are vec1-8'''
+        opening_angle=self.opening_anlgle
+        #print(point_to_test,tip_coord)      
+        tip_coord=np.squeeze(np.asarray(tip_coord))
+        correct_y_direction=tip_coord[1]*point_to_test[1] 
+        cone_direction_vec=tip_coord/LA.norm(tip_coord)
+        #print(cone_direction_vec,print(type(cone_direction_vec)))
+        projection_on_cone_axis=np.dot(point_to_test-tip_coord, cone_direction_vec)
+        #print(projection_on_cone_axis)
+        orth_distance = LA.norm((point_to_test - tip_coord) - projection_on_cone_axis * cone_direction_vec)
+        #print(orth_distance)
+        true_angle = np.arcsin(orth_distance/LA.norm(point_to_test-tip_coord))
+        #print(true_angle,opening_angle)
+        if (true_angle<opening_angle) & (correct_y_direction>0):
+            #print(True)
+            return True
+        else:
+            #print(False)
+            return False
+
+    def if_detected(self,emit_coordinates,det_num):
+        '''return a bool mask'''
+        detect_mask=[]
+        tip_coord=self.tip_coords[det_num]+self.position
+        for coord in emit_coordinates:
+            if self.exclude_detector(coord):
+                detect_mask.append(False)
+            else: 
+                return detect_mask.append.self.inside_pmt_fov_cone(emit_coordinate,tip_coord)
+        return detect_mask
+ 
+
     def _propagation(self, photon_counts: np.array,
                      pos_x: np.array, pos_y: np.array, pos_z: np.array,
                      wavelengths: np.array) -> np.array:
@@ -116,17 +172,20 @@ class Lucifer(object):
             for i in range(0, self._det_geom["det num"])
         ])**(1./2.)
         # The angles
-        #TODO:critical change here
-        angles = np.array([
-            np.arctan2(
-                (pos_y -
-                 (self._det_geom["y_pos"] + self._det_geom["y_offsets"][i])),
-                (pos_x -
-                 (self._det_geom["x_pos"] + self._det_geom["x_offsets"][i])))
-            for i in range(0, self._det_geom["det num"])
-        ])
-        # To degrees
-        angles = np.degrees(angles)
+        #TODO:critical change here, directly return bool_arr
+        coords=np.stack((pos_x,pos_y,pos_z),axis=-1)
+        angles = np.array([self.if_detected(coords ,i) 
+                           for i in range(0, self._det_geom["det num"]) ])      
+#         np.array([
+#             np.arctan2(
+#                 (pos_y -
+#                  (self._det_geom["y_pos"] + self._det_geom["y_offsets"][i])),
+#                 (pos_x -
+#                  (self._det_geom["x_pos"] + self._det_geom["x_offsets"][i])))
+#            for i in range(0, self._det_geom["det num"])
+#        ])
+#         # To degrees
+#         angles = np.degrees(angles)
         # Checking if within opening angles
         if self._acceptance_angles.ndim > 1:
             outside_minus = np.less(angles[:, 0], self._acceptance_angles[0])
