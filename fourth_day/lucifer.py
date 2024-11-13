@@ -259,6 +259,7 @@ class Lucifer(object):
                     emission_pdfs[i] * photons[i]
                     for i in range(0, len(species))
                 ])
+                print("emission_photons",emission_photons)
                 # Emitters
                 if len(emission_photons) >= 1:
                     propagated = np.array([
@@ -269,9 +270,10 @@ class Lucifer(object):
                 # No emitter
                 else:
                     propagated = self._propagation(emission_photons, x_pos,
-                                                   y_pos,z_pos,
+                                                   y_pos, z_pos,
                                                    nm_range)
                 # Integrating for each detector
+                print("propagated",propagated,propagated[0])
                 flat_prop = propagated[0]
                 tmp_arriving.append(flat_prop)
             arriving = np.array(tmp_arriving)

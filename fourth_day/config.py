@@ -49,7 +49,7 @@ _baseconfig = {
         # Length of simulation in seconds
         "duration": 75,
         # The population
-        "population size": 100,
+        "population size": 10,
         # Starting distribution
         # -Uniform:
         #   Organisms are randomly distributed at the beginning
@@ -101,7 +101,7 @@ _baseconfig = {
             "x_length": 40.,  # in meters
             "y_length": 5.,  # in meters
             "z_length": 5.,  # in meters
-            "offset": np.array([0., 7.5, 4.5]),  # The offset of [0,0] (bottom left)
+            "offset": np.array([0., 7.5, 7.5]),  # The offset of [0,0] (bottom left)
         },
         #Exclusion e.g. detector
         "exclusion_3d": {
@@ -357,6 +357,7 @@ _baseconfig = {
             'Chordata',
             'Dinoflagellata'
         ],
+        'abundance adjust':False,
         # Filter the organisms created
         # Currently supported:
         #   - 'average':
@@ -369,7 +370,7 @@ _baseconfig = {
         #       Removes all life above the specified depth
         'filter': 'depth',
         # Used for the depth filter. Otherwise redundant
-        'depth filter': 2000.,  # in m
+        'depth filter': 10000.,  # in m
         # The probability distribution to use for the light pdf
         # Currently supported:
         #   - 'Gamma':

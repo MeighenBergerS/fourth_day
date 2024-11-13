@@ -195,7 +195,7 @@ class Genesis(object):
                                delimiter=',')
                 )
                 # Converting to numpy array
-                tmp = np.asarray(tmp)
+                tmp=np.asarray(tmp)
                 # Relevant values
                 # [0] is the name
                 # [1] is the mean emission line in nm
@@ -204,6 +204,7 @@ class Genesis(object):
                 # [6] is the mean emission duration
                 # [7] is the sd of the emission duration
                 # [8] is the photon yield
+                # [9] is the abundance, now just put some trivial number to test functionarlity
                 life[phyla] = np.array(
                     [
                         tmp[:, 0].astype(str),
@@ -212,7 +213,8 @@ class Genesis(object):
                         tmp[:, 5].astype(np.float32),
                         tmp[:, 6].astype(np.float32),
                         tmp[:, 7].astype(np.float32),
-                        tmp[:, 8].astype(np.float32)
+                        tmp[:, 8].astype(np.float32),
+                        tmp[:, 9].astype(np.float32)
                     ],
                     dtype=object
                 )
@@ -244,7 +246,8 @@ class Genesis(object):
                             tmp[:, 5].astype(np.float32),
                             tmp[:, 6].astype(np.float32),
                             tmp[:, 7].astype(np.float32),
-                            tmp[:, 8].astype(np.float32)
+                            tmp[:, 8].astype(np.float32),
+                            tmp[:, 9].astype(np.float32)
                         ],
                         dtype=object
                     )
@@ -357,7 +360,7 @@ class Genesis(object):
         """
         evolved = dict()
         for key in life.keys():
-            evolved[key] = [[], [], [], [], [], []]
+            evolved[key] = [[], [], [], [], [], [], []]
             for idspecies, _ in enumerate(life[key][0]):
                 cut_off = config['organisms']['depth filter']
                 if (life[key][3][idspecies] <= cut_off): #-2000) and (life[key][3][idspecies] <= cut_off+1000):
@@ -385,11 +388,31 @@ class Genesis(object):
                     evolved[key][5].append(
                         life[key][6][idspecies]
                     )
+                    # The abundence
+                    evolved[key][6].append(
+                        life[key][7][idspecies]
+                    )
+            #TODO: when there is abundence index, un/able the normalisation 
+#             if config['organisms']['abundance adjust']==True:
+#                 index_dict={}
+#                 for key in evolved.keys():   
+#                     abundence_sum=np.sum(evolved[key][6])
+#                     fraction=evolved[key][6]/abundence_sum
+#                     random_index= np.random.choice(np.arange(0,len(evolved[key][0])), size=10, p=fraction)
+#                     index_dict[key]=random_index
+#                 #new evolved dict
+#                 new_evolved={}
+#                 for key in evolved.keys():
+#                     new_life_list=[]
+#                     for idx in index_dict[key]:
+#                         new_life_list.append(np.asarray(evolved[key])[:,idx])
+#                     new_evolved[key]=np.asarray(new_life_list).transpose()
+#             #print("new_evolved", new_evolved)
             total_survive = len(evolved[key][0])
             total_pre_flood = len(life[key][0])
             _log.debug('%d out of %d %s survived the flood'
                        %(total_survive, total_pre_flood, key))
-        return evolved
+        return evolved #or new_evolved
 
     def _light_pdf(self, evolved: dict) -> dict:
         """ Constructs the light emission pdfs for the organisms
