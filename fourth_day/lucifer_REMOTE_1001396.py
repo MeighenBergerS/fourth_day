@@ -11,10 +11,6 @@ from time import time
 from .config import config
 from .genesis import Genesis
 from numpy import array,float64
-<<<<<<< HEAD
-from numpy import linalg as LA
-=======
->>>>>>> 70368b01d95e458ba52f54e4057f030f26ecca0d
 
 _log = logging.getLogger(__name__)
 
@@ -32,14 +28,10 @@ class Lucifer(object):
     def __init__(self):
         if not config["general"]["enable logging"]:
             _log.disabled = True
-<<<<<<< HEAD
-        _log.debug("Constructing the attenuation splines")           
-=======
         _log.debug("Constructing the attenuation splines")
         
             
             
->>>>>>> 70368b01d95e458ba52f54e4057f030f26ecca0d
         self._wave_length = config["water"]["attenuation"]["wavelengths"]
         self._attenuation = config["water"]["attenuation"]["factors"]
         # The attenuation function
@@ -53,10 +45,7 @@ class Lucifer(object):
                     config["scenario"]["detector"]["type"]
                     ]
             )
-<<<<<<< HEAD
-=======
             
->>>>>>> 70368b01d95e458ba52f54e4057f030f26ecca0d
             # geo properties for propa
             self.tip_coords= np.stack((self._det_geom['x_offsets'], self._det_geom['y_offsets'],self._det_geom['z_offsets']),axis=-1)
             self.opening_anlgle=self._det_geom['opening angle']
@@ -109,13 +98,8 @@ class Lucifer(object):
     #help geo function
     def distance(self, p1, p2):
         '''point =np.array([x,y,z])'''
-<<<<<<< HEAD
-        #print(p1)
-        #print(p2)
-=======
         print(p1)
         print(p2)
->>>>>>> 70368b01d95e458ba52f54e4057f030f26ecca0d
         return np.sqrt(np.sum((p1-p2)**2, axis=0))
     
     def exclude_detector(self, point):
@@ -123,26 +107,6 @@ class Lucifer(object):
         r=self.inner_radius
         return self.distance(point,sphere_center)<r
     
-<<<<<<< HEAD
-    def inside_pmt_fov_cone(self,point_to_test,tip_coord):
-        '''tip coord are vec1-8'''
-        opening_angle=self.opening_anlgle
-        #print("point_to_test",point_to_test)
-        #print("tip_coord",tip_coord)   
-        point_to_test=point_to_test[0]
-        tip_coord=np.squeeze(np.asarray(tip_coord))
-        correct_y_direction=tip_coord*point_to_test[0] 
-        cone_direction_vec=tip_coord/LA.norm(tip_coord)
-        #print("cone_direction_vec",cone_direction_vec)
-        projection_on_cone_axis=np.dot(point_to_test-tip_coord, cone_direction_vec)
-        #print("projection_on_cone_axis",projection_on_cone_axis)
-        #print(point_to_test,tip_coord) 
-        orth_distance = LA.norm((point_to_test - tip_coord) - projection_on_cone_axis * cone_direction_vec)
-        #print(orth_distance)
-        true_angle = np.arcsin(orth_distance/LA.norm(point_to_test-tip_coord))
-        #print(np.rad2deg(true_angle),opening_angle)
-        if (true_angle<opening_angle) & (correct_y_direction[1]>0):
-=======
     def inside_pmt_fov_cone(point_to_test,tip_coord):
         '''tip coord are vec1-8'''
         opening_angle=self.opening_anlgle
@@ -158,7 +122,6 @@ class Lucifer(object):
         true_angle = np.arcsin(orth_distance/LA.norm(point_to_test-tip_coord))
         #print(true_angle,opening_angle)
         if (true_angle<opening_angle) & (correct_y_direction>0):
->>>>>>> 70368b01d95e458ba52f54e4057f030f26ecca0d
             #print(True)
             return True
         else:
@@ -167,14 +130,6 @@ class Lucifer(object):
 
     def if_detected(self,emit_coordinates,det_num):
         '''return a bool mask'''
-<<<<<<< HEAD
-        tip_coord=self.tip_coords[det_num]+self.position
-        for coord in emit_coordinates:
-            if self.exclude_detector(coord):
-                return False
-            else:
-                return self.inside_pmt_fov_cone(emit_coordinates,tip_coord)
-=======
         detect_mask=[]
         tip_coord=self.tip_coords[det_num]+self.position
         for coord in emit_coordinates:
@@ -183,7 +138,6 @@ class Lucifer(object):
             else: 
                 return detect_mask.append.self.inside_pmt_fov_cone(emit_coordinate,tip_coord)
         return detect_mask
->>>>>>> 70368b01d95e458ba52f54e4057f030f26ecca0d
  
 
     def _propagation(self, photon_counts: np.array,
@@ -233,13 +187,14 @@ class Lucifer(object):
 #         # To degrees
 #         angles = np.degrees(angles)
         # Checking if within opening angles
-#         if self._acceptance_angles.ndim > 1:
-#             print("acc angle dim>1")
-#         else:
-#             print("acc angle dim=1 or None?")
+        if self._acceptance_angles.ndim > 1:
+            outside_minus = np.less(angles[:, 0], self._acceptance_angles[0])
+            outside_plus = np.greater(angles[:, 0], self._acceptance_angles[1])
+            angles = np.logical_and(~outside_minus, ~outside_plus)
+        else:
+            angles[angles < self._acceptance_angles[0]] = 0.
+            angles[angles > self._acceptance_angles[1]] = 0.
         # Converting to 1 and zeros
-        #print('acceptance angles',angles)
-        #print('dim acceptance angles',self._acceptance_angles.ndim,angles)
         bool_arr = angles.astype(bool)
         # Acceptance arr
         accept_arr = bool_arr.astype(float)
@@ -304,13 +259,8 @@ class Lucifer(object):
                     emission_pdfs[i] * photons[i]
                     for i in range(0, len(species))
                 ])
-<<<<<<< HEAD
-                #print("emission_photons",emission_photons)
-=======
                 print("emission_photons",emission_photons)
->>>>>>> 70368b01d95e458ba52f54e4057f030f26ecca0d
                 # Emitters
-                #print(len(emission_photons) >= 1)
                 if len(emission_photons) >= 1:
                     propagated = np.array([
                         np.sum(self._propagation(emission_photons, x_pos,
@@ -323,11 +273,7 @@ class Lucifer(object):
                                                    y_pos, z_pos,
                                                    nm_range)
                 # Integrating for each detector
-<<<<<<< HEAD
-                #print("propagated",propagated,propagated[0])
-=======
                 print("propagated",propagated,propagated[0])
->>>>>>> 70368b01d95e458ba52f54e4057f030f26ecca0d
                 flat_prop = propagated[0]
                 tmp_arriving.append(flat_prop)
             arriving = np.array(tmp_arriving)

@@ -155,6 +155,7 @@ class FourthDayStateMachine(object):
             self._world.point_in_obs(position)
             for position in new_position
         ])
+        print("new_observation_mask", new_observation_mask)
         observation_count = np.sum(new_observation_mask)
         if observation_count == 0:
             # Injecting new organisms
@@ -365,7 +366,7 @@ class FourthDayStateMachine(object):
             list(zip(np.cos((self._population.loc[:,
                                                   'angle'].values)),
                      np.sin((self._population.loc[:,
-                                                  'angle'].values)),np.zeros(len(self._population.loc[:,'angle'].values))
+                                                  'angle'].values)), np.zeros(len(self._population.loc[:,'angle'].values))
             ))
         ) * (self._population.loc[:,
                                   'velocity'].values).reshape(

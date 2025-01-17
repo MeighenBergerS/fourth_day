@@ -5,6 +5,7 @@
 
 import numpy as np
 from scipy import spatial
+from scipy.spatial import Delaunay
 import logging
 from .config import config
 from .functions import normalize
@@ -74,7 +75,7 @@ class Adamah(object):
         # The exclusion volume
         if config['scenario']['exclusion']:
             _log.debug("Construction exclusion zone")
-            self._exclusion = spatial.ConvexHull(
+            self._exclusion = Delaunay(
                 self._ellipsoid(config['advanced']['ellipsoid sample'])
             )
             _log.debug("Finished exclusion zone")
@@ -175,7 +176,7 @@ class Adamah(object):
                 offset
             )
         # The convex hull of the box
-        return spatial.ConvexHull(points)
+        return Delaunay(points)
 
     def _even_circle(self, samples):
         """
@@ -191,7 +192,6 @@ class Adamah(object):
         points: np.array
             The point cloud
         """
-        print(samples)
         t = np.linspace(0., np.pi*2., samples)
         pos_x = config['geometry']['exclusion']['x_pos']
         pos_y = config['geometry']['exclusion']['y_pos']
@@ -202,7 +202,6 @@ class Adamah(object):
             [x[i], y[i]]
             for i in range(len(x))
         ])
-        print(points)
         return points
     
     def _ellipsoid(self, samples):
@@ -338,15 +337,10 @@ class Adamah(object):
         bool
             Truth or not if inside
         """
-        print("point",point)
-        for eq in self._hull.equations:
-            print(eq)
-        return all(
-            (np.dot(eq[:-1], point) + eq[-1] <=tolerance)
-            for eq in self._hull.equations
-        )
+        return self._hull.find_simplex(point)>=0
 
-    def point_in_obs(self, point: np.ndarray, tolerance=1e-12) -> bool:
+
+    def point_in_obs(self, point: np.ndarray, tolerance=1e-5) -> bool:
         """ Checks if the point lies inside the observed volume
 
         Parameters
@@ -359,10 +353,8 @@ class Adamah(object):
         bool
             Truth or not if inside
         """
-        return all(
-            (np.dot(eq[:-1], point) + eq[-1] <=tolerance)
-            for eq in self._observed.equations
-        )
+        print("observed_mask", self._observed.find_simplex(point)>=0,point)
+        return self._observed.find_simplex(point)>=0
 
     def point_in_exclusion(self, point: np.ndarray, tolerance=1e-12) -> bool:
         """ Checks if the point lies inside the exclusion
@@ -377,10 +369,8 @@ class Adamah(object):
         bool
             Truth or not if inside
         """
-        return all(
-            (np.dot(eq[:-1], point) + eq[-1] <=tolerance)
-            for eq in self._exclusion.equations
-        )
+        return self._exclusion.find_simplex(point)>=0
+    
 
     # TODO: Make some cross-checks to check validity
     def find_intersection(self, hull: spatial.ConvexHull,

@@ -248,6 +248,7 @@ class data_handler():
         the velocities (in coordinate directions) and speed at the n
         coordinates. For scalar valued data, returns one array of the scalar
         evaluated at the n coordinates."""
+        print("do i use this part of code?")
         # Check if coordinate array has correct shape
         attribute_error_flag = False
         if not isinstance(coords, np.ndarray):

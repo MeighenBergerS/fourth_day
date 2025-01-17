@@ -379,7 +379,7 @@ class Potential_Cylinder_Current(object):
         # The gradients
         grads_x = np.gradient(vel_x_calc, self._x_grid, self._y_grid,self._z_grid)
         grads_y = np.gradient(vel_y_calc, self._x_grid, self._y_grid,self._z_grid)
-        grads_y = np.gradient(vel_z_calc, self._x_grid, self._y_grid,self._z_grid)
+        grads_z = np.gradient(vel_z_calc, self._x_grid, self._y_grid,self._z_grid)
         gradients = np.linalg.norm(grads_x + grads_y + grads_z, axis=0).reshape(
             (len(self._data_points))
         )
@@ -419,7 +419,7 @@ class Potential_Cylinder_Current(object):
         if self._switch:
             vel_x = self._spl_vel_x(coords[:, 0], coords[:, 1],coords[:, 2])
             vel_y = self._spl_vel_y(coords[:, 0], coords[:, 1],coords[:, 2])
-            vel_z = self._spl_vel_y(coords[:, 0], coords[:, 1],coords[:, 2])
+            vel_z = self._spl_vel_z(coords[:, 0], coords[:, 1],coords[:, 2])
             vel_abs = (self._spl_vel_abs(coords[:, 0], coords[:, 1],coords[:, 2]))
             return np.array(
                 [vel_x, vel_y, vel_z, vel_abs]
@@ -462,10 +462,10 @@ class Current_Loader(object):
             raise ValueError("Current data file not found!")
         #TODO: critical change here
         self._xyz_coords = np.load(io.BytesIO(tmp_raw))
-        #print("before append",np.shape(self._xyz_coords), self._xyz_coords)
+        print("before append",np.shape(self._xyz_coords), self._xyz_coords)
         trivial_z = np.linspace( 0., config['geometry']['volume']['z_length']+1., len(self._xyz_coords[0,:]), endpoint=False,dtype=int)
         self._xyz_coords = np.vstack((self._xyz_coords, trivial_z)) 
-        #print("after append",np.shape(self._xyz_coords),self._xyz_coords)
+        print("after append",np.shape(self._xyz_coords),self._xyz_coords)
         # Build interpolator based on a triangulation given the coordinates
         self._tri = Delaunay(self._xyz_coords.transpose())
 
@@ -500,9 +500,9 @@ class Current_Loader(object):
             raise ValueError("Current data file not found!")
         if isinstance(out_nr, int):
             data = np.load(io.BytesIO(tmp_raw))
-            print("1",np.shape(data))
+            print("1",np.shape(data),data)
             data = np.column_stack((data, np.zeros(len(data[:,0]))))
-            print("2",np.shape(data))
+            print("2",np.shape(data),data)
         else:
             raise AttributeError('When loading data from numpy array, '\
                                  'out_nr must be an integer')
@@ -561,5 +561,5 @@ class Current_Loader(object):
             z_val = self._data_interpolator_z(coords)
             return (x_val, y_val, np.array([np.sqrt(x_val[i]**2 + y_val[i]**2 + z_val[i]**2)
                                             for i in range(len(x_val))]))
-
+        
         return (self._data_interpolator(coords))
