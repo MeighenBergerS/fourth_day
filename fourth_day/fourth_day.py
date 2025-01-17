@@ -231,6 +231,15 @@ class Fourth_Day(object):
         if config['scenario']["detector"]["switch"]:
             _log.info("Calculating photon yields at the detector")
             self._lucifer = Lucifer()
+            z_len=len(self._statistics[-1]['pos_x'])
+            z_coords = (config["runtime"]['random state'].uniform(
+                    low=0.,
+                    high=30, # up and down 15m
+                    size=z_len)
+                    )
+            for i in range(config['scenario']['duration']):
+                z_len_step=len(self._statistics[i]['pos_x'])
+                self._statistics[i]['pos_z']=z_coords[:z_len_step]
             self._light_yields = self._lucifer.light_bringer(
                 self._statistics,
                 self._life
