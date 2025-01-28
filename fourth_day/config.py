@@ -59,8 +59,8 @@ _baseconfig = {
         # The injection is treated as a binomial distro with p=0.5 for
         # rate >= 1, else rate = p
         "injection": {
-            "rate": 1e-1,
-            "y range": [0., 15.],
+            "rate": 1e0,#1e-1,
+            "y range": [0., 10.],
         },
         # If an exclusion zone should be used
         "exclusion": True,
@@ -88,28 +88,25 @@ _baseconfig = {
         #       Constructs a rectangle defined by the user
         'volume': {
             "function": 'rectangle',  # the geometry type
-            "x_length": 40.,  # in meters
-            "y_length": 20.,  # in meters
-            "z_length": 20., # in meters
+            "x_length": 30.,  # in meters
+            "y_length": 10.,  # in meters
             "offset": None,  # The bounding volume requires no offset
         },
         # The observation area. It is recommended to keep this smaller than
         # the volume.
         'observation': {
             "function": 'rectangle',
-            "x_length": 40.,  # in meters
-            "y_length": 5.,  # in meters
-            "z_length": 5.,  # in meters
-            "offset": np.array([0., 7.5, 7.5]),  # The offset of [0,0] (bottom left)
+            "x_length": 30.,  # in meters
+            "y_length": 10.,  # in meters
+            "offset": np.array([0., 0]),  # The offset of [0,0] (bottom left)
         },
         #Exclusion e.g. detector
         "exclusion_3d": {
             "function": "ellipsoid",
             "major_axis": 0.30,
             "minor_axis": 0.22,
-            "x_pos": 10.,
+            "x_pos": 20.,
             "y_pos": 10.,
-            "z_pos": 10.,
         },
         # Exclusion e.g. detector
         "exclusion": {
@@ -167,22 +164,34 @@ _baseconfig = {
             },
             # The P-OM module
             "POM": {
-                "x_pos": 10., #ellipsoid shape, all following coordinates are assumed center of module is at (0,0) position. 
+                "x_pos": 15., #ellipsoid shape, all following coordinates are assumed center of module is at (0,0) position. 
                 "y_pos": 10.,
                 "z_pos": 10.,
                 "det num": 16, #8 pmts on -y hemisphere with  footnote 1 , 8 pmts on y hemisphere with footnote 2
-"x_offsets":np.array([ 4.13720698,  0.        , -4.13720698,  0.        ,  4.93459414,
-       -4.93459414, -4.93459414,  4.93459414,  4.13720698,  0.        ,
-       -4.13720698,  0.        ,  4.93459414, -4.93459414, -4.93459414,
-        4.93459414])/100.,
-"y_offsets":np.array([ 6.49411413,  6.49411413,  6.49411413,  6.49411413,  3.25416062,
-        3.25416062,  3.25416062,  3.25416062, -6.49411413, -6.49411413,
-       -6.49411413, -6.49411413, -3.25416062, -3.25416062, -3.25416062,
-       -3.25416062])/100.,
-"z_offsets":np.array([ 0.        , -4.13720698,  0.        ,  4.13720698, -4.93459414,
-       -4.93459414,  4.93459414,  4.93459414,  0.        , -4.13720698,
-        0.        ,  4.13720698, -4.93459414, -4.93459414,  4.93459414,
-        4.93459414])/100.,      
+                "x_offsets":np.array([ 0.53729961,  0.        , -0.53729961,  0.        ,  0.64085638,
+       -0.64085638, -0.64085638,  0.64085638,  0.53729961,  0.        ,
+       -0.53729961,  0.        ,  0.64085638, -0.64085638, -0.64085638,
+        0.64085638]),
+                "y_offsets":np.array([ 0.84339145,  0.84339145,  0.84339145,  0.84339145,  0.42261826,
+        0.42261826,  0.42261826,  0.42261826, -0.84339145, -0.84339145,
+       -0.84339145, -0.84339145, -0.42261826, -0.42261826, -0.42261826,
+       -0.42261826]),
+                "z_offsets":np.array([ 0.        , -0.53729961,  0.        ,  0.53729961, -0.64085638,
+       -0.64085638,  0.64085638,  0.64085638,  0.        , -0.53729961,
+        0.        ,  0.53729961, -0.64085638, -0.64085638,  0.64085638,
+        0.64085638]),
+# "x_offsets":np.array([ 4.13720698,  0.        , -4.13720698,  0.        ,  4.93459414,
+#        -4.93459414, -4.93459414,  4.93459414,  4.13720698,  0.        ,
+#        -4.13720698,  0.        ,  4.93459414, -4.93459414, -4.93459414,
+#         4.93459414])/100.,
+# "y_offsets":np.array([ 6.49411413,  6.49411413,  6.49411413,  6.49411413,  3.25416062,
+#         3.25416062,  3.25416062,  3.25416062, -6.49411413, -6.49411413,
+#        -6.49411413, -6.49411413, -3.25416062, -3.25416062, -3.25416062,
+#        -3.25416062])/100.,
+# "z_offsets":np.array([ 0.        , -4.13720698,  0.        ,  4.13720698, -4.93459414,
+#        -4.93459414,  4.93459414,  4.93459414,  0.        , -4.13720698,
+#         0.        ,  4.13720698, -4.93459414, -4.93459414,  4.93459414,
+#         4.93459414])/100.,      
                 "angle offset": 0,  # does 3D need angle offset?
                 "opening angle": 45.,  
                 "quantum efficiency": "Func",  # It's actually a function, i'll update the function in providence.py

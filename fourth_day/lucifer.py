@@ -51,7 +51,7 @@ class Lucifer(object):
            
             # The acceptance region
             self._acceptance_angles = np.array([
-                self._det_geom["angle offset"] -
+                self._det_geom["angle offset"] - #is 0 for 3D
                 self._det_geom["opening angle"] / 2.,
                 self._det_geom["angle offset"] +
                 self._det_geom["opening angle"] / 2.
@@ -107,30 +107,32 @@ class Lucifer(object):
     def inside_pmt_fov_cone(self,point_to_test,tip_coord):
         '''tip coord are vec1-8'''
         opening_angle=self.opening_anlgle
-        #print("point_to_test",point_to_test)
-        #print("tip_coord",tip_coord)   
-        point_to_test=point_to_test[0]
+        point_to_test=np.squeeze(point_to_test[0])
         tip_coord=np.squeeze(np.asarray(tip_coord))
-        correct_y_direction=tip_coord*point_to_test[0] 
+        print("point_to_test",point_to_test,"tip_coord",tip_coord) 
+        correct_y_direction=np.dot(tip_coord,point_to_test-self.position)
+        print("correct_y_direction",correct_y_direction)
         cone_direction_vec=tip_coord/LA.norm(tip_coord)
-        #print("cone_direction_vec",cone_direction_vec)
-        projection_on_cone_axis=np.dot(point_to_test-tip_coord, cone_direction_vec)
-        #print("projection_on_cone_axis",projection_on_cone_axis)
-        #print(point_to_test,tip_coord) 
-        orth_distance = LA.norm((point_to_test - tip_coord) - projection_on_cone_axis * cone_direction_vec)
-        #print(orth_distance)
-        true_angle = np.arcsin(orth_distance/LA.norm(point_to_test-tip_coord))
-        #print(np.rad2deg(true_angle),opening_angle)
-        if (true_angle<opening_angle) & (correct_y_direction[1]>0):
-            #print(True)
+        print("cone_direction_vec",cone_direction_vec)
+        projection_on_cone_axis=np.dot(point_to_test-(tip_coord+self.position), cone_direction_vec)
+        print("projection_on_cone_axis",projection_on_cone_axis)
+        a_side_vec= point_to_test - (tip_coord+self.position)
+        b_side_vec= projection_on_cone_axis * cone_direction_vec
+        print("a_side_vec",a_side_vec,"b_side_vec",b_side_vec)
+        true_angle = np.rad2deg(np.arccos(LA.norm(b_side_vec)/LA.norm(a_side_vec)))
+        print("true_angle",true_angle,"opening_angle",opening_angle)
+        if (true_angle<opening_angle) & (correct_y_direction>0):
+            print(True)
             return True
         else:
-            #print(False)
+            print(False)
             return False
 
     def if_detected(self,emit_coordinates,det_num):
         '''return a bool mask'''
-        tip_coord=self.tip_coords[det_num]+self.position
+        tip_coord=self.tip_coords[det_num] # no need to +self.position, because it's vector
+        print('testing detector num with coord', det_num, tip_coord)
+        print('emission is at',emit_coordinates)
         for coord in emit_coordinates:
             if self.exclude_detector(coord):
                 return False
@@ -190,7 +192,7 @@ class Lucifer(object):
 #         else:
 #             print("acc angle dim=1 or None?")
         # Converting to 1 and zeros
-        #print('acceptance angles',angles)
+        print('if detected for 16 detectors',angles)
         #print('dim acceptance angles',self._acceptance_angles.ndim,angles)
         bool_arr = angles.astype(bool)
         # Acceptance arr
