@@ -99,50 +99,57 @@ class Lucifer(object):
         #print(p2)
         return np.sqrt(np.sum((p1-p2)**2, axis=0))
     
-    def exclude_detector(self, point):
-        sphere_center=self.position
+    def exclude_detector(self, point,shift):
+        
+        sphere_center = np.copy(self.position)
+        sphere_center[-1] +=shift
+        
         r=self.inner_radius
         return self.distance(point,sphere_center)<r
     
-    def inside_pmt_fov_cone(self,point_to_test,tip_coord):
+    def inside_pmt_fov_cone(self,point_to_test,tip_coord,shift):
         '''tip coord are vec1-8'''
+        sphere_center = np.copy(self.position)
+        sphere_center[-1] +=shift
+        print('sphere center',sphere_center)
+        
         opening_angle=self.opening_anlgle
         point_to_test=np.squeeze(point_to_test[0])
         tip_coord=np.squeeze(np.asarray(tip_coord))
-        print("point_to_test",point_to_test,"tip_coord",tip_coord) 
-        correct_y_direction=np.dot(tip_coord,point_to_test-self.position)
-        print("correct_y_direction",correct_y_direction)
+        #print("point_to_test",point_to_test,"tip_coord",tip_coord) 
+        correct_y_direction=np.dot(tip_coord,point_to_test-sphere_center)
+        #print("correct_y_direction",correct_y_direction)
         cone_direction_vec=tip_coord/LA.norm(tip_coord)
-        print("cone_direction_vec",cone_direction_vec)
-        projection_on_cone_axis=np.dot(point_to_test-(tip_coord+self.position), cone_direction_vec)
-        print("projection_on_cone_axis",projection_on_cone_axis)
-        a_side_vec= point_to_test - (tip_coord+self.position)
+        #print("cone_direction_vec",cone_direction_vec)
+        projection_on_cone_axis=np.dot(point_to_test-(tip_coord+sphere_center), cone_direction_vec)
+        #print("projection_on_cone_axis",projection_on_cone_axis)
+        a_side_vec= point_to_test - (tip_coord+sphere_center)
         b_side_vec= projection_on_cone_axis * cone_direction_vec
-        print("a_side_vec",a_side_vec,"b_side_vec",b_side_vec)
+        #print("a_side_vec",a_side_vec,"b_side_vec",b_side_vec)
         true_angle = np.rad2deg(np.arccos(LA.norm(b_side_vec)/LA.norm(a_side_vec)))
-        print("true_angle",true_angle,"opening_angle",opening_angle)
+        #print("true_angle",true_angle,"opening_angle",opening_angle)
         if (true_angle<opening_angle) & (correct_y_direction>0):
-            print(True)
+            #print(True)
             return True
         else:
-            print(False)
+            #print(False)
             return False
 
-    def if_detected(self,emit_coordinates,det_num):
+    def if_detected(self,emit_coordinates,det_num,tip_coords_copy,shift):
         '''return a bool mask'''
-        tip_coord=self.tip_coords[det_num] # no need to +self.position, because it's vector
+        tip_coord=tip_coords_copy[det_num] # no need to +self.position, because it's vector
         print('testing detector num with coord', det_num, tip_coord)
-        print('emission is at',emit_coordinates)
+        print('emission is at', emit_coordinates)
         for coord in emit_coordinates:
-            if self.exclude_detector(coord):
+            if self.exclude_detector(coord,shift):
                 return False
             else:
-                return self.inside_pmt_fov_cone(emit_coordinates,tip_coord)
+                return self.inside_pmt_fov_cone(emit_coordinates,tip_coord,shift)
  
 
     def _propagation(self, photon_counts: np.array,
                      pos_x: np.array, pos_y: np.array, pos_z: np.array,
-                     wavelengths: np.array) -> np.array:
+                     wavelengths: np.array, shift, tip_coords_copy) -> np.array:
         """ Attenuates the given photons depending on their emission position
 
         Parameters
@@ -168,13 +175,14 @@ class Lucifer(object):
             (pos_y -
              (self._det_geom["y_pos"] + self._det_geom["y_offsets"][i]))**2. +
             (pos_z -
-             (self._det_geom["z_pos"] + self._det_geom["z_offsets"][i]))**2. 
+             ((self._det_geom["z_pos"]+shift) + self._det_geom["z_offsets"][i]))**2. 
             for i in range(0, self._det_geom["det num"])
         ])**(1./2.)
+        print('path length', paths)
         # The angles
         #TODO:critical change here, directly return bool_arr
         coords=np.stack((pos_x,pos_y,pos_z),axis=-1)
-        angles = np.array([self.if_detected(coords ,i) 
+        angles = np.array([self.if_detected(coords ,i,tip_coords_copy,shift) 
                            for i in range(0, self._det_geom["det num"]) ])      
 #         np.array([
 #             np.arctan2(
@@ -192,7 +200,7 @@ class Lucifer(object):
 #         else:
 #             print("acc angle dim=1 or None?")
         # Converting to 1 and zeros
-        print('if detected for 16 detectors',angles)
+        #print('if detected for 16 detectors',angles)
         #print('dim acceptance angles',self._acceptance_angles.ndim,angles)
         bool_arr = angles.astype(bool)
         # Acceptance arr
@@ -222,7 +230,7 @@ class Lucifer(object):
             )
 
     def light_bringer(self, statistics: pd.DataFrame,
-                      life: Genesis) -> np.array:
+                      life: Genesis, shift) -> np.array:
         """ Calculates the light yields for the MC results
 
         Parameters
@@ -237,6 +245,10 @@ class Lucifer(object):
         arriving : np.array
             The attenuated photon counts depending on time
         """
+        tip_coords_copy = np.copy(self.tip_coords)
+        tip_coords_copy[:,-1] +=shift
+        print('tip_coords_copy:',tip_coords_copy)
+        
         if config["scenario"]["class"] != "Calibration":
             _log.debug("Launching the attenuation calculation")
             start = time()
@@ -265,13 +277,13 @@ class Lucifer(object):
                     propagated = np.array([
                         np.sum(self._propagation(emission_photons, x_pos,
                                                  y_pos,z_pos,
-                                                 nm_range), axis=1)
+                                                 nm_range,shift,tip_coords_copy), axis=1)
                     ])
                 # No emitter
                 else:
                     propagated = self._propagation(emission_photons, x_pos,
                                                    y_pos, z_pos,
-                                                   nm_range)
+                                                   nm_range,shift,tip_coords_copy)
                 # Integrating for each detector
                 #print("propagated",propagated,propagated[0])
                 flat_prop = propagated[0]

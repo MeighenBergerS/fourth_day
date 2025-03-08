@@ -16,7 +16,7 @@ _baseconfig = {
     ###########################################################################
     "general": {
         # Random state seed
-        "random state seed": 1337,
+        "random state seed": 1332,
         # Logger switch
         "enable logging": False,
         # If the config file for the run should be stored
@@ -89,7 +89,7 @@ _baseconfig = {
         'volume': {
             "function": 'rectangle',  # the geometry type
             "x_length": 30.,  # in meters
-            "y_length": 10.,  # in meters
+            "y_length": 20.,  # in meters
             "offset": None,  # The bounding volume requires no offset
         },
         # The observation area. It is recommended to keep this smaller than
@@ -97,22 +97,22 @@ _baseconfig = {
         'observation': {
             "function": 'rectangle',
             "x_length": 30.,  # in meters
-            "y_length": 10.,  # in meters
+            "y_length": 20.,  # in meters
             "offset": np.array([0., 0]),  # The offset of [0,0] (bottom left)
         },
         #Exclusion e.g. detector
         "exclusion_3d": {
             "function": "ellipsoid",
             "major_axis": 0.30,
-            "minor_axis": 0.22,
-            "x_pos": 20.,
+            "minor_axis": 0.08,
+            "x_pos": 15.,
             "y_pos": 10.,
         },
         # Exclusion e.g. detector
         "exclusion": {
             "function": "sphere",
             "radius": 0.3,
-            "x_pos": 5.,
+            "x_pos": 15.,
             "y_pos": 10.,
         },
         # Detector positions
@@ -166,7 +166,7 @@ _baseconfig = {
             "POM": {
                 "x_pos": 15., #ellipsoid shape, all following coordinates are assumed center of module is at (0,0) position. 
                 "y_pos": 10.,
-                "z_pos": 10.,
+                "z_pos": 0.,
                 "det num": 16, #8 pmts on -y hemisphere with  footnote 1 , 8 pmts on y hemisphere with footnote 2
                 "x_offsets":np.array([ 0.53729961,  0.        , -0.53729961,  0.        ,  0.64085638,
        -0.64085638, -0.64085638,  0.64085638,  0.53729961,  0.        ,

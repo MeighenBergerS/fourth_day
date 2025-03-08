@@ -233,16 +233,30 @@ class Fourth_Day(object):
             self._lucifer = Lucifer()
             z_len=len(self._statistics[-1]['pos_x'])
             z_coords = (config["runtime"]['random state'].uniform(
-                    low=0.,
-                    high=30, # up and down 15m
+                    low=40.,
+                    high=80., # up and down 25m
                     size=z_len)
                     )
             for i in range(config['scenario']['duration']):
                 z_len_step=len(self._statistics[i]['pos_x'])
                 self._statistics[i]['pos_z']=z_coords[:z_len_step]
+            print("Lower detector!")
+            self._light_yields_lower = self._lucifer.light_bringer(
+                self._statistics,
+                self._life,
+                10.
+            )
+            print("Middle detector!")
             self._light_yields = self._lucifer.light_bringer(
                 self._statistics,
-                self._life
+                self._life,
+                60.
+            )
+            print("Upper detector!")
+            self._light_yields_upper = self._lucifer.light_bringer(
+                self._statistics,
+                self._life,
+                110.
             )
             if config['scenario']["detector"]["response"]:
                 _log.info("Folding detection probability")
@@ -250,13 +264,33 @@ class Fourth_Day(object):
                 tmp_measured = self._providence.detection_efficiency(
                     self._light_yields
                 )
+                tmp_measured_upper = self._providence.detection_efficiency(
+                    self._light_yields_upper
+                )
+                tmp_measured_lower = self._providence.detection_efficiency(
+                    self._light_yields_lower
+                )
                 # Converting to pandas dataframe
                 detector_names = [
                     "Detector %d" %i
                     for i in range(0, tmp_measured.shape[1])
                 ]
+                detector_names_upper = [
+                    "Detector %d" %i
+                    for i in range(0, tmp_measured_upper.shape[1])
+                ]
+                detector_names_lower = [
+                    "Detector %d" %i
+                    for i in range(0, tmp_measured_lower.shape[1])
+                ]
                 self._measured = pd.DataFrame(
                     tmp_measured, columns=detector_names
+                )
+                self._measured_upper = pd.DataFrame(
+                    tmp_measured_upper, columns=detector_names_upper
+                )
+                self._measured_lower = pd.DataFrame(
+                    tmp_measured_lower, columns=detector_names_lower
                 )
         _log.info('---------------------------------------------------')
         _log.info('---------------------------------------------------')
@@ -342,6 +376,56 @@ class Fourth_Day(object):
             raise ValueError(
                 "Light yields not calculated! Check the config file"
             )
+            
+    @property
+    def light_yields_upper(self):
+        """ Getter function for the light yields. The switch needs to be true
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        light_yields : np.array
+            The light yield of the detector
+
+        Raises
+        ------
+            ValueError
+                When the correct switches were't set in the config
+        """
+        if config['scenario']["light prop"]["switch"]:
+            return self._light_yields_upper
+        else:
+            raise ValueError(
+                "Light yields not calculated! Check the config file"
+            )
+            
+    @property
+    def light_yields_lower(self):
+        """ Getter function for the light yields. The switch needs to be true
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        light_yields : np.array
+            The light yield of the detector
+
+        Raises
+        ------
+            ValueError
+                When the correct switches were't set in the config
+        """
+        if config['scenario']["light prop"]["switch"]:
+            return self._light_yields_lower
+        else:
+            raise ValueError(
+                "Light yields not calculated! Check the config file"
+            )
 
     @property
     def measured(self):
@@ -369,6 +453,58 @@ class Fourth_Day(object):
                 "Detector not simulated! Check the config file"
             )
 
+    @property
+    def measured_upper(self):
+        """ Getter function for the measured light yields.
+        The switch needs to be true
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        light_yields : np.array
+            The light yield of the detector
+
+        Raises
+        ------
+            ValueError
+                When the correct switches were't set in the config
+        """
+        if config['scenario']["detector"]["response"]:
+            return self._measured_upper
+        else:
+            raise ValueError(
+                "Detector not simulated! Check the config file"
+            )
+            
+    @property
+    def measured_lower(self):
+        """ Getter function for the measured light yields.
+        The switch needs to be true
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        light_yields : np.array
+            The light yield of the detector
+
+        Raises
+        ------
+            ValueError
+                When the correct switches were't set in the config
+        """
+        if config['scenario']["detector"]["response"]:
+            return self._measured_lower
+        else:
+            raise ValueError(
+                "Detector not simulated! Check the config file"
+            ) 
+            
     @property
     def wavelengths(self):
         """ Getter functions for the wavelengths of the emitted light used
