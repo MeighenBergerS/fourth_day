@@ -233,8 +233,8 @@ class Fourth_Day(object):
             self._lucifer = Lucifer()
             z_len=len(self._statistics[-1]['pos_x'])
             z_coords = (config["runtime"]['random state'].uniform(
-                    low=40.,
-                    high=80., # up and down 25m
+                    low=config['geometry']['N_layers']['lower_POM_pos']+config['geometry']['N_layers']['lower_layers'],
+                    high=config['geometry']['N_layers']['upper_POM_pos']-config['geometry']['N_layers']['upper_layers'],
                     size=z_len)
                     )
             for i in range(config['scenario']['duration']):
@@ -244,19 +244,19 @@ class Fourth_Day(object):
             self._light_yields_lower = self._lucifer.light_bringer(
                 self._statistics,
                 self._life,
-                10.
+                config['geometry']['N_layers']['lower_POM_pos'],
             )
             print("Middle detector!")
             self._light_yields = self._lucifer.light_bringer(
                 self._statistics,
                 self._life,
-                60.
+                config['geometry']['N_layers']['middle_POM_pos'],
             )
             print("Upper detector!")
             self._light_yields_upper = self._lucifer.light_bringer(
                 self._statistics,
                 self._life,
-                110.
+                config['geometry']['N_layers']['upper_POM_pos'],
             )
             if config['scenario']["detector"]["response"]:
                 _log.info("Folding detection probability")

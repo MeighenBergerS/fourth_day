@@ -8,6 +8,7 @@ from scipy import spatial
 import logging
 from .config import config
 from .functions import normalize
+from scipy.spatial import Delaunay
 
 
 _log = logging.getLogger(__name__)

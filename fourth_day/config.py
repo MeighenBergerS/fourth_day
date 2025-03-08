@@ -88,7 +88,7 @@ _baseconfig = {
         #       Constructs a rectangle defined by the user
         'volume': {
             "function": 'rectangle',  # the geometry type
-            "x_length": 30.,  # in meters
+            "x_length": 40.,  # in meters
             "y_length": 20.,  # in meters
             "offset": None,  # The bounding volume requires no offset
         },
@@ -96,17 +96,26 @@ _baseconfig = {
         # the volume.
         'observation': {
             "function": 'rectangle',
-            "x_length": 30.,  # in meters
+            "x_length": 40.,  # in meters
             "y_length": 20.,  # in meters
             "offset": np.array([0., 0]),  # The offset of [0,0] (bottom left)
         },
         #Exclusion e.g. detector
         "exclusion_3d": {
             "function": "ellipsoid",
-            "major_axis": 0.30,
-            "minor_axis": 0.08,
+            "major_axis": 0.30, #radius
+            "minor_axis": 0.23, #radius
+            "string":0.08, #radius
             "x_pos": 15.,
             "y_pos": 10.,
+        },
+        #z-direction stacking layers
+        "N_layers": {
+            "upper_layers": 24., #50m between POMs
+            "lower_layers": 24.,
+            "upper_POM_pos":100.,
+            "middle_POM_pos":50.,
+            "lower_POM_pos":0.,
         },
         # Exclusion e.g. detector
         "exclusion": {
@@ -164,7 +173,7 @@ _baseconfig = {
             },
             # The P-OM module
             "POM": {
-                "x_pos": 15., #ellipsoid shape, all following coordinates are assumed center of module is at (0,0) position. 
+                "x_pos": 10., #default simulation world X*Y = 40*20, detector pos (10,10)
                 "y_pos": 10.,
                 "z_pos": 0.,
                 "det num": 16, #8 pmts on -y hemisphere with  footnote 1 , 8 pmts on y hemisphere with footnote 2
