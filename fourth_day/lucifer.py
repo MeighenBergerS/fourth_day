@@ -110,7 +110,7 @@ class Lucifer(object):
         '''tip coord are vec1-16'''
         sphere_center = np.copy(self.det_default_position)
         sphere_center[-1] +=shift
-        print('sphere center',sphere_center)
+        #print('sphere center',sphere_center)
         
         opening_angle=self.opening_angle
         point_to_test=np.squeeze(point_to_test[0])
@@ -126,19 +126,19 @@ class Lucifer(object):
         b_side_vec= projection_on_cone_axis * cone_direction_vec
         #print("a_side_vec",a_side_vec,"b_side_vec",b_side_vec)
         true_angle = np.rad2deg(np.arccos(LA.norm(b_side_vec)/LA.norm(a_side_vec)))
-        print("true_angle",true_angle,correct_y_direction>0)
+        #print("true_angle",true_angle,correct_y_direction>0)
         if (true_angle<opening_angle) & (correct_y_direction>0):
-            print(True)
+            #print(True)
             return True
         else:
-            print(False)
+            #print(False)
             return False
 
     def if_detected(self,emit_coordinates,det_num,shift):
         '''return a bool mask'''
         tip_coord=self.tip_coords[det_num] # no need to +self.position, because it's vector
-        print('testing detector num with coord', det_num)
-        print('emission is at', emit_coordinates)
+        #print('testing detector num with coord', det_num)
+        #print('emission is at', emit_coordinates)
         for coord in emit_coordinates:
             if self.exclude_detector(coord,shift):
                 return False
@@ -177,7 +177,7 @@ class Lucifer(object):
              ((self._det_geom["z_pos"] + shift) + self._det_geom["z_offsets"][i]))**2. 
             for i in range(0, self._det_geom["det num"])
         ])**(1./2.)
-        print('path length', paths)
+        #print('path length', paths)
         # The angles
         #TODO:critical change here, directly return bool_arr
         coords=np.stack((pos_x,pos_y,pos_z),axis=-1)
