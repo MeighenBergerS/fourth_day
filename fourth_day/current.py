@@ -427,7 +427,7 @@ class Potential_Cylinder_Current(object):
         else:
             return self._spl_grad(coords[:, 0], coords[:, 1], coords[:, 2])
 
-class Current_Loader(object):
+class Current_Loader(object): #this is used for custom current
     """ Loads the current
 
     Parameters
@@ -462,12 +462,13 @@ class Current_Loader(object):
             raise ValueError("Current data file not found!")
         #TODO: critical change here
         self._xyz_coords = np.load(io.BytesIO(tmp_raw))
-        print("before append",np.shape(self._xyz_coords), self._xyz_coords)
-        trivial_z = np.linspace( 0., config['geometry']['volume']['z_length']+1., len(self._xyz_coords[0,:]), endpoint=False,dtype=int)
+        #print("before append",np.shape(self._xyz_coords), self._xyz_coords)
+        trivial_z = np.linspace( 0., config['geometry']['volume']['z_length'], len(self._xyz_coords[0,:]), endpoint=False,dtype=float)
         self._xyz_coords = np.vstack((self._xyz_coords, trivial_z)) 
-        print("after append",np.shape(self._xyz_coords),self._xyz_coords)
+        #print("after append",np.shape(self._xyz_coords),self._xyz_coords)
         # Build interpolator based on a triangulation given the coordinates
         self._tri = Delaunay(self._xyz_coords.transpose())
+        #print("is it because of construction too slow?")
 
     def _load_from_npy_and_build_interpolator(self, out_nr: int):
         """ Load data from numpy arrays, given output number associated with
@@ -491,6 +492,7 @@ class Current_Loader(object):
                 __name__, '{0}/data_{1}.npy'.format(self._save_string,
                                                     i_step)
         )
+        print("name:",__name__)
         print('{0}/data_{1}.npy'.format(self._save_string,
                                                     i_step))
         if tmp_raw is None:
@@ -557,8 +559,11 @@ class Current_Loader(object):
         # Retrieve values from data interpolator
         if self._vector_data:
             x_val = self._data_interpolator_x(coords)
+            print("data_interpolator_x result:",x_val)
             y_val = self._data_interpolator_y(coords)
+            print("data_interpolator_y result:",y_val)
             z_val = self._data_interpolator_z(coords)
+            print("data_interpolator_z result:",z_val)
             return (x_val, y_val, np.array([np.sqrt(x_val[i]**2 + y_val[i]**2 + z_val[i]**2)
                                             for i in range(len(x_val))]))
         

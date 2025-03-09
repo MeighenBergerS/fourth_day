@@ -103,6 +103,7 @@ class FourthDayStateMachine(object):
         # ---------------------------------------------------------------------
         # The currently observed
         observation_mask = self._population.loc[:, 'observed'].values
+        #print("initial observation mask:",observation_mask)
         # ---------------------------------------------------------------------
         # Cleaning up before update
         # Organisms that are unobserved can't produce photons
@@ -122,6 +123,7 @@ class FourthDayStateMachine(object):
                      self._population.loc[:, 'pos_y'].values,
                      self._population.loc[:, 'pos_z'].values))
         )
+        
         # ---------------------------------------------------------------------
         # The water current at this step
         # TODO: Needs a more correct approach
@@ -142,10 +144,12 @@ class FourthDayStateMachine(object):
         self._vel_x = self._vel_x
         self._vel_y = self._vel_y
         self._vel_z = self._vel_z
+        print("result from current loader:",self._vel_x, self._vel_y, self._vel_z)
         self._gradient = self._gradient
         # ---------------------------------------------------------------------
         # New positions
         new_position = self._update_position(current_pos)
+        print("new_position:",new_position)
         # TODO: Optimize this
         # ---------------------------------------------------------------------
         # Checking if these are inside and observed
@@ -155,7 +159,7 @@ class FourthDayStateMachine(object):
             self._world.point_in_obs(position)
             for position in new_position
         ])
-        print("new_observation_mask", new_observation_mask)
+        #print("new_observation_mask", new_observation_mask)
         observation_count = np.sum(new_observation_mask)
         if observation_count == 0:
             # Injecting new organisms
@@ -344,6 +348,10 @@ class FourthDayStateMachine(object):
         self._step += 1
         if self._step % 100 == 0:
             _log.debug("Finished step %d" %self._step)
+        print('XYZ at end of state_machine update:')
+        print(self._population.loc[:, "pos_x"])
+        print(self._population.loc[:, "pos_y"])
+        print(self._population.loc[:, "pos_z"])
         return [self._population, False]
 
     def _update_position(self, current_pos: np.array) -> np.array:
@@ -362,6 +370,7 @@ class FourthDayStateMachine(object):
         # The movement is defined by the organisms' own movement and
         # the current
         #TODO:critical change in this steps
+        #print( "nan comes from here?", (self._population.loc[:,'velocity'].values).reshape(  len(self._population.loc[:, 'velocity'].values),   1) )
         new_position = (current_pos + np.array(
             list(zip(np.cos((self._population.loc[:,
                                                   'angle'].values)),

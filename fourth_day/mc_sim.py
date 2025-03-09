@@ -115,6 +115,7 @@ class MC_sim(object):
         possible_pulse_means = np.array(possible_pulse_means)
         possible_pulse_sd = np.array(possible_pulse_sd)
         possible_pulse_size = np.array(possible_pulse_size)
+        print("possible_species:", len(possible_species),possible_species)
         # Checking if more than one species
         if len(possible_species) > 1:
             pop_index_sample = config["runtime"]['random state'].randint(
@@ -125,6 +126,7 @@ class MC_sim(object):
         else:
             ValueError("No species found! Something went horribly wrong!" + 
                        "Perhaps the apocalypse? Check the config file!")
+        print("pop_index_sample:",pop_index_sample)
         self._population.loc[:, 'species'] = (
             possible_species[pop_index_sample]
         )
@@ -141,6 +143,7 @@ class MC_sim(object):
         # Distributing positions
         # TODO: Optimize this
         if config["scenario"]["inital distribution"] == "Uniform":
+            print("world dim:",world.x,world.y,world.z)
             x_coords = (
                 config["runtime"]['random state'].uniform(
                     low=0.,
@@ -165,6 +168,11 @@ class MC_sim(object):
         self._population.loc[:, "pos_x"] = x_coords
         self._population.loc[:, "pos_y"] = y_coords
         self._population.loc[:, "pos_z"] = z_coords
+        print('species:',self._population.loc[:, 'species'])
+        print('XYZ:')
+        print(self._population.loc[:, "pos_x"])
+        print(self._population.loc[:, "pos_y"])
+        print(self._population.loc[:, "pos_z"])
         # Distributing the radii
         self._population.loc[:, 'radius'] = (
             life.Movement['rad'].rvs(self._pop_size) / 1e3
@@ -205,6 +213,7 @@ class MC_sim(object):
             self._statistics.append(res[0])
             if config["scenario"]["premature break"]:
                 if res[1]:
+                    print("now evolution terminate with:",res[1])
                     # No more observed organisms
                     _log.debug("No more observed organisms")
                     break

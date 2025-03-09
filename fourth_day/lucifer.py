@@ -11,10 +11,7 @@ from time import time
 from .config import config
 from .genesis import Genesis
 from numpy import array,float64
-<<<<<<< HEAD
 from numpy import linalg as LA
-=======
->>>>>>> 70368b01d95e458ba52f54e4057f030f26ecca0d
 
 _log = logging.getLogger(__name__)
 
@@ -32,14 +29,9 @@ class Lucifer(object):
     def __init__(self):
         if not config["general"]["enable logging"]:
             _log.disabled = True
-<<<<<<< HEAD
-        _log.debug("Constructing the attenuation splines")           
-=======
         _log.debug("Constructing the attenuation splines")
         
-            
-            
->>>>>>> 70368b01d95e458ba52f54e4057f030f26ecca0d
+           
         self._wave_length = config["water"]["attenuation"]["wavelengths"]
         self._attenuation = config["water"]["attenuation"]["factors"]
         # The attenuation function
@@ -53,10 +45,6 @@ class Lucifer(object):
                     config["scenario"]["detector"]["type"]
                     ]
             )
-<<<<<<< HEAD
-=======
-            
->>>>>>> 70368b01d95e458ba52f54e4057f030f26ecca0d
             # geo properties for propa
             self.tip_coords= np.stack((self._det_geom['x_offsets'], self._det_geom['y_offsets'],self._det_geom['z_offsets']),axis=-1)
             self.opening_anlgle=self._det_geom['opening angle']
@@ -66,9 +54,9 @@ class Lucifer(object):
             # The acceptance region
             self._acceptance_angles = np.array([
                 self._det_geom["angle offset"] -
-                self._det_geom["opening angle"] / 2.,
+                self._det_geom["opening angle"],
                 self._det_geom["angle offset"] +
-                self._det_geom["opening angle"] / 2.
+                self._det_geom["opening angle"]
             ])
             _log.debug("The acceptance angles are:")
             _log.debug("Minus")
@@ -109,13 +97,8 @@ class Lucifer(object):
     #help geo function
     def distance(self, p1, p2):
         '''point =np.array([x,y,z])'''
-<<<<<<< HEAD
         #print(p1)
         #print(p2)
-=======
-        print(p1)
-        print(p2)
->>>>>>> 70368b01d95e458ba52f54e4057f030f26ecca0d
         return np.sqrt(np.sum((p1-p2)**2, axis=0))
     
     def exclude_detector(self, point):
@@ -123,42 +106,25 @@ class Lucifer(object):
         r=self.inner_radius
         return self.distance(point,sphere_center)<r
     
-<<<<<<< HEAD
+
     def inside_pmt_fov_cone(self,point_to_test,tip_coord):
         '''tip coord are vec1-8'''
         opening_angle=self.opening_anlgle
-        #print("point_to_test",point_to_test)
-        #print("tip_coord",tip_coord)   
-        point_to_test=point_to_test[0]
+        point_to_test=np.squeeze(point_to_test[0])
         tip_coord=np.squeeze(np.asarray(tip_coord))
-        correct_y_direction=tip_coord*point_to_test[0] 
+        #print("point_to_test",point_to_test,"tip_coord",tip_coord) 
+        correct_y_direction=np.dot(tip_coord,point_to_test-self.position)
+        #print("correct_y_direction",correct_y_direction)
         cone_direction_vec=tip_coord/LA.norm(tip_coord)
         #print("cone_direction_vec",cone_direction_vec)
-        projection_on_cone_axis=np.dot(point_to_test-tip_coord, cone_direction_vec)
+        projection_on_cone_axis=np.dot(point_to_test-(tip_coord+self.position), cone_direction_vec)
         #print("projection_on_cone_axis",projection_on_cone_axis)
-        #print(point_to_test,tip_coord) 
-        orth_distance = LA.norm((point_to_test - tip_coord) - projection_on_cone_axis * cone_direction_vec)
-        #print(orth_distance)
-        true_angle = np.arcsin(orth_distance/LA.norm(point_to_test-tip_coord))
-        #print(np.rad2deg(true_angle),opening_angle)
-        if (true_angle<opening_angle) & (correct_y_direction[1]>0):
-=======
-    def inside_pmt_fov_cone(point_to_test,tip_coord):
-        '''tip coord are vec1-8'''
-        opening_angle=self.opening_anlgle
-        #print(point_to_test,tip_coord)      
-        tip_coord=np.squeeze(np.asarray(tip_coord))
-        correct_y_direction=tip_coord[1]*point_to_test[1] 
-        cone_direction_vec=tip_coord/LA.norm(tip_coord)
-        #print(cone_direction_vec,print(type(cone_direction_vec)))
-        projection_on_cone_axis=np.dot(point_to_test-tip_coord, cone_direction_vec)
-        #print(projection_on_cone_axis)
-        orth_distance = LA.norm((point_to_test - tip_coord) - projection_on_cone_axis * cone_direction_vec)
-        #print(orth_distance)
-        true_angle = np.arcsin(orth_distance/LA.norm(point_to_test-tip_coord))
-        #print(true_angle,opening_angle)
+        a_side_vec= point_to_test - (tip_coord+self.position)
+        b_side_vec= projection_on_cone_axis * cone_direction_vec
+        #print("a_side_vec",a_side_vec,"b_side_vec",b_side_vec)
+        true_angle = np.rad2deg(np.arccos(LA.norm(b_side_vec)/LA.norm(a_side_vec)))
+        #print("true_angle",true_angle,"opening_angle",opening_angle)
         if (true_angle<opening_angle) & (correct_y_direction>0):
->>>>>>> 70368b01d95e458ba52f54e4057f030f26ecca0d
             #print(True)
             return True
         else:
@@ -167,23 +133,12 @@ class Lucifer(object):
 
     def if_detected(self,emit_coordinates,det_num):
         '''return a bool mask'''
-<<<<<<< HEAD
-        tip_coord=self.tip_coords[det_num]+self.position
+        tip_coord=self.tip_coords[det_num]
         for coord in emit_coordinates:
             if self.exclude_detector(coord):
                 return False
             else:
                 return self.inside_pmt_fov_cone(emit_coordinates,tip_coord)
-=======
-        detect_mask=[]
-        tip_coord=self.tip_coords[det_num]+self.position
-        for coord in emit_coordinates:
-            if self.exclude_detector(coord):
-                detect_mask.append(False)
-            else: 
-                return detect_mask.append.self.inside_pmt_fov_cone(emit_coordinate,tip_coord)
-        return detect_mask
->>>>>>> 70368b01d95e458ba52f54e4057f030f26ecca0d
  
 
     def _propagation(self, photon_counts: np.array,
@@ -304,11 +259,7 @@ class Lucifer(object):
                     emission_pdfs[i] * photons[i]
                     for i in range(0, len(species))
                 ])
-<<<<<<< HEAD
                 #print("emission_photons",emission_photons)
-=======
-                print("emission_photons",emission_photons)
->>>>>>> 70368b01d95e458ba52f54e4057f030f26ecca0d
                 # Emitters
                 #print(len(emission_photons) >= 1)
                 if len(emission_photons) >= 1:
@@ -323,11 +274,7 @@ class Lucifer(object):
                                                    y_pos, z_pos,
                                                    nm_range)
                 # Integrating for each detector
-<<<<<<< HEAD
                 #print("propagated",propagated,propagated[0])
-=======
-                print("propagated",propagated,propagated[0])
->>>>>>> 70368b01d95e458ba52f54e4057f030f26ecca0d
                 flat_prop = propagated[0]
                 tmp_arriving.append(flat_prop)
             arriving = np.array(tmp_arriving)
