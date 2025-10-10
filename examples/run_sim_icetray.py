@@ -34,7 +34,7 @@ parser.add_option('-t',
 (options,args) = parser.parse_args()
 print(options)
 
-def create_config(options = options, **kwargs):
+def create_config(**kwargs):
 
     config = config_icetray._baseconfig
     if "rs" in kwargs:
@@ -46,7 +46,7 @@ def create_config(options = options, **kwargs):
     config['general']['debug level'] = logging.DEBUG 
     config['general']['log file handler'] = '/home/clagunas/projects/rpp-nahee/clagunas/fourth_day/run/fd.log'  
     config['general']['config location'] = '/home/clagunas/projects/rpp-nahee/clagunas/fourth_day/run/config.txt' 
-    print("Random Seed:", rs)
+    print("Random Seed:", config['general']['random state seed'])
 
     config['scenario']['population size'] = 10  # The starting population size
     config['scenario']['duration'] = 300 * 1  # Total simulation time in seconds
@@ -83,33 +83,36 @@ class RunBiolum(icetray.I3Module):
         icetray.I3Module.__init__(self, context)
         self.AddOutBox("OutBox")
 
-        self.offline_pmts = [7,8,5,6,3,4,1,2,14,13,16,15,11,10,9,12]
-        self.string = 1
+        self.OFFLINE_PMTS = [7,8,5,6,3,4,1,2,14,13,16,15,11,10,9,12]
+        self.STRING = 1
         self.event_id = 0
-        self.num_detectors = 1
+        self.NUM_MODULES = 1
 
         one_string_tmp = {}
-        for j in range(self.num_detectors):
-            self.config = create_config(rs = 10+j)
+
+        rs = 12
+        # Run num_detectors simulations
+        for j in range(self.NUM_MODULES):
+            self.config = create_config(rs = rs)
             fd = Fourth_Day(userconfig=self.config)
             fd.sim()
             one_string_tmp[j] = [fd.measured_upper, fd.measured, fd.measured_lower]
 
             if j == 0 and True:  # Save the first one for inspection
-
                 pkl.dump(fd.measured_upper, open("/home/clagunas/projects/rpp-nahee/clagunas/li_data/sim/detectors_0" + ".pkl", "wb"))
                 pkl.dump(fd.measured, open("/home/clagunas/projects/rpp-nahee/clagunas/li_data/sim/detectors_1" + ".pkl", "wb"))
                 pkl.dump(fd.measured_lower, open("/home/clagunas/projects/rpp-nahee/clagunas/li_data/sim/detectors_2" + ".pkl", "wb"))
 
         one_string = {}
 
+        # Add contributions from neighboring modules
         for ii, fds in one_string_tmp.items():
             mid = one_string_tmp[ii][1]
             neighbors = []
 
             if ii > 0:
                 neighbors.append(one_string_tmp[ii - 1][2])
-            if ii < self.num_detectors - 1:
+            if ii < self.NUM_MODULES - 1:
                 neighbors.append(one_string_tmp[ii + 1][0])
 
             total = mid.copy()
@@ -155,11 +158,11 @@ class RunBiolum(icetray.I3Module):
                 #pmt = self.offline_pmts[int(det[1]) - 1]
                 pmt = int(det[1]) # Use direct mapping for now
 
-                pulse_series_map[OMKey(self.string, optical_module, pmt)] = dataclasses.I3RecoPulseSeries()
+                pulse_series_map[OMKey(self.STRING, optical_module, pmt)] = dataclasses.I3RecoPulseSeries()
                 pulse = dataclasses.I3RecoPulse()
                 pulse.time = t
                 pulse.charge = non_zero_values[j]
-                pulse_series_map[OMKey(self.string, optical_module, pmt)].append(pulse)
+                pulse_series_map[OMKey(self.STRING, optical_module, pmt)].append(pulse)
 
         header = dataclasses.I3EventHeader()
         header.run_id = 0
@@ -180,7 +183,11 @@ timein = time.time()
 
 tray = icetray.I3Tray()
 
-tray.Add(RunBiolum, "SimulateBioluminescence")
+#rs = 42
+
+#initial_config = create_config(rs=rs)
+
+tray.Add(RunBiolum, "SimulateBioluminescence")#, config = initial_config)
 tray.AddModule("I3Writer", 'i3writer', Filename=options.OUTPUT_FILE)
     
 tray.Execute()
