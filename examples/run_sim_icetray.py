@@ -46,7 +46,6 @@ def create_config(**kwargs):
     config['general']['debug level'] = logging.DEBUG 
     config['general']['log file handler'] = '/home/clagunas/projects/rpp-nahee/clagunas/fourth_day/run/fd.log'  
     config['general']['config location'] = '/home/clagunas/projects/rpp-nahee/clagunas/fourth_day/run/config.txt' 
-    print("Random Seed:", config['general']['random state seed'])
 
     config['scenario']['population size'] = 10  # The starting population size
     config['scenario']['duration'] = 300 * 1  # Total simulation time in seconds
@@ -74,26 +73,34 @@ def create_config(**kwargs):
 
     return config
 
-# maybe divide this into two modules, so we can still run the conversion 
-# on simulation directly or on files
 class RunBiolum(icetray.I3Module):
     
     def __init__(self, context):
 
         icetray.I3Module.__init__(self, context)
+        self.AddParameter("DeltaTime", "Delta time step for interpolation", 0.1) 
+        self.AddParameter("Config", "Optional config dictionary", None) # don't make it optional
         self.AddOutBox("OutBox")
 
         self.OFFLINE_PMTS = [7,8,5,6,3,4,1,2,14,13,16,15,11,10,9,12]
         self.STRING = 1
         self.event_id = 0
-        self.NUM_MODULES = 1
+        self.NUM_MODULES = 20
+        
+    def Configure(self):
+        self.delta_t = self.GetParameter("DeltaTime")
+        self.config = self.GetParameter("Config")
+        self.times_new = np.arange(0, self.config['scenario']['duration'], self.delta_t)
+        self._run_sim()
+
+    def _run_sim(self):
 
         one_string_tmp = {}
-
-        rs = 12
         # Run num_detectors simulations
         for j in range(self.NUM_MODULES):
-            self.config = create_config(rs = rs)
+            self.config['general']['random state seed'] = self.config['general']['random state seed'] + j # weird sum but ok
+            print("Random seed:", self.config['general']['random state seed'])
+            #self.config = create_config(rs = rs)
             fd = Fourth_Day(userconfig=self.config)
             fd.sim()
             one_string_tmp[j] = [fd.measured_upper, fd.measured, fd.measured_lower]
@@ -130,7 +137,6 @@ class RunBiolum(icetray.I3Module):
 
         self.final_df = pd.concat(dfs, axis=1)
         print(self.final_df) 
-        self.times_new = np.arange(0, self.config['scenario']['duration'], options.DELTA_TIME_S)
 
     def Process(self):
 
@@ -183,11 +189,13 @@ timein = time.time()
 
 tray = icetray.I3Tray()
 
-#rs = 42
+rs = 42
+initial_config = create_config(rs=rs)
 
-#initial_config = create_config(rs=rs)
+tray.Add(RunBiolum, "SimulateBioluminescence", 
+         Config = initial_config, 
+         DeltaTime = options.DELTA_TIME_S)
 
-tray.Add(RunBiolum, "SimulateBioluminescence")#, config = initial_config)
 tray.AddModule("I3Writer", 'i3writer', Filename=options.OUTPUT_FILE)
     
 tray.Execute()
