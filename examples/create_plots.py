@@ -20,14 +20,14 @@ parser.add_option('-i',
 NUM_DETECTORS = 20
 PMTS_PER_DETECTOR = 16
 STRING = 1
-PLOT_DIR = "/home/clagunas/projects/rpp-nahee/clagunas/li_data/plots/"
-DATA_DIR = "/home/clagunas/projects/rpp-nahee/clagunas/li_data/"
+PLOT_DIR = "/home/clagunas/projects/rpp-nahee/clagunas/biolum_sim/plots/"
+DATA_DIR = "/home/clagunas/projects/rpp-nahee/clagunas/biolum_sim/"
 
 (options,args) = parser.parse_args()
 print(options)
 
 # PDF outputs
-output_pdf_pkl = "/home/clagunas/projects/rpp-nahee/clagunas/li_data/plots/one_module_detector_plots_pkl.pdf"
+output_pdf_pkl = "/home/clagunas/projects/rpp-nahee/clagunas/biolum_sim/plots/one_module_detector_plots_pkl.pdf"
 output_pdf_i3 = PLOT_DIR + options.INPUT_FILE + ".pdf"
 
 input_file = DATA_DIR + options.INPUT_FILE
@@ -41,7 +41,7 @@ color_cycle = plt.cm.tab20(np.linspace(0,1,PMTS_PER_DETECTOR))
 print(f"Reading PKL files and plotting to {output_pdf_pkl}")
 with PdfPages(output_pdf_pkl) as pdf:
     for i in range(0, 3):#NUM_DETECTORS):
-        with open(f'/home/clagunas/projects/rpp-nahee/clagunas/li_data/sim/detectors_{i}.pkl', 'rb') as f:
+        with open(f'/home/clagunas/projects/rpp-nahee/clagunas/biolum_sim/sim/detectors_{i}.pkl', 'rb') as f:
             detectors = pkl.load(f)
 
         plt.figure(figsize=(6,4))
@@ -108,7 +108,7 @@ with dataio.I3File(input_file) as f:
 # Plot I3
 with PdfPages(output_pdf_i3) as pdf:
     for det in range(0, NUM_DETECTORS):
-        plt.figure(figsize=(10,6))
+        plt.figure(figsize=(6,4))
         for pmt in range(1, PMTS_PER_DETECTOR+1):
             if sum(charges[det][pmt]) > 0.0:
                 print(f"Plotting module {det}, PMT {pmt}, sum charge: {sum(charges[det][pmt]):.2e}")

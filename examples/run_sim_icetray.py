@@ -1,10 +1,8 @@
 from icecube import dataio, icetray, dataclasses
 from icecube.icetray import OMKey
 
-import pickle as pkl
 import numpy as np
 import pandas as pd
-import os
 from optparse import OptionParser
 import logging
 import time
@@ -17,13 +15,9 @@ parser = OptionParser(usage)
 
 parser.add_option('-o',
                   '--output_file',
-                  default = '/home/clagunas/projects/rpp-nahee/clagunas/li_data/test_one_string.i3',
+                  default = '/home/clagunas/projects/rpp-nahee/clagunas/biolum_sim/test_one_string.i3',
                   dest    = 'OUTPUT_FILE',
                   help    = 'Path to output file')
-parser.add_option('--config_file',
-                  default = '/home/clagunas/projects/rpp-nahee/clagunas/li_data',
-                  dest    = 'CONFIG_FILE',
-                  help    = 'Path to the config file')
 parser.add_option('-t',
                   '--interpolation_time',
                   type    = 'float',
@@ -34,9 +28,9 @@ parser.add_option('-t',
 (options,args) = parser.parse_args()
 print(options)
 
-def create_config(**kwargs):
+def create_config(config, **kwargs):
 
-    config = config_icetray._baseconfig
+    #config = config_icetray._baseconfig
     if "rs" in kwargs:
         rs = kwargs["rs"]
     else:
@@ -95,24 +89,24 @@ class RunBiolum(icetray.I3Module):
 
     def _run_sim(self):
 
-        one_string_tmp = {}
         # Run num_detectors simulations
+        one_string_tmp = {}
         for j in range(self.NUM_MODULES):
+
             self.config['general']['random state seed'] = self.config['general']['random state seed'] + j # weird sum but ok
             print("Random seed:", self.config['general']['random state seed'])
-            #self.config = create_config(rs = rs)
             fd = Fourth_Day(userconfig=self.config)
             fd.sim()
             one_string_tmp[j] = [fd.measured_upper, fd.measured, fd.measured_lower]
 
-            if j == 0 and True:  # Save the first one for inspection
-                pkl.dump(fd.measured_upper, open("/home/clagunas/projects/rpp-nahee/clagunas/li_data/sim/detectors_0" + ".pkl", "wb"))
-                pkl.dump(fd.measured, open("/home/clagunas/projects/rpp-nahee/clagunas/li_data/sim/detectors_1" + ".pkl", "wb"))
-                pkl.dump(fd.measured_lower, open("/home/clagunas/projects/rpp-nahee/clagunas/li_data/sim/detectors_2" + ".pkl", "wb"))
-
-        one_string = {}
+            if j == 0 and False:  # Save the first one for inspection
+                import pickle as pkl
+                pkl.dump(fd.measured_upper, open("/home/clagunas/projects/rpp-nahee/clagunas/biolum_sim/sim/detectors_0" + ".pkl", "wb"))
+                pkl.dump(fd.measured, open("/home/clagunas/projects/rpp-nahee/clagunas/biolum_sim/sim/detectors_1" + ".pkl", "wb"))
+                pkl.dump(fd.measured_lower, open("/home/clagunas/projects/rpp-nahee/clagunas/biolum_sim/sim/detectors_2" + ".pkl", "wb"))
 
         # Add contributions from neighboring modules
+        one_string = {}
         for ii, fds in one_string_tmp.items():
             mid = one_string_tmp[ii][1]
             neighbors = []
@@ -129,6 +123,7 @@ class RunBiolum(icetray.I3Module):
 
             one_string[ii] = total
 
+        # Rename columns and combine into a single dataframe
         dfs = []
         for ii in one_string.keys():
             nameDict = {f"Detector {j}": f"{ii}_{j+1:02d}" for j in range(16)}
@@ -190,10 +185,11 @@ timein = time.time()
 tray = icetray.I3Tray()
 
 rs = 42
-initial_config = create_config(rs=rs)
+default_config = config_icetray._baseconfig
+config = create_config(default_config, rs=rs)
 
 tray.Add(RunBiolum, "SimulateBioluminescence", 
-         Config = initial_config, 
+         Config = config, 
          DeltaTime = options.DELTA_TIME_S)
 
 tray.AddModule("I3Writer", 'i3writer', Filename=options.OUTPUT_FILE)
