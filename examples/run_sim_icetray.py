@@ -1,14 +1,22 @@
 from icecube import dataio, icetray, dataclasses
 from icecube.icetray import OMKey
 
+import multiprocessing as mp
+mp.set_start_method("spawn", force=True)
+
 import numpy as np
 import pandas as pd
 from optparse import OptionParser
 import logging
 import time
+import os
 
 from fourth_day import Fourth_Day 
 import config_icetray 
+
+from multiprocessing import Pool
+import copy
+from threadpoolctl import threadpool_limits
 
 usage  = 'usage: %prog [options]'
 parser = OptionParser(usage)
@@ -30,7 +38,6 @@ print(options)
 
 def create_config(config, **kwargs):
 
-    #config = config_icetray._baseconfig
     if "rs" in kwargs:
         rs = kwargs["rs"]
     else:
@@ -67,48 +74,94 @@ def create_config(config, **kwargs):
 
     return config
 
+def _run_fd_sim(args):
+    """
+    Worker function executed in a separate process.
+    Performs one Fourth_Day sim and returns its results.
+    """
+    j, base_config = args
+    config = copy.deepcopy(base_config)
+
+    # Update seed inside worker
+    config['general']['random state seed'] = config['general']['random state seed'] + j
+    print(f"[Worker {j}] Seed = {config['general']['random state seed']}")
+    
+    with threadpool_limits(limits=1):
+        fd = Fourth_Day(userconfig=config)
+        fd.sim()
+
+    return j, fd.measured_upper, fd.measured, fd.measured_lower
+
 class RunBiolum(icetray.I3Module):
     
     def __init__(self, context):
 
         icetray.I3Module.__init__(self, context)
         self.AddParameter("DeltaTime", "Delta time step for interpolation", 0.1) 
-        self.AddParameter("Config", "Optional config dictionary", None) # don't make it optional
+        self.AddParameter("Config", "Config dictionary", None) 
+        self.AddParameter("NumModules", "Number of 3-module sims to run", 20)
+        self.AddParameter("UseMultiprocessing",
+                  "Whether to run all module simulations in parallel",
+                  False)
         self.AddOutBox("OutBox")
 
         self.OFFLINE_PMTS = [7,8,5,6,3,4,1,2,14,13,16,15,11,10,9,12]
         self.STRING = 1
         self.event_id = 0
-        self.NUM_MODULES = 20
         
     def Configure(self):
         self.delta_t = self.GetParameter("DeltaTime")
         self.config = self.GetParameter("Config")
+        if self.config is None:
+            raise RuntimeError("RunBiolum: Config parameter is required.")
+        self.NUM_MODULES = int(self.GetParameter("NumModules"))
+        self.use_mp = bool(self.GetParameter("UseMultiprocessing"))
         self.times_new = np.arange(0, self.config['scenario']['duration'], self.delta_t)
         self._run_sim()
 
     def _run_sim(self):
 
+        base_config = self.config
+        N = self.NUM_MODULES
+
         # Run num_detectors simulations
         one_string_tmp = {}
-        for j in range(self.NUM_MODULES):
 
-            self.config['general']['random state seed'] = self.config['general']['random state seed'] + j # weird sum but ok
-            print("Random seed:", self.config['general']['random state seed'])
-            fd = Fourth_Day(userconfig=self.config)
-            fd.sim()
-            one_string_tmp[j] = [fd.measured_upper, fd.measured, fd.measured_lower]
+        if self.use_mp:
+            print(f"[RunBiolum] Running {N} module simulations with multiprocessing…")
 
-            if j == 0 and False:  # Save the first one for inspection
-                import pickle as pkl
-                pkl.dump(fd.measured_upper, open("/home/clagunas/projects/rpp-nahee/clagunas/biolum_sim/sim/detectors_0" + ".pkl", "wb"))
-                pkl.dump(fd.measured, open("/home/clagunas/projects/rpp-nahee/clagunas/biolum_sim/sim/detectors_1" + ".pkl", "wb"))
-                pkl.dump(fd.measured_lower, open("/home/clagunas/projects/rpp-nahee/clagunas/biolum_sim/sim/detectors_2" + ".pkl", "wb"))
+            # Limit BLAS / MKL threads inside workers
+            from threadpoolctl import threadpool_limits
+            
+            # Ensure worker function is importable from module-level
+            with mp.get_context("spawn").Pool(processes=min(N, mp.cpu_count())) as pool:
+                results = pool.map(_run_fd_sim, [(j, base_config) for j in range(N)])
+
+            for j, upper, mid, lower in results:
+                one_string_tmp[j] = [upper, mid, lower]
+
+        else:
+            print(f"[RunBiolum] Running {N} module simulations in single-process mode…")
+
+            for j in range(N):
+                cfg = copy.deepcopy(base_config)
+                # ensure unique seed per module
+                cfg['general']['random state seed'] = cfg['general']['random state seed'] + j
+                print(f"[RunBiolum] Running Fourth_Day for module {j}, seed {cfg['general']['random state seed']}")
+                fd = Fourth_Day(userconfig=cfg)
+                fd.sim()
+                one_string_tmp[j] = [fd.measured_upper, fd.measured, fd.measured_lower]
+
+        #     if j == 0 and False:  # Save the first one for inspection
+        #         import pickle as pkl
+        #         pkl.dump(fd.measured_upper, open("/home/clagunas/projects/rpp-nahee/clagunas/biolum_sim/sim/detectors_0" + ".pkl", "wb"))
+        #         pkl.dump(fd.measured, open("/home/clagunas/projects/rpp-nahee/clagunas/biolum_sim/sim/detectors_1" + ".pkl", "wb"))
+        #         pkl.dump(fd.measured_lower, open("/home/clagunas/projects/rpp-nahee/clagunas/biolum_sim/sim/detectors_2" + ".pkl", "wb"))
 
         # Add contributions from neighboring modules
         one_string = {}
         for ii, fds in one_string_tmp.items():
-            mid = one_string_tmp[ii][1]
+            mid = fds[1]
             neighbors = []
 
             if ii > 0:
@@ -190,7 +243,8 @@ config = create_config(default_config, rs=rs)
 
 tray.Add(RunBiolum, "SimulateBioluminescence", 
          Config = config, 
-         DeltaTime = options.DELTA_TIME_S)
+         DeltaTime = options.DELTA_TIME_S,
+         UseMultiprocessing=False,)
 
 tray.AddModule("I3Writer", 'i3writer', Filename=options.OUTPUT_FILE)
     
